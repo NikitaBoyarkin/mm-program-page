@@ -1,5 +1,6 @@
 ---
 import Base from "../layouts/Base.astro";
+import { BASE_URL } from "../lib/program";
 ---
 
 <Base
@@ -10,7 +11,7 @@ import Base from "../layouts/Base.astro";
     <p class="eyebrow">404</p>
     <h1 class="page-title">Страница не найдена</h1>
     <p class="page-intro">
-      Такой страницы нет. Программа конференции — на <a href="/">главной</a>, второй и
+      Такой страницы нет. Программа конференции — на <a href={BASE_URL}>главной</a>, второй и
       третий дни — в табах над сеткой.
     </p>
   </header>

@@ -1,10 +1,11 @@
 import { defineConfig } from "astro/config";
 
 // A single prerendered surface: three day pages, one data endpoint, no adapter.
-// `site` is deliberately unset — the deploy target (user Pages root vs a
-// project subpath) decides it, and a wrong absolute URL is worse than none.
-// Set `site` (and `base` when the page lives under a subpath) at deploy time.
+// Deployed to a project subpath on GitHub Pages, so `site` fixes the absolute
+// origin and `base` prefixes every link, asset and `program.json` fetch.
 export default defineConfig({
+  site: "https://nikitaboyarkin.github.io",
+  base: "/mm-program-page",
   output: "static",
   build: { format: "directory" },
   trailingSlash: "ignore",
