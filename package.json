@@ -15,7 +15,8 @@
     "data:dry": "bun run scripts/fetch-program.ts --dry-run"
   },
   "dependencies": {
-    "astro": "^7.2.9"
+    "astro": "^7.2.9",
+    "posthog-js": "^1.444.4"
   },
   "devDependencies": {
     "@astrojs/check": "^0.9.10",

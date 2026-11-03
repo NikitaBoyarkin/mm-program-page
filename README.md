@@ -218,3 +218,19 @@ URL берётся из `BASE_URL` (`src/lib/program.ts`), поэтому про
 
 Сборку с текущим `base` проверили прогоном в Chromium: табы работают, модалка открывается
 (значит, `/program.json` доступен), шрифты отдают `200`, консоль чистая.
+
+### Аналитика
+
+PostHog включается переменной `PUBLIC_POSTHOG_KEY` на этапе сборки (в CI — секрет
+репозитория `PUBLIC_POSTHOG_KEY`, локально — `.env`). Без неё скрипт не рендерится,
+и сайт остаётся полностью статическим. Опционально `PUBLIC_POSTHOG_HOST`
+(по умолчанию `https://us.i.posthog.com`).
+
+```bash
+# локально
+echo 'PUBLIC_POSTHOG_KEY=phc_…' > .env
+bun run dev
+```
+
+Схема свойств повторяет портфолио (`visit_utm_*`, `first_utm_*`, `initial_referrer_class`,
+`landing_path`) плюс `site: "mm-program-page"`. Подробности — `CONTRACT.md`, раздел «Аналитика».

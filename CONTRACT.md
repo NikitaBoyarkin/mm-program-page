@@ -23,6 +23,8 @@
 | `src/lib/program.ts` | core | типы + чистые функции домена (заморожено) |
 | `src/lib/ics.ts` | core | сборка `.ics` (заморожено) |
 | `src/lib/theme.ts` | core | три темы, цвета `theme-color`, `nextTheme` |
+| `src/lib/analytics.ts` | core | UTM-атрибуция и единственный канал в PostHog (`track`, супер-свойства) |
+| `src/components/Analytics.astro` | view | ленивый `init` PostHog, `outbound_click` |
 | `src/layouts/Base.astro` | view | `<head>`, тема до отрисовки, шапка, подвал |
 | `src/components/Nav.astro` | view | шапка, drawer, дни, тумблер темы, счётчик избранного |
 | `src/components/ProgramPage.astro` | view | день: шапка, табы, чипы, тулбар, сетка, модалка |
@@ -208,6 +210,17 @@ div.mm-toast[role=status]
 - Тексты из данных — только `textContent`/`createElement`; `innerHTML` в клиенте не используется.
 - Консоль чистая: ни одного `console.error`/`pageerror` на `/` и `/day/2/` (тест `04`).
 - Без JavaScript страница читается целиком: сетка, табы, чипы, счётчик (тест `13`).
+
+## Аналитика
+
+- Схема совпадает с портфолио: `visit_utm_*` (кампания текущего визита), `first_utm_*`
+  (первый заход), `initial_referrer_class`, `landing_path` — и `site: "mm-program-page"`,
+  по которому тайлы отличают этот сайт от портфолио в общем проекте PostHog.
+- Все свойства — супер-свойства, а не свойства `$pageview`: клик по билету обязан нести кампанию тоже.
+- SDK грузится только после первого взаимодействия и никогда на `localhost`/`127.0.0.1`.
+- Без `PUBLIC_POSTHOG_KEY` скрипт не рендерится; сборка и страница работают как раньше.
+- Единственное событие, которое сайт шлёт сам, — `outbound_click {domain, url, surface, path}`
+  на внешние ссылки (билеты Матемаркетинга, первоисточник, портфолио). Остальное — автозахват.
 
 ## Отклонения от оригинала
 

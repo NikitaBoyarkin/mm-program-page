@@ -4,6 +4,7 @@
  * `main` и подвал. Модалку и клиентский скрипт подключает страница программы,
  * а не этот layout: `404` не должна тянуть 90 КБ данных.
  */
+import Analytics from "../components/Analytics.astro";
 import Nav from "../components/Nav.astro";
 import { BASE_URL } from "../lib/program";
 import "../styles/tokens.css";
@@ -47,6 +48,8 @@ const {
     <meta name="twitter:card" content="summary" />
     <meta name="twitter:title" content={title} />
     <meta name="twitter:description" content={description} />
+
+    <Analytics />
 
     <script is:inline>
       // Тема до первой отрисовки: тёмная по умолчанию, сохранённая важнее

@@ -1,0 +1,115 @@
+---
+/**
+ * PostHog: ничего не грузится до первого взаимодействия.
+ *
+ * Ключ приходит из `PUBLIC_POSTHOG_KEY` на этапе сборки (локально — `.env`,
+ * в CI — секрет репозитория). Без ключа компонент не рендерит скрипт вовсе,
+ * поэтому сборка остаётся рабочей и без аналитики.
+ *
+ * Вся работа с SDK — через `src/lib/analytics.ts`: здесь только загрузка,
+ * `init` и делегированный `outbound_click`. Локальные хосты не инструментируются,
+ * иначе dev-сессии портят проект.
+ */
+const posthogKey = import.meta.env.PUBLIC_POSTHOG_KEY;
+---
+
+{posthogKey && (
+  <script>
+    import { attachPosthog, registerSuperProperties, track } from "../lib/analytics";
+
+    const POSTHOG_KEY = import.meta.env.PUBLIC_POSTHOG_KEY as string;
+    const POSTHOG_HOST = import.meta.env.PUBLIC_POSTHOG_HOST || "https://us.i.posthog.com";
+
+    const IS_LOCAL = /^(localhost|127\.0\.0\.1|::1|\[::1\]|0\.0\.0\.0)$/.test(
+      window.location.hostname,
+    );
+
+    if (!IS_LOCAL && POSTHOG_KEY) {
+      let started = false;
+
+      // Клик, который запускает загрузку SDK, иначе теряется: слушатель кликов
+      // появляется только после `await import()`. Копим и проигрываем после init.
+      const pendingClicks: Event[] = [];
+      const bufferClick = (e: Event) => {
+        if (pendingClicks.length < 50) pendingClicks.push(e);
+      };
+      document.addEventListener("click", bufferClick, { capture: true });
+
+      const TRIGGERS = ["pointerdown", "keydown", "scroll", "touchstart"] as const;
+
+      async function start() {
+        if (started) return;
+        started = true;
+        for (const type of TRIGGERS) window.removeEventListener(type, onFirstInteraction);
+
+        let posthog: typeof import("posthog-js")["posthog"];
+        try {
+          ({ posthog } = await import("posthog-js"));
+        } catch {
+          // Чанк не загрузился (адблок, CSP) — снимаем буфер и живём дальше.
+          document.removeEventListener("click", bufferClick, { capture: true });
+          pendingClicks.length = 0;
+          return;
+        }
+
+        posthog.init(POSTHOG_KEY, {
+          api_host: POSTHOG_HOST,
+          defaults: "2026-05-30",
+          capture_pageview: true,
+          capture_pageleave: true,
+          autocapture: true,
+          capture_exceptions: true,
+          session_recording: { maskAllInputs: true },
+        });
+
+        attachPosthog(posthog);
+        registerSuperProperties();
+
+        const path = window.location.pathname;
+        const sameHost = window.location.hostname;
+
+        const handleClick = (e: Event) => {
+          const target = e.target as Element | null;
+          const anchor = target?.closest?.("a[href]") as HTMLAnchorElement | null;
+          if (!anchor) return;
+
+          let url: URL;
+          try {
+            url = new URL(anchor.href, window.location.href);
+          } catch {
+            return;
+          }
+          if (url.protocol !== "http:" && url.protocol !== "https:") return;
+          if (url.hostname === sameHost) return;
+
+          track("outbound_click", {
+            domain: url.hostname,
+            url: url.href,
+            surface: anchor.dataset.analytics || "content",
+            path,
+          });
+        };
+
+        document.addEventListener("click", handleClick);
+        document.removeEventListener("click", bufferClick, { capture: true });
+        for (const event of pendingClicks.splice(0)) handleClick(event);
+      }
+
+      function onFirstInteraction() {
+        void start();
+      }
+
+      for (const type of TRIGGERS) {
+        window.addEventListener(type, onFirstInteraction, { passive: true });
+      }
+
+      // Пассивный посетитель всё равно инициализируется на idle, иначе короткие
+      // сессии не дают `$pageview` и воронка врёт.
+      const idle = (
+        window as Window & { requestIdleCallback?: (cb: () => void) => number }
+      ).requestIdleCallback;
+      if (idle) idle(() => void start());
+      else window.setTimeout(() => void start(), 1200);
+    }
+  </script>
+)}
