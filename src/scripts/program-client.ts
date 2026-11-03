@@ -26,7 +26,12 @@ import { THEMES, THEME_COLORS, nextTheme, type Theme } from "../lib/theme";
 
 const THEME_KEY = "theme";
 const FAV_KEY = "mm-program:favorites";
+/** Фильтр «только избранное» — выбор экрана, а не данные: живёт в sessionStorage. */
+const FAV_FILTER_KEY = "mm-program:favorites-only";
 const TOAST_MS = 2500;
+
+/** Класс скелетона области постера, пока грузится картинка из чужого CDN. */
+const SKELETON_CLASS = "talk-modal__media--loading";
 
 /** Порог мобильной модели (см. `CONTRACT.md`): список, а не сжатая сетка. */
 const MOBILE_QUERY = "(max-width: 767.98px)";
@@ -63,17 +68,19 @@ function safeUrl(value: unknown): string {
   }
 }
 
-function readStorage(key: string): string | null {
+function readStorage(key: string, kind: "local" | "session" = "local"): string | null {
   try {
-    return window.localStorage.getItem(key);
+    const storage = kind === "session" ? window.sessionStorage : window.localStorage;
+    return storage.getItem(key);
   } catch {
     return null; // приватный режим — живём без сохранения
   }
 }
 
-function writeStorage(key: string, value: string): void {
+function writeStorage(key: string, value: string, kind: "local" | "session" = "local"): void {
   try {
-    window.localStorage.setItem(key, value);
+    const storage = kind === "session" ? window.sessionStorage : window.localStorage;
+    storage.setItem(key, value);
   } catch {
     // приватный режим / переполнение — молча, состояние остаётся в памяти
   }
@@ -104,9 +111,67 @@ function initTheme(): void {
   const theme: Theme = isTheme(stored) ? stored : isTheme(rendered) ? rendered : "dark";
   applyTheme(theme, false);
 
-  $("button[data-theme-toggle]")?.addEventListener("click", () => {
+  // Тумблеров два — в шапке и в drawer'е (`Nav.astro`). Один делегированный
+  // слушатель обслуживает оба: два обработчика на одну кнопку проматывали бы
+  // тему через шаг, поэтому на каждой кнопке отдельного подписчика нет.
+  document.addEventListener("click", (event) => {
+    const target = event.target;
+    if (!(target instanceof Element) || !target.closest("[data-theme-toggle]")) return;
     const current = document.documentElement.dataset.theme;
     applyTheme(nextTheme(isTheme(current) ? current : "dark"), true);
+  });
+}
+
+/* ── 1a. История браузера: системная «Назад» закрывает слой ────────── */
+
+/**
+ * Модалка и drawer — верхние слои, и оба живут в истории отдельной записью:
+ * `pushState` при открытии, `popstate` — сигнал «пользователь нажал Назад,
+ * закрой слой». Пользовательское закрытие прячет слой сразу и только потом
+ * отматывает запись, убедившись, что она наша, поэтому два быстрых `Esc` не
+ * делают два `history.back()`. Маркер `mmLayerToken` в state отвечает на
+ * вопрос «эта запись — моя?»: если записи нет (рассинхрон истории,
+ * `pushState` упал), `back()` не вызывается и со страницы не выкидывает.
+ */
+type LayerName = "modal" | "drawer";
+
+let layerSeq = 0;
+let modalLayerToken = "";
+let drawerLayerToken = "";
+
+function currentLayerToken(): string {
+  const state: unknown = window.history.state;
+  if (!state || typeof state !== "object") return "";
+  const token = (state as Record<string, unknown>).mmLayerToken;
+  return typeof token === "string" ? token : "";
+}
+
+/** Возвращает маркер записи или `""`, если History API недоступен. */
+function pushLayer(layer: LayerName): string {
+  const token = `${layer}-${++layerSeq}`;
+  try {
+    const base: unknown = window.history.state;
+    const state =
+      base && typeof base === "object"
+        ? { ...(base as Record<string, unknown>), mmLayerToken: token }
+        : { mmLayerToken: token };
+    window.history.pushState(state, "");
+    return token;
+  } catch {
+    return "";
+  }
+}
+
+function initHistory(): void {
+  window.addEventListener("popstate", () => {
+    const token = currentLayerToken();
+    // Слой закрывается только если запись действительно ушла: чужой
+    // `popstate` (например, от `?track=` в другой записи) ничего не трогает.
+    if (modalLayerToken && modalLayerToken !== token) {
+      hideModal();
+      return;
+    }
+    if (drawerLayerToken && drawerLayerToken !== token) hideDrawer(true);
   });
 }
 
@@ -126,17 +191,38 @@ function openDrawer(): void {
   // делает инлайновый фолбэк в `Base.astro` для страниц без этого скрипта.
   nav?.removeAttribute("inert");
   nav?.querySelector<HTMLElement>("a, button")?.focus();
+  // Упрощённая версия приёма из модалки: запись в истории, чтобы системная
+  // «Назад» закрывала меню, а не уводила со страницы.
+  if (!drawerLayerToken && document.body.classList.contains("nav-open")) {
+    drawerLayerToken = pushLayer("drawer");
+  }
 }
 
-function closeDrawer(returnFocus = true): void {
+/** Скрытие без истории: сам слой и его маркер, фокус — по флагу. */
+function hideDrawer(returnFocus = true): void {
   const wasOpen = document.body.classList.contains("nav-open");
   document.body.classList.remove("nav-open");
+  drawerLayerToken = "";
   const trigger = drawerTrigger();
   if (!trigger) return;
   trigger.setAttribute("aria-expanded", "false");
   trigger.setAttribute("aria-label", "Открыть меню");
   $("nav#site-nav")?.setAttribute("inert", "");
   if (wasOpen && returnFocus) trigger.focus();
+}
+
+/**
+ * Пользовательское закрытие: слой скрывается сразу, а история отматывается
+ * вторым шагом — только если верхняя запись наша. Скрытие идёт первым, чтобы
+ * два быстрых `Esc` не сделали два `history.back()` (второй увёл бы со
+ * страницы). `popstate` после `back()` ничего не делает: маркер уже сброшен.
+ */
+function closeDrawer(returnFocus = true, viaHistory = true): void {
+  if (!document.body.classList.contains("nav-open")) return;
+  const token = drawerLayerToken;
+  hideDrawer(returnFocus);
+  // Записи нет (рассинхрон) — `back()` не зовём: он выкинул бы со страницы.
+  if (viaHistory && token && currentLayerToken() === token) window.history.back();
 }
 
 function initDrawer(): void {
@@ -149,10 +235,11 @@ function initDrawer(): void {
   for (const button of $$("[data-nav-close]")) {
     button.addEventListener("click", () => closeDrawer());
   }
-  // Ссылка внутри меню: сначала навигация, потом закрытие — фокус не отбираем.
+  // Ссылка внутри меню: сначала навигация, потом закрытие — фокус не отбираем,
+  // историю не трогаем: `back()` отменил бы переход.
   $("nav#site-nav")?.addEventListener("click", (event) => {
     const target = event.target;
-    if (target instanceof Element && target.closest("a[href]")) closeDrawer(false);
+    if (target instanceof Element && target.closest("a[href]")) closeDrawer(false, false);
   });
 }
 
@@ -182,7 +269,9 @@ function writeTrackToUrl(): void {
     else url.searchParams.delete("track");
     const next = `${url.pathname}${url.search}${url.hash}`;
     const current = `${window.location.pathname}${window.location.search}${window.location.hash}`;
-    if (next !== current) window.history.replaceState(null, "", next);
+    // `history.state` переносим как есть: в нём может лежать маркер открытого
+    // слоя (модалка/drawer), и `null` потерял бы связь записи с ним.
+    if (next !== current) window.history.replaceState(window.history.state, "", next);
   } catch {
     // нет History API (file://, песочница) — фильтр продолжает работать без URL
   }
@@ -256,6 +345,38 @@ function syncTimeGroups(): void {
   closeGroup();
 }
 
+/**
+ * `?track=` переезжает вместе с днём: вкладки дней — обычные ссылки, и без
+ * правки их `href` фильтр терялся бы на первом же переходе. `dayHref` в ядре
+ * не трогаем (это core) — квери добавляется здесь, на клиенте.
+ */
+function syncDayTabTracks(): void {
+  // Drawer — второй путь к дням, особенно на мобиле; без него фильтр терялся
+  // на первом же переходе по меню. Внешние ссылки портфолио в drawer'е не
+  // трогаем: у них другой origin.
+  const links = $$<HTMLAnchorElement>(
+    "nav.day-tabs a.day-tab[href], nav#site-nav a.drawer-link[href]",
+  );
+  for (const link of links) {
+    if (
+      link.classList.contains("drawer-link") &&
+      new URL(link.href).origin !== window.location.origin
+    ) {
+      continue;
+    }
+    const href = link.getAttribute("href");
+    if (!href) continue;
+    try {
+      const url = new URL(href, window.location.href);
+      if (activeTrack) url.searchParams.set("track", activeTrack);
+      else url.searchParams.delete("track");
+      link.setAttribute("href", `${url.pathname}${url.search}${url.hash}`);
+    } catch {
+      // некорректный href — оставляем как есть, вкладка продолжает работать
+    }
+  }
+}
+
 function setActiveTrack(track: string | null, updateUrl = true): void {
   const chips = trackChips();
   const known = track !== null && chips.some((chip) => chip.dataset.track === track) ? track : null;
@@ -268,6 +389,7 @@ function setActiveTrack(track: string | null, updateUrl = true): void {
   }
 
   applyFilter();
+  syncDayTabTracks();
   if (updateUrl) writeTrackToUrl();
 }
 
@@ -311,12 +433,18 @@ function setFavoritesOnly(next: boolean): void {
     chip.setAttribute("aria-pressed", String(next));
     chip.classList.toggle("track-chip--active", next);
   }
+  // Выбор экрана, а не данные: sessionStorage переживает перезагрузку и не
+  // тащит фильтр в новую вкладку, в отличие от localStorage.
+  writeStorage(FAV_FILTER_KEY, next ? "1" : "0", "session");
   applyFilter();
 }
 
 function initFavFilter(): void {
   const chip = $<HTMLButtonElement>("button[data-fav-filter]");
   if (!chip) return;
+  // Состояние читаем до первого применения, иначе чип стартовал бы выключенным
+  // и перезагрузка сбрасывала бы выбор.
+  favoritesOnly = readStorage(FAV_FILTER_KEY, "session") === "1";
   chip.addEventListener("click", () => setFavoritesOnly(!favoritesOnly));
   // В URL избранное не живёт, но трек из `?track=` уже мог примениться —
   // прогон выравнивает состояние и счётчик с разметкой.
@@ -477,6 +605,60 @@ function loadProgram(): Promise<Program> {
   return programPromise;
 }
 
+/* ── 5a. Прогрев данных и предзагрузка постера ─────────────────────── */
+
+/**
+ * `/program.json` — 280 КБ (63 КБ gzip). Качать его при загрузке страницы
+ * нельзя, но и ждать клика до конца нельзя: после первого взаимодействия
+ * запрос уходит в простой, и к моменту открытия модалки данные уже едут.
+ */
+function initWarmup(): void {
+  let scheduled = false;
+
+  const warm = (): void => {
+    if (scheduled) return;
+    scheduled = true;
+    const start = (): void => {
+      // Ошибку глотаем молча: тост покажет повторная попытка из модалки.
+      void loadProgram().catch(() => undefined);
+    };
+    if (typeof window.requestIdleCallback === "function") {
+      window.requestIdleCallback(start);
+    } else {
+      window.setTimeout(start, 200);
+    }
+  };
+
+  // `once` на каждое событие: прогрев нужен ровно один раз.
+  document.addEventListener("pointerdown", warm, { once: true, passive: true });
+  document.addEventListener("keydown", warm, { once: true });
+}
+
+/**
+ * Постер модалки — тот же URL, что баннер карточки. `pointerdown` срабатывает
+ * раньше `click` и раньше запроса данных, поэтому картинка стартует на тап,
+ * а не на открытие диалога (или берётся из кеша без второго запроса).
+ */
+function initPosterPrefetch(): void {
+  document.addEventListener(
+    "pointerdown",
+    (event) => {
+      const target = event.target;
+      if (!(target instanceof Element)) return;
+      const button = target.closest<HTMLElement>("button.talk-card__title-btn[data-talk-id]");
+      if (!button) return;
+      const source = button
+        .closest("article.talk-card")
+        ?.querySelector<HTMLImageElement>("img.talk-card__banner-img[src]")?.src;
+      if (!source) return; // компактная карточка без баннера — грузить нечего
+      const poster = new Image();
+      poster.referrerPolicy = "no-referrer";
+      poster.src = source;
+    },
+    { passive: true },
+  );
+}
+
 /* ── 6. Модалка доклада ────────────────────────────────────────────── */
 
 let modalTalk: Talk | null = null;
@@ -541,9 +723,33 @@ function buildSpeaker(lector: Talk["lectors"][number]): HTMLElement {
   return row;
 }
 
+/**
+ * Скелетон области постера: пока картинка идёт с чужого CDN, диалог не должен
+ * показывать пустое место. Разметка не пересобирается — на существующем
+ * `[data-modal-media]` включаются класс и `aria-busy`.
+ */
+function showPosterSkeleton(media: HTMLElement): void {
+  media.hidden = false;
+  media.classList.add(SKELETON_CLASS);
+  media.setAttribute("aria-busy", "true");
+  // Фолбэк, пока `program.css` не описал класс: пустой блок без стилей не виден.
+  media.style.setProperty("min-block-size", "clamp(140px, 26dvh, 280px)");
+  media.style.setProperty("border-radius", "var(--radius-lg, 12px)");
+  media.style.setProperty("background", "var(--background-secondary, rgba(127, 127, 127, 0.18))");
+}
+
+function clearPosterSkeleton(media: HTMLElement): void {
+  media.classList.remove(SKELETON_CLASS);
+  media.removeAttribute("aria-busy");
+  media.style.removeProperty("min-block-size");
+  media.style.removeProperty("border-radius");
+  media.style.removeProperty("background");
+}
+
 function fillPoster(talk: Talk): void {
   const media = $<HTMLElement>("[data-modal-media]");
   if (!media) return;
+  clearPosterSkeleton(media);
   media.replaceChildren();
   const poster = safeUrl(talk.image);
   if (!poster) {
@@ -551,7 +757,8 @@ function fillPoster(talk: Talk): void {
     media.hidden = true;
     return;
   }
-  media.hidden = false;
+  // Скелетон появляется сразу, до ответа CDN: диалог уже виден, картинки ещё нет.
+  showPosterSkeleton(media);
   const img = document.createElement("img");
   img.className = "talk-modal__poster-img";
   img.src = poster;
@@ -559,16 +766,31 @@ function fillPoster(talk: Talk): void {
   img.loading = "lazy";
   img.decoding = "async";
   img.referrerPolicy = "no-referrer";
+  // Обработчики привязаны к конкретной картинке: при быстром переключении
+  // докладов поздний `error` уже отсоединённого `img` стирал бы постер
+  // следующего, потому что `media` — общий узел.
+  img.addEventListener(
+    "load",
+    () => {
+      if (img.isConnected) clearPosterSkeleton(media);
+    },
+    { once: true },
+  );
   // CDN первоисточника отдаёт 403/404: пустая рамка лучше «тёмной дыры».
   img.addEventListener(
     "error",
     () => {
+      if (!img.isConnected) return;
+      clearPosterSkeleton(media);
       media.replaceChildren();
       media.hidden = true;
     },
     { once: true },
   );
   media.appendChild(img);
+  // Картинка уже в памяти: событие `load` до слушателя не дойдёт, и скелетон
+  // остался бы висеть под ней.
+  if (img.complete) clearPosterSkeleton(media);
 }
 
 function fillMeta(talk: Talk): void {
@@ -626,6 +848,11 @@ function fillModal(talk: Talk): void {
   syncModalFav();
 }
 
+function isModalOpen(): boolean {
+  const modal = modalRoot();
+  return !!modal && !modal.hidden;
+}
+
 function showModal(talk: Talk): void {
   const modal = modalRoot();
   const dialog = modalDialog();
@@ -633,6 +860,10 @@ function showModal(talk: Talk): void {
 
   modalTalk = talk;
   fillModal(talk);
+  // Запись в истории: системная «Назад» закрывает модалку, а не уводит со
+  // страницы. `pushLayer` возвращает `""`, если History API недоступен —
+  // тогда закрытие пойдёт напрямую.
+  if (!modalLayerToken) modalLayerToken = pushLayer("modal");
   modal.hidden = false;
   document.body.classList.add("is-modal-open");
 
@@ -641,22 +872,77 @@ function showModal(talk: Talk): void {
   dialog.focus();
 }
 
-function closeModal(): void {
+/** Последний рубеж для фокуса: `main` помечен `tabindex="-1"` и фокусируем. */
+function focusMain(): void {
+  const main = document.getElementById("main");
+  if (main instanceof HTMLElement) main.focus();
+}
+
+/** Скрытие без истории — единственная точка, где модалка реально исчезает. */
+function hideModal(): void {
   const modal = modalRoot();
   if (!modal || modal.hidden) return;
   modal.hidden = true;
   document.body.classList.remove("is-modal-open");
   modalTalk = null;
+  modalLayerToken = "";
+  const media = $<HTMLElement>("[data-modal-media]");
+  if (media) clearPosterSkeleton(media);
   // Возврат фокуса на кнопку, которая открыла диалог: иначе клавиатурный
   // пользователь оказывается в начале документа.
   const opener = modalOpener;
   modalOpener = null;
-  if (opener && opener.isConnected) opener.focus();
+  if (!opener || !opener.isConnected) {
+    focusMain();
+    return;
+  }
+  opener.focus();
+  // Фон снимается из `inert` наблюдателем в `TalkModal.astro` уже после нас
+  // (системная «Назад» не проходит через его синхронные обработчики): если
+  // фокус не встал в инертном поддереве, повторяем следующим микрошагом.
+  if (document.activeElement !== opener) {
+    queueMicrotask(() => {
+      if (opener.isConnected) opener.focus();
+      // Кнопку мог скрыть фильтр «Избранное» (звезду сняли внутри модалки):
+      // фокус тогда уходит в `main`, а не в начало документа.
+      if (document.activeElement !== opener) focusMain();
+    });
+  }
+}
+
+/**
+ * Пользовательское закрытие (крестик, фон, `Esc`): модалка скрывается сразу,
+ * история отматывается вторым шагом и только если верхняя запись наша —
+ * поэтому закрытие и системная «Назад» не срабатывают дважды. Если записи
+ * нет — `back()` не зовём: он выкинул бы со страницы.
+ */
+function closeModal(): void {
+  if (!isModalOpen()) return;
+  const token = modalLayerToken;
+  hideModal();
+  if (token && currentLayerToken() === token) window.history.back();
+}
+
+/** Видимый отклик на тап: кнопка-источник занята, пока едут данные. */
+function setBusy(button: HTMLElement | null, busy: boolean): void {
+  if (!button) return;
+  button.classList.toggle("is-busy", busy);
+  if (busy) {
+    button.setAttribute("aria-busy", "true");
+    // Фолбэк, пока в `program.css` нет правила: `aria-busy` сам по себе не виден.
+    button.style.setProperty("opacity", "0.6");
+  } else {
+    button.removeAttribute("aria-busy");
+    button.style.removeProperty("opacity");
+  }
 }
 
 function openTalk(talkId: number, opener: HTMLElement): void {
   if (!modalRoot() || !modalDialog()) return;
   modalOpener = opener;
+  // Отклик в первую секунду: `/program.json` может ещё ехать, но тап уже
+  // виден — кнопка помечена занятой и вернёт вид после ответа.
+  setBusy(opener, true);
   loadProgram()
     .then((program) => {
       const talk = program.talks.find((item) => item.id === talkId);
@@ -670,7 +956,8 @@ function openTalk(talkId: number, opener: HTMLElement): void {
     .catch(() => {
       modalOpener = null;
       toast("Не удалось загрузить программу");
-    });
+    })
+    .finally(() => setBusy(opener, false));
 }
 
 function onDialogKeydown(event: KeyboardEvent): void {
@@ -786,6 +1073,9 @@ export function init(): void {
   initExpand();
   initModal();
   initExport();
+  initHistory();
+  initWarmup();
+  initPosterPrefetch();
 
   // Esc: сначала закрываем верхний слой, потом drawer.
   document.addEventListener("keydown", (event) => {

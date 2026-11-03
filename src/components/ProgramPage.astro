@@ -139,7 +139,9 @@ const trackChips = tracksOfProgram().map((track) => ({
     }
   </div>
 
-  <p class="talk-count">
+  {/* `aria-live` на самом счётчике: фильтр переписывает число и слово без
+      перерисовки сетки, и без live-региона скринридер молчит о результате. */}
+  <p class="talk-count" aria-live="polite">
     <span data-talk-count>{total}</span>
     <span data-talk-count-label>{pluralTalks(total)}</span>
   </p>

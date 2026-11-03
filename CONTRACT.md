@@ -37,7 +37,7 @@
 | `src/styles/site.css` | design | каркас страницы |
 | `src/styles/program.css` | design | сетка, карточка, модалка, печать |
 | `tests/lib/*.test.ts` | verify | юнит-тесты ядра (`bun test`) |
-| `tests/built/program.spec.ts` | verify | 15 браузерных тестов сборки (Playwright) |
+| `tests/built/program.spec.ts` | verify | 27 браузерных тестов сборки (Playwright) в трёх проектах — 81 прогон |
 
 ## Данные: `src/data/program.json`
 
@@ -94,9 +94,13 @@ html[data-theme=dark|light|cyberpunk][data-day-id][data-day-date]
   body > a.skip-link + header.nav-mobile + div.nav-scrim + nav#site-nav + main#main.page + footer.site-footer
 ```
 
-Шапка и меню: `button.nav-toggle[data-nav-open][aria-expanded][aria-controls=site-nav]`,
-`nav#site-nav` с `ul.drawer-links > a.drawer-link.is-current`, `button[data-theme-toggle]`,
-`[data-favorites-count]` в `.drawer-foot`, `div.nav-scrim[data-nav-close]`, `body.nav-open`.
+Шапка и меню: `header.nav-mobile > div.nav-top-actions` с
+`button.nav-icon-btn.theme-toggle--header[data-theme-toggle]` (тема из шапки, без меню) и
+`button.nav-toggle[data-nav-open][aria-expanded][aria-controls=site-nav]`; второй
+`button.theme-toggle[data-theme-toggle]` и `[data-favorites-count]` живут в `.drawer-foot`
+внутри `nav#site-nav`, где также `ul.drawer-links > a.drawer-link.is-current`. Оба тумблера
+темы несут `data-theme-toggle` и обрабатываются делегированным слушателем. Ещё:
+`div.nav-scrim[data-nav-close]`, `body.nav-open`.
 
 Программа:
 
@@ -155,11 +159,20 @@ div.mm-toast[role=status]
 | `.talk-card__media` у `.talk-card--compact` | остаётся: в нём живёт `h3` с кнопкой заголовка |
 | `.talk-card__time` | скрыт — время несёт разделитель |
 | `.talk-card__hall` | виден только здесь; на десктопе `display: none` |
-| `nav.day-tabs` | липкие под шапкой, `flex-wrap: nowrap` + горизонтальный скролл |
+| `.track-chip`, `.talk-card__title-btn` | `min-block-size: 44px` — сенсорная цель, а не только визуальная высота; подписи не мельче 0.75 rem |
+| `.talk-card__favorite`, `.talk-card__toggle-btn`, `.talk-modal__close` | целевой размер 44 px даёт псевдоэлемент (`::after`/`::before`), глиф остаётся прежнего размера |
+| `header.nav-mobile` | `backdrop-filter: none`: блюр на каждой прокрутке дороже, чем даёт, а фон `color-mix(… 97%)` и так почти непрозрачен |
+| `nav.day-tabs` | липкие под шапкой, `flex-wrap: nowrap`; подпись вкладки без даты (`.day-tab__date` скрыт), поэтому три вкладки встают в строку даже на 320 px. Горизонтальный скролл остаётся страховкой, а не основным способом добраться до третьего дня |
 
 Липкая цепочка сверху вниз: `header.nav-mobile` → `nav.day-tabs` →
 `.program-grid__time-cell`. Смещение каждой ступени — сумма высот предыдущих
 (токены `--nav-mobile-h` и `--mm-day-tabs-h`); разделитель не заезжает под табы дня.
+
+Кнопка закрытия модалки — `position: sticky` внутри `div.talk-modal__dialog`, `inset-block-start: 0`
+(не `var(--space-3)`: 12 px складывались с 16 px паддинга и вешали кнопку в 29 px от края) и
+`flex: none` (иначе flex-сжимание режет цель до 22 px на длинном докладе): она остаётся
+у верхнего края при любой глубине прокрутки длинного описания. Дерево разметки не менялось,
+`button.talk-modal__close[data-modal-close]` остаётся прямым ребёнком диалога.
 
 
 ## Поведение (`src/scripts/program-client.ts`)
@@ -167,8 +180,8 @@ div.mm-toast[role=status]
 1. **Тема**: `dark → light → cyberpunk → dark`, `localStorage['theme']`, обновление
    `meta[name=theme-color]`. До первой отрисовки ту же работу делает inline-скрипт в `<head>`.
 2. **Drawer**: `body.nav-open`, `aria-expanded`, закрытие по `Esc`, scrim'у и ссылке, возврат
-   фокуса на триггер. Тумблер меню виден на всех ширинах: drawer — единственный путь к дням
-   и теме.
+   фокуса на триггер. Тумблер меню виден на всех ширинах: drawer остаётся единственным путём
+   к дням. Тема — уже нет: второй тумблер живёт в шапке и работает без открытия меню.
 3. **День**: обычная ссылка (`/`, `/day/2/`, `/day/3/`); `aria-current="page"` у активного.
    Клиент день не переключает.
 4. **Фильтр**: один активный чип трека (`aria-pressed`), ячейки чужого трека получают
@@ -194,7 +207,12 @@ div.mm-toast[role=status]
    текст в карточке (`talk-card--expanded`, подпись «Свернуть», `aria-expanded`).
 8. **Модалка**: `hidden` по умолчанию; открытие — `hidden = false`, `body.is-modal-open`,
    заполнение из `/program.json`; закрытие — backdrop, кнопка, `Esc`; фокус-трап внутри
-   `[data-modal-dialog]`, возврат фокуса на триггер.
+   `[data-modal-dialog]`, возврат фокуса на триггер. Слой живёт в истории браузера: открытие
+   делает `pushState` с маркером `mmLayerToken`, системная «Назад» (`popstate`) закрывает
+   модалку и не уводит со страницы, а пользовательское закрытие вызывает `history.back()` —
+   только если верхняя запись ещё наша, иначе `back()` выкинул бы со страницы. Тот же
+   механизм у drawer'а: обе панели открываются через `pushLayer`, а закрываются своими
+   `closeDrawer`/`closeModal` с общей проверкой `mmLayerToken`.
 9. **`.ics`**: экспортирует видимые доклады дня (с учётом фильтра) через `buildCalendar`
    и `downloadIcs`; имя файла `matemarketing-<YYYY-MM-DD>.ics`; пустой набор → тост.
 10. **Тост**: `div.mm-toast[role=status]`, живёт ~2.5 с.
@@ -202,6 +220,10 @@ div.mm-toast[role=status]
 ## Доступность и качество
 
 - Интерактив — только `button`/`a`; никаких `div` с обработчиком и `href="#"`.
+- Счётчик докладов — `p.talk-count[aria-live=polite]`: фильтр переписывает число и слово,
+  и скринридер слышит новое значение, не теряя фокуса.
+- Пока модалка открыта, весь фон получает `inert` (плюс `aria-hidden` как фолбэк без
+  поддержки `inert`); ставит и снимает его `MutationObserver` в `TalkModal.astro`.
 - Табы дней — ссылки с `aria-current`; чипы — `button` с `aria-pressed`; карточка открывается
   кнопкой заголовка (не `tabindex` на `article`).
 - Фокус-видимый на всём интерактиве; `:focus-visible` объявлен в токенах.
@@ -210,6 +232,13 @@ div.mm-toast[role=status]
 - Тексты из данных — только `textContent`/`createElement`; `innerHTML` в клиенте не используется.
 - Консоль чистая: ни одного `console.error`/`pageerror` на `/` и `/day/2/` (тест `04`).
 - Без JavaScript страница читается целиком: сетка, табы, чипы, счётчик (тест `13`).
+- Декоративный `:hover` живёт только под `@media (hover: hover) and (pointer: fine)`;
+  на сенсорных экранах отклик дают явные `:active`-состояния. Обёртка `@media` не меняет
+  селекторный контракт выше, но декларации в этой волне менялись: крестик модалки переведён
+  с `absolute` на `sticky` (см. мобильную модель), у него появился `flex: none`, а сенсорные
+  цели выросли до 44 px через псевдоэлементы.
+- `-webkit-tap-highlight-color: transparent` на `html` и `touch-action: manipulation` на
+  интерактиве: без серой вспышки на Android и без двойного тап-зума на iOS.
 
 ## Аналитика
 

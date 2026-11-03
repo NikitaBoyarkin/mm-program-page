@@ -85,7 +85,7 @@ dl.facts {
 }
 
 .facts dt {
-  font-size: 0.72rem;
+  font-size: 0.75rem;
   line-height: 1.4;
   text-transform: uppercase;
   letter-spacing: 0.12em;
@@ -131,10 +131,12 @@ dl.facts {
 }
 
 /* :not(:disabled) — выключенная кнопка не берёт hover-заливку вообще */
-.button:not(:disabled):hover {
-  background: var(--button-bg-hover);
-  transform: translateY(-2px);
-  box-shadow: 0 8px 20px color-mix(in srgb, var(--text-accent) 25%, transparent);
+@media (hover: hover) and (pointer: fine) {
+  .button:not(:disabled):hover {
+    background: var(--button-bg-hover);
+    transform: translateY(-2px);
+    box-shadow: 0 8px 20px color-mix(in srgb, var(--text-accent) 25%, transparent);
+  }
 }
 
 /* :active возвращает на место: нажатие, которое продолжает подниматься,
@@ -160,23 +162,29 @@ dl.facts {
   color: var(--text-accent);
 }
 
-.button--secondary:not(:disabled):hover,
-.button.button-secondary:not(:disabled):hover {
-  background: color-mix(in srgb, var(--text-accent) 18%, transparent);
-  border-color: color-mix(in srgb, var(--text-accent) 60%, transparent);
-  color: var(--text-accent-hover);
+@media (hover: hover) and (pointer: fine) {
+  .button--secondary:not(:disabled):hover,
+  .button.button-secondary:not(:disabled):hover {
+    background: color-mix(in srgb, var(--text-accent) 18%, transparent);
+    border-color: color-mix(in srgb, var(--text-accent) 60%, transparent);
+    color: var(--text-accent-hover);
+  }
 }
 
+/* Та же пара литералов, что у остальных кнопок программы: в киберпанке
+   `--button-bg` розовый. Единственный потребитель — «Загрузить .ics». */
 .button--ghost {
-  background: transparent;
-  border-color: var(--border-color);
-  color: var(--text-normal);
+  background: #171717;
+  border-color: color-mix(in srgb, #f8f2da 22%, transparent);
+  color: #f8f2da;
 }
 
-.button--ghost:not(:disabled):hover {
-  background: color-mix(in srgb, var(--text-accent) 10%, transparent);
-  border-color: var(--border-active);
-  color: var(--text-accent);
+@media (hover: hover) and (pointer: fine) {
+  .button--ghost:not(:disabled):hover {
+    background: #2e2e2e;
+    border-color: var(--border-active);
+    color: #f8f2da;
+  }
 }
 
 /* ── Верхняя панель (sticky, full-bleed) ────────────────────────────────── */
@@ -205,8 +213,10 @@ header.nav-mobile {
   text-decoration: none;
 }
 
-.nav-brand:hover {
-  color: var(--text-normal);
+@media (hover: hover) and (pointer: fine) {
+  .nav-brand:hover {
+    color: var(--text-normal);
+  }
 }
 
 .nav-brand-icon {
@@ -217,8 +227,10 @@ header.nav-mobile {
   transition: color 0.2s ease;
 }
 
-.nav-brand:hover .nav-brand-icon {
-  color: var(--text-accent);
+@media (hover: hover) and (pointer: fine) {
+  .nav-brand:hover .nav-brand-icon {
+    color: var(--text-accent);
+  }
 }
 
 .nav-brand-text {
@@ -271,9 +283,11 @@ ul.nav-inline {
     background-color 0.2s ease;
 }
 
-.nav-inline a:hover {
-  background: var(--interactive-hover);
-  color: var(--text-normal);
+@media (hover: hover) and (pointer: fine) {
+  .nav-inline a:hover {
+    background: var(--interactive-hover);
+    color: var(--text-normal);
+  }
 }
 
 .nav-inline a[aria-current="page"] {
@@ -289,22 +303,28 @@ ul.nav-inline {
   inline-size: 44px;
   block-size: 44px;
   padding: 0;
-  border: 1px solid var(--border-color);
+  /* Литералы, не `--button-*`: в киберпанке те токены красят кнопку в
+     розовый. Пара #171717 / #f8f2da — контраст 15.7:1 в любой теме и та же,
+     что у переключателя темы рядом (`.nav-icon-btn` в `Nav.astro`). */
+  border: 1px solid color-mix(in srgb, #f8f2da 22%, transparent);
   border-radius: var(--radius-full);
-  background: var(--background-secondary);
-  color: var(--text-normal);
+  background: #171717;
+  color: #f8f2da;
   font-size: 1.1rem;
   line-height: 1;
   cursor: pointer;
   transition:
     transform 0.2s ease,
+    background-color 0.2s ease,
     border-color 0.2s ease,
     color 0.2s ease;
 }
 
-.nav-toggle:hover {
-  border-color: var(--border-active);
-  color: var(--text-accent);
+@media (hover: hover) and (pointer: fine) {
+  .nav-toggle:hover {
+    border-color: var(--border-active);
+    background: #2e2e2e;
+  }
 }
 
 .nav-toggle:active {
@@ -317,6 +337,8 @@ ul.nav-inline {
   inset: 0;
   z-index: calc(var(--z-panel) - 1);
   background: color-mix(in srgb, var(--background-primary) 74%, transparent);
+  /* Жест, начатый на подложке, не должен скроллить документ под drawer'ом. */
+  touch-action: none;
   opacity: 0;
   visibility: hidden;
   transition:
@@ -333,7 +355,9 @@ ul.nav-inline {
   flex-direction: column;
   gap: var(--space-4);
   inline-size: min(360px, 88vw);
-  padding: var(--space-5) var(--space-5) calc(var(--space-6) + env(safe-area-inset-bottom));
+  /* В ландшафте слева вырез: фон тянется под него, контент отступает. */
+  padding: var(--space-5) var(--space-5) calc(var(--space-6) + env(safe-area-inset-bottom))
+    calc(var(--space-5) + env(safe-area-inset-left));
   overflow-y: auto;
   overscroll-behavior: contain;
   background: var(--background-secondary);
@@ -347,6 +371,14 @@ ul.nav-inline {
 }
 
 body.nav-open {
+  overflow: hidden;
+}
+
+/* iOS: overflow: hidden на body вьюпорт уже получает (перенос overflow со
+   второго корневого ящика), но документ всё равно «резинит» — известная
+   особенность WebKit. Дубль на html адресует корневой скроллер прямо.
+   :has() в базовой линии проекта (program.css: .talk-card__top:not(:has(...))). */
+html:has(body.nav-open) {
   overflow: hidden;
 }
 
@@ -398,9 +430,11 @@ body.nav-open #site-nav {
     color 0.2s ease;
 }
 
-.drawer-head button:hover {
-  border-color: var(--border-active);
-  color: var(--text-accent);
+@media (hover: hover) and (pointer: fine) {
+  .drawer-head button:hover {
+    border-color: var(--border-active);
+    color: var(--text-accent);
+  }
 }
 
 ul.drawer-links {
@@ -426,9 +460,11 @@ ul.drawer-links {
     border-color 0.2s ease;
 }
 
-.drawer-link:hover {
-  background: var(--interactive-hover);
-  color: var(--text-normal);
+@media (hover: hover) and (pointer: fine) {
+  .drawer-link:hover {
+    background: var(--interactive-hover);
+    color: var(--text-normal);
+  }
 }
 
 .drawer-link.is-current {
@@ -489,9 +525,21 @@ ul.drawer-links {
     background-color 0.2s ease;
 }
 
-.drawer-foot button:hover {
-  border-color: var(--border-active);
-  background: color-mix(in srgb, var(--text-accent) 8%, transparent);
+@media (hover: hover) and (pointer: fine) {
+  .drawer-foot button:hover {
+    border-color: var(--border-active);
+    background: color-mix(in srgb, var(--text-accent) 8%, transparent);
+    color: var(--text-accent);
+  }
+}
+
+.drawer-head button:active,
+.drawer-foot button:active {
+  transform: translateY(1px);
+}
+
+.nav-inline a:active,
+.drawer-link:active {
   color: var(--text-accent);
 }
 
@@ -544,6 +592,13 @@ ul.drawer-links {
 
   .site-footer {
     padding-block-end: var(--space-8);
+  }
+
+  /* Блюр на каждой прокрутке пересчитывает подложку на GPU — на мобиле это
+     дороже, чем даёт. Почти непрозрачный фон читается так же. */
+  header.nav-mobile {
+    background: color-mix(in srgb, var(--background-primary) 97%, transparent);
+    backdrop-filter: none;
   }
 }
 

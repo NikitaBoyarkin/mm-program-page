@@ -1,10 +1,12 @@
 /**
- * Проверка СОБРАННОЙ страницы программы (dist/) в реальном chromium:
+ * Проверка СОБРАННОЙ страницы программы (dist/) в реальном браузере:
  * тесты читают фактический DOM после `astro preview`, ничего не мокают и
- * не подменяют данные. 19 тестов = 19 фактов контракта.
+ * не подменяют данные. 27 тестов = 27 фактов контракта; набор идёт в трёх
+ * проектах (`playwright.config.ts`): chromium 1280×900, chromium 320×700
+ * и WebKit iPhone 13 390×844.
  */
 import { readFile } from "node:fs/promises";
-import { expect, test, type Page } from "playwright/test";
+import { expect, test, type APIRequestContext, type Page } from "playwright/test";
 
 /**
  * `base` проекта (`astro.config.mjs`): страница живёт на подпути, корень
@@ -62,6 +64,49 @@ async function talkIds(page: Page): Promise<number[]> {
 /** `hidden` как свойство DOM, а не как строка атрибута. */
 async function isHidden(page: Page, selector: string): Promise<boolean> {
   return page.locator(selector).evaluate((node) => (node as HTMLElement).hidden);
+}
+
+/** Названия докладов из того же `/program.json`, что читает клиент: id → текст. */
+async function talkTitles(request: APIRequestContext): Promise<Map<number, string>> {
+  const response = await request.get(BASE + "/program.json");
+  const body = (await response.json()) as { talks: { id: number; title: string }[] };
+  const normalize = (value: string): string => value.replace(/\s+/g, " ").trim();
+  return new Map(body.talks.map((talk) => [Number(talk.id), normalize(talk.title)]));
+}
+
+/**
+ * Кнопка-заголовок — единственная сенсорная цель карточки, поэтому у неё два
+ * обязательства: текст совпадает с названием доклада (это видимая кнопка, а не
+ * прозрачная обёртка) и высота не меньше 44 px — и в мобильном списке, и в
+ * десктопной сетке, где заголовок может занять несколько строк.
+ */
+async function assertTitleButtons(page: Page, request: APIRequestContext): Promise<void> {
+  const titles = await talkTitles(request);
+
+  const buttons = await page.locator("article.talk-card[data-talk-id]").evaluateAll((nodes) =>
+    nodes.map((node) => {
+      const card = node as HTMLElement;
+      const button = card.querySelector<HTMLElement>("button.talk-card__title-btn");
+      const rect = button?.getBoundingClientRect();
+      return {
+        id: Number(card.dataset.talkId),
+        text: (button?.textContent ?? "").replace(/\s+/g, " ").trim(),
+        height: rect ? Math.round(rect.height * 100) / 100 : 0,
+        width: rect ? Math.round(rect.width * 100) / 100 : 0,
+      };
+    }),
+  );
+
+  expect(buttons.length).toBe(DAY1_TALKS);
+
+  // Заголовок без размеров = карточка без пути в модалку.
+  const visible = buttons.filter((button) => button.width > 0 && button.height > 0);
+  expect(visible.length).toBe(DAY1_TALKS);
+
+  for (const button of visible) {
+    expect(button.text, `доклад ${button.id}: текст кнопки = название`).toBe(titles.get(button.id));
+    expect(button.height, `доклад ${button.id}: сенсорная цель ≥ 44 px`).toBeGreaterThanOrEqual(44);
+  }
 }
 
 test("01 · / — 39 карточек, 3 таба дней, 11 чипов, счётчик 39, активен первый таб", async ({
@@ -192,6 +237,7 @@ test("06 · избранное: звезда, [data-favorites-count], сохра
 
 test("07 · модалка: hidden снят, заголовок непустой, body.is-modal-open, Esc и возврат фокуса", async ({
   page,
+  browserName,
 }) => {
   await open(page, "/");
   const trigger = page.locator("button.talk-card__title-btn").first();
@@ -205,18 +251,61 @@ test("07 · модалка: hidden снят, заголовок непустой
     .toBeGreaterThan(0);
   await expect(page.locator("body")).toHaveClass(/is-modal-open/);
 
-  // Фокус-трап: Tab не выводит фокус за пределы диалога. Проверяем 12 нажатий —
-  // больше, чем интерактивных элементов в модалке, — и каждый раз ждём, что
-  // активный элемент остался внутри `[data-modal-dialog]`.
   const focusInside = async (): Promise<boolean> =>
     page.evaluate(() => {
       const dialog = document.querySelector("[data-modal-dialog]");
       return !!dialog && dialog.contains(document.activeElement);
     });
+
+  /**
+   * WebKit на macOS повторяет настройку Safari «Tab подсвечивает только поля
+   * ввода»: реальное нажатие Tab не доходит ни до кнопок, ни до ссылок
+   * (проверено минимальной страницей — из `<button>` Tab уходит только в
+   * `<input>`, а без полей фокус остаётся на `body`). Поэтому в WebKit тот же
+   * обработчик `keydown` вызывается событием из DOM, а в Chromium-проектах —
+   * настоящими нажатиями клавиши. Проверяемое поведение одно и то же.
+   */
+  const pressTab = async (shift = false): Promise<void> => {
+    if (browserName !== "webkit") {
+      await page.keyboard.press(shift ? "Shift+Tab" : "Tab");
+      return;
+    }
+    await page.evaluate((withShift) => {
+      const target = document.activeElement ?? document.body;
+      target.dispatchEvent(
+        new KeyboardEvent("keydown", {
+          key: "Tab",
+          shiftKey: withShift,
+          bubbles: true,
+          cancelable: true,
+        }),
+      );
+    }, shift);
+  };
+
+  // Фокус-трап: Tab не выводит фокус за пределы диалога. Проверяем 12 нажатий —
+  // больше, чем интерактивных элементов в модалке, — и каждый раз ждём, что
+  // активный элемент остался внутри `[data-modal-dialog]`.
   for (let i = 0; i < 12; i += 1) {
-    await page.keyboard.press("Tab");
+    await pressTab();
     expect(await focusInside()).toBe(true);
   }
+
+  // Границы трапеции проверяем адресно: с последнего элемента Tab уводит на
+  // первый, а Shift+Tab с первого — обратно на последний. Это те две ветки, где
+  // обработчик обязан вмешаться; «остался внутри» ловит это только косвенно.
+  const activeClass = (): Promise<string> =>
+    page.evaluate(() => (document.activeElement?.className ?? "").toString());
+  const lastSelector = "button[data-modal-fav]";
+  const firstSelector = "button.talk-modal__close";
+
+  await page.locator(lastSelector).focus();
+  await pressTab();
+  expect(await activeClass()).toBe("talk-modal__close");
+
+  await page.locator(firstSelector).focus();
+  await pressTab(true);
+  expect(await activeClass()).toBe("talk-modal__fav");
 
   await page.keyboard.press("Escape");
   await expect.poll(() => isHidden(page, "[data-modal]")).toBe(true);
@@ -346,22 +435,52 @@ test.describe("мобильный 390×844", () => {
 
     expect(await theme()).toBe("dark");
 
-    // Тумблер темы живёт в off-canvas drawer'е — открываем его как пользователь,
-    // иначе клик уходит в `visibility: hidden` элемент.
-    await page.locator("[data-nav-open]").click();
-    const toggle = page.locator("[data-theme-toggle]");
+    // Тумблеров теперь два: в шапке и в drawer'е. Оба живут одновременно,
+    // поэтому адресация — по скоупу, а не `[data-theme-toggle]` целиком:
+    // без сужения локатор даёт strict-mode violation на двух элементах.
+    await expect(page.locator("[data-theme-toggle]")).toHaveCount(2);
 
-    await toggle.click();
+    // Цикл гоняем тумблером В ШАПКЕ: он виден сразу, drawer открывать не нужно
+    // (на мобиле меню ещё и перекрывает контент).
+    const headerToggle = page.locator(
+      "header.nav-mobile .nav-top-actions > button.nav-icon-btn.theme-toggle--header[data-theme-toggle]",
+    );
+    await expect(headerToggle).toBeVisible();
+
+    await headerToggle.click();
     expect(await theme()).toBe("light");
     expect(await stored()).toBe("light");
 
-    await toggle.click();
+    await headerToggle.click();
     expect(await theme()).toBe("cyberpunk");
     expect(await stored()).toBe("cyberpunk");
 
-    await toggle.click();
+    await headerToggle.click();
     expect(await theme()).toBe("dark");
     expect(await stored()).toBe("dark");
+
+    // Второй тумблер — в подвале drawer'а: свой скоуп `nav#site-nav`, тот же
+    // цикл и то же хранилище. Открываем меню как пользователь, иначе клик
+    // уходит в `visibility: hidden` элемент.
+    await page.locator("[data-nav-open]").click();
+    await expect(page.locator("body")).toHaveClass(/nav-open/);
+
+    const drawerToggle = page.locator(
+      "nav#site-nav .drawer-foot button.theme-toggle[data-theme-toggle]",
+    );
+    await expect(drawerToggle).toBeVisible();
+
+    await drawerToggle.click();
+    expect(await theme()).toBe("light");
+    expect(await stored()).toBe("light");
+
+    await drawerToggle.click();
+    expect(await theme()).toBe("cyberpunk");
+    expect(await stored()).toBe("cyberpunk");
+
+    // Первый тумблер не «умер» вместе с открытием меню: оба в DOM и оба видны.
+    await expect(headerToggle).toBeVisible();
+    await expect(page.locator("[data-theme-toggle]")).toHaveCount(2);
   });
 
   // Липкая цепочка: шапка → табы дня → разделитель группы времени. Каждая
@@ -481,6 +600,276 @@ test.describe("мобильный 390×844", () => {
     await expect(page.locator("[data-talk-count]")).toHaveText(String(trackOnly));
     expect(page.url()).toContain("track=");
   });
+
+  // Крестик модалки — `position: sticky` внутри прокручиваемого диалога:
+  // на длинном описании он обязан остаться у верхнего края, а не уехать с
+  // контентом (раньше `absolute` уезжал вместе с прокруткой).
+  test("21 · крестик модалки sticky: виден после прокрутки длинного описания", async ({
+    page,
+    request,
+  }) => {
+    await open(page, "/");
+
+    // Самый длинный доклад дня — из того же `/program.json`, что читает клиент:
+    // диалог гарантированно прокручивается, без выдуманных данных.
+    const body = (await (await request.get(BASE + "/program.json")).json()) as {
+      talks: { id: number; description: string; short: string }[];
+    };
+    const ids = new Set(await talkIds(page));
+    const longest = body.talks
+      .filter((talk) => ids.has(Number(talk.id)))
+      .sort(
+        (a, b) =>
+          (b.description || b.short).length - (a.description || a.short).length,
+      )[0];
+    expect(longest, "в списке дня должен быть хотя бы один доклад").toBeTruthy();
+
+    await page
+      .locator(`article.talk-card[data-talk-id="${longest.id}"] button.talk-card__title-btn`)
+      .click();
+    await expect.poll(() => isHidden(page, "[data-modal]")).toBe(false);
+
+    const close = page.locator("button.talk-modal__close[data-modal-close]");
+    await expect(close).toBeVisible();
+    await expect
+      .poll(() => close.evaluate((node) => getComputedStyle(node).position))
+      .toBe("sticky");
+
+    const dialog = page.locator("[data-modal-dialog]");
+    const before = await dialog.evaluate((node) => {
+      const el = node as HTMLElement;
+      const close = document.querySelector("button[data-modal-close]") as HTMLElement;
+      return {
+        scrollHeight: el.scrollHeight,
+        clientHeight: el.clientHeight,
+        closeTop: close.getBoundingClientRect().top,
+      };
+    });
+    expect(
+      before.scrollHeight,
+      "длинное описание должно давать прокрутку диалога",
+    ).toBeGreaterThan(before.clientHeight + 40);
+
+    // Прокручиваем сам диалог (не страницу): sticky-крестик не уезжает.
+    await dialog.evaluate((node) => {
+      const el = node as HTMLElement;
+      el.scrollTop = el.scrollHeight;
+    });
+    await expect
+      .poll(() => dialog.evaluate((node) => (node as HTMLElement).scrollTop))
+      .toBeGreaterThan(100);
+
+    const after = await close.evaluate((node) => {
+      const el = document.querySelector("[data-modal-dialog]") as HTMLElement;
+      const dialogRect = el.getBoundingClientRect();
+      const rect = node.getBoundingClientRect();
+      return {
+        dialogTop: dialogRect.top,
+        dialogBottom: dialogRect.bottom,
+        top: rect.top,
+        bottom: rect.bottom,
+      };
+    });
+
+    // Кнопка в границах диалога и у его верхнего края. Смещение — паддинг
+    // диалога (16 px в списке, 20 px в сетке) плюс `inset-block-start: 12px`,
+    // то есть до 48 px, а не высота прокрученного текста.
+    expect(after.top).toBeGreaterThanOrEqual(after.dialogTop);
+    expect(after.bottom).toBeLessThanOrEqual(after.dialogBottom + 1);
+    expect(after.top - after.dialogTop).toBeLessThanOrEqual(48);
+    // И сама кнопка осталась примерно там же, где была до прокрутки: она
+    // прилипла к краю, а не уехала вместе с контентом.
+    expect(Math.abs(after.top - before.closeTop)).toBeLessThanOrEqual(24);
+  });
+
+  // Модалка и drawer живут в истории отдельной записью: системная «Назад»
+  // обязана закрыть слой, а не выкинуть пользователя со страницы.
+  test("22 · системная «Назад» закрывает модалку, а не уводит со страницы", async ({ page }) => {
+    await open(page, "/");
+
+    await page.locator("button.talk-card__title-btn").first().click();
+    await expect.poll(() => isHidden(page, "[data-modal]")).toBe(false);
+    await expect(page.locator("body")).toHaveClass(/is-modal-open/);
+
+    await page.goBack();
+
+    await expect.poll(() => isHidden(page, "[data-modal]")).toBe(true);
+    await expect(page.locator("body")).not.toHaveClass(/is-modal-open/);
+    // Остались на той же программе: ни about:blank, ни второго дня.
+    expect(new URL(page.url()).pathname).toBe(`${BASE}/`);
+    await expect(page.locator("article.talk-card")).toHaveCount(DAY1_TALKS);
+  });
+
+  // `prefers-reduced-motion: reduce` должен снять и появление модалки:
+  // анимация — украшение, а не условие появления диалога.
+  test("25 · prefers-reduced-motion: reduce отключает анимации модалки", async ({ page }) => {
+    await page.emulateMedia({ reducedMotion: "reduce" });
+    await open(page, "/");
+
+    await page.locator("button.talk-card__title-btn").first().click();
+    await expect.poll(() => isHidden(page, "[data-modal]")).toBe(false);
+
+    const styles = await page.evaluate(() => {
+      const read = (selector: string): { name: string; duration: string } | null => {
+        const node = document.querySelector(selector);
+        if (!node) return null;
+        const style = getComputedStyle(node);
+        return { name: style.animationName, duration: style.animationDuration };
+      };
+      return { modal: read(".talk-modal"), dialog: read(".talk-modal__dialog") };
+    });
+
+    expect(styles.modal, "контейнер модалки должен существовать").not.toBeNull();
+    expect(styles.dialog, "диалог модалки должен существовать").not.toBeNull();
+
+    // Главный признак — `animation-name: none` из `program.css` (блок
+    // `prefers-reduced-motion`): анимации появления у обоих слоёв нет вовсе.
+    expect(styles.modal?.name).toBe("none");
+    expect(styles.dialog?.name).toBe("none");
+
+    // Длительность сверяем числом, а не строкой: `tokens.css` глобально
+    // ставит `animation-duration: 0.01ms !important` (1e-05s), а движки
+    // печатают эту величину по-разному («0s», «1e-05s», «0.00001s»).
+    const toMs = (value: string): number =>
+      value.trim().endsWith("ms")
+        ? Number.parseFloat(value)
+        : Number.parseFloat(value) * 1000;
+    expect(toMs(styles.modal?.duration ?? "")).toBeLessThanOrEqual(1);
+    expect(toMs(styles.dialog?.duration ?? "")).toBeLessThanOrEqual(1);
+  });
+
+  test("26 · кнопка-заголовок в списке: текст = название доклада, высота ≥ 44 px", async ({
+    page,
+    request,
+  }) => {
+    await open(page, "/");
+    await assertTitleButtons(page, request);
+  });
+
+  // Без JS список читается целиком: модель списка включает CSS, а карточки и
+  // заголовки уже в HTML. Проверяем именно мобильную ширину — там карточка
+  // без баннера держит заголовок в `.talk-card__media`, а не в нижнем блоке.
+  test.describe("без JavaScript на 390", () => {
+    test.use({ javaScriptEnabled: false });
+
+    test("23 · без JS: карточки и заголовки видны на 390 px, скролла вбок нет", async ({
+      page,
+    }) => {
+      await open(page, "/");
+
+      await expect(page.locator("article.talk-card")).toHaveCount(DAY1_TALKS);
+      await expect(page.locator("h1.page-title")).toBeVisible();
+      await expect(page.locator("a.day-tab")).toHaveCount(3);
+
+      const titles = page.locator(".talk-card__title-btn");
+      await expect(titles).toHaveCount(DAY1_TALKS);
+      await expect(titles.first()).toBeVisible();
+      expect((await titles.first().innerText()).trim().length).toBeGreaterThan(0);
+
+      // Список — работа CSS: одна колонка и ни одного пикселя вбок.
+      const layout = await page.evaluate(() => ({
+        overflowX: document.documentElement.scrollWidth - document.documentElement.clientWidth,
+        contentDisplay: getComputedStyle(
+          document.querySelector(".program-grid__content") as HTMLElement,
+        ).display,
+        firstCard: document
+          .querySelector("article.talk-card")
+          ?.getBoundingClientRect().width,
+      }));
+      expect(layout.overflowX).toBe(0);
+      expect(layout.contentDisplay).toBe("flex");
+      expect(layout.firstCard).toBeLessThanOrEqual(390);
+    });
+  });
+});
+
+// 320 px — нижняя граница бюджета: на ней три вкладки дней обязаны встать в
+// строку без горизонтальной прокрутки, а липкая цепочка — не разъехаться.
+test.describe("мобильный 320×700", () => {
+  test.use({ viewport: { width: 320, height: 700 } });
+
+  test("20 · три вкладки дней достижимы и не переполняют строку на 320 px", async ({ page }) => {
+    await open(page, "/");
+
+    const doc = await page.evaluate(
+      () => document.documentElement.scrollWidth - document.documentElement.clientWidth,
+    );
+    expect(doc, "документ не должен скроллиться вбок на 320 px").toBe(0);
+
+    await expect(page.locator("nav.day-tabs a.day-tab")).toHaveCount(3);
+
+    // Полоса табов — не скроллпорт: содержимое встаёт по её ширине.
+    const strip = await page.locator("nav.day-tabs").evaluate((node) => {
+      const el = node as HTMLElement;
+      return { overflow: el.scrollWidth - el.clientWidth };
+    });
+    expect(strip.overflow, "переполнение .day-tabs должно быть 0").toBe(0);
+
+    // Каждая вкладка внутри видимой полосы: третья не за краем.
+    const tabs = await page.evaluate(() => {
+      const nav = document.querySelector("nav.day-tabs") as HTMLElement;
+      const navRect = nav.getBoundingClientRect();
+      return Array.from(nav.querySelectorAll("a.day-tab")).map((node) => {
+        const rect = node.getBoundingClientRect();
+        return {
+          left: rect.left,
+          right: rect.right,
+          width: rect.width,
+          navLeft: navRect.left,
+          navRight: navRect.right,
+        };
+      });
+    });
+
+    expect(tabs.length).toBe(3);
+    for (const [index, tab] of tabs.entries()) {
+      expect(tab.width, `вкладка ${index + 1} должна иметь ширину`).toBeGreaterThan(0);
+      expect(tab.left, `вкладка ${index + 1} не должна съезжать влево`).toBeGreaterThanOrEqual(
+        tab.navLeft - 1,
+      );
+      expect(tab.right, `вкладка ${index + 1} не должна уезжать за правый край`).toBeLessThanOrEqual(
+        tab.navRight + 1,
+      );
+    }
+
+    for (let i = 0; i < 3; i += 1) {
+      await expect(page.locator("a.day-tab").nth(i)).toBeVisible();
+    }
+  });
+
+  test("24 · липкая цепочка держится при scrollY = 0 и на 320 px", async ({ page }) => {
+    await open(page, "/");
+
+    // На старте шапка и табы стоят в потоке: табы начинаются под шапкой.
+    const top = await page.evaluate(() => {
+      const header = document.querySelector("header.nav-mobile")!.getBoundingClientRect();
+      const tabs = document.querySelector("nav.day-tabs")!.getBoundingClientRect();
+      return { headerBottom: header.bottom, tabsTop: tabs.top };
+    });
+    expect(top.tabsTop).toBeGreaterThanOrEqual(top.headerBottom - 1);
+
+    await page.evaluate(() => window.scrollTo(0, 900));
+    await expect.poll(() => page.evaluate(() => window.scrollY)).toBe(900);
+
+    const chain = await page.evaluate(() => {
+      const header = document.querySelector("header.nav-mobile")!.getBoundingClientRect();
+      const tabs = document.querySelector("nav.day-tabs")!.getBoundingClientRect();
+      const times = Array.from(document.querySelectorAll(".program-grid__time-cell"))
+        .filter((node) => !(node as HTMLElement).hidden)
+        .map((node) => node.getBoundingClientRect().top);
+      return { headerBottom: header.bottom, tabsTop: tabs.top, tabsBottom: tabs.bottom, times };
+    });
+
+    // Табы прилипли ровно под шапкой — без зазора и без перекрытия.
+    expect(chain.tabsTop).toBeGreaterThanOrEqual(chain.headerBottom - 1);
+    expect(chain.tabsTop).toBeLessThanOrEqual(chain.headerBottom + 2);
+
+    // Разделитель времени — под табами, не заезжая под них.
+    expect(chain.times.length).toBeGreaterThan(1);
+    const topmost = Math.min(...chain.times);
+    expect(topmost).toBeGreaterThanOrEqual(chain.tabsBottom - 1);
+    expect(topmost).toBeLessThanOrEqual(chain.tabsBottom + 3);
+  });
 });
 
 test("12 · /program.json — 200, application/json, 91 доклад, 3 дня", async ({ request }) => {
@@ -510,21 +899,32 @@ test.describe("без JavaScript", () => {
 // Регрессия: на десктопе тумблер меню был `display: none` (базовое правило
 // `site.css`), а сам drawer — единственный путь к смене темы и к дням. Значит
 // при ≥1024 px тема и навигация становились недостижимы мышью и клавиатурой.
+// Сейчас тумблер темы есть ещё и в шапке — он работает без открытия меню.
 test.describe("десктоп 1440×900", () => {
   test.use({ viewport: { width: 1440, height: 900 } });
 
-  test("14 · drawer и тумблер темы достижимы и на десктопе", async ({ page }) => {
+  test("14 · тумблер темы в шапке достижим без меню, drawer открывается тумблером меню", async ({
+    page,
+  }) => {
     await open(page, "/");
 
+    // Шапка: тумблер темы виден и меняет тему, не открывая drawer.
+    const themeToggle = page.locator("header.nav-mobile .nav-top-actions [data-theme-toggle]");
+    await expect(themeToggle).toBeVisible();
+    await themeToggle.click();
+    await expect(page.locator("html")).toHaveAttribute("data-theme", "light");
+
+    // Навигация по-прежнему за тумблером меню — он тоже виден на десктопе.
     const toggle = page.locator("[data-nav-open]");
     await expect(toggle).toBeVisible();
     await toggle.click();
     await expect(page.locator("body")).toHaveClass(/nav-open/);
 
-    const themeToggle = page.locator("[data-theme-toggle]");
-    await expect(themeToggle).toBeVisible();
-    await themeToggle.click();
-    await expect(page.locator("html")).toHaveAttribute("data-theme", "light");
+    // Тумблер темы внутри drawer'а тоже рабочий: свой скоуп `nav#site-nav`.
+    const drawerToggle = page.locator("nav#site-nav [data-theme-toggle]");
+    await expect(drawerToggle).toBeVisible();
+    await drawerToggle.click();
+    await expect(page.locator("html")).toHaveAttribute("data-theme", "cyberpunk");
   });
 
   // Мобильная модель (список) не должна протекать на десктоп: там по-прежнему
@@ -564,6 +964,16 @@ test.describe("десктоп 1440×900", () => {
     // 5 залов первого дня встают в 5 колонок, карточка 391 px.
     expect(grid.cardWidth).toBe(391);
     expect(grid.columns).toBe(5);
+  });
+
+  // В сетке заголовок тоже кнопка: высота ≥ 44 px обязана держаться и там,
+  // где карточка шире и заголовок может встать в одну строку.
+  test("27 · кнопка-заголовок в десктопной сетке: текст = название, высота ≥ 44 px", async ({
+    page,
+    request,
+  }) => {
+    await open(page, "/");
+    await assertTitleButtons(page, request);
   });
 });
 

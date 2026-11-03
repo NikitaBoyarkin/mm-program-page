@@ -80,6 +80,8 @@ const STAR =
             class="talk-card__banner-img"
             src={image}
             alt=""
+            width="1200"
+            height="900"
             loading="lazy"
             decoding="async"
             referrerpolicy="no-referrer"
@@ -118,6 +120,8 @@ const STAR =
                   class="talk-card__speaker-photo"
                   src={safeUrl(lector.photo) as string}
                   alt=""
+                  width="36"
+                  height="36"
                   loading="lazy"
                   decoding="async"
                   referrerpolicy="no-referrer"
@@ -175,20 +179,65 @@ const STAR =
 
 <style>
   /* Заголовок карточки — кнопка: так `h3` остаётся заголовком для скринридера,
-     а модалку открывает настоящий `button`, не tabindex на статье. Рамку и фон
-     браузерной кнопки снимаем, типографику наследуем от заголовка. */
+     а модалку открывает настоящий `button`, не tabindex на статье. Типографику
+     наследуем от заголовка, но аффорданс делаем явным: заголовок ведёт себя как
+     кнопка, значит и выглядит как кнопка.
+
+     Цвета литералами, а не `--button-*`: в киберпанке `--button-bg` уходит в
+     розовый #ff2bd6. Пара #171717 / #f8f2da одинаково читается в обеих
+     поверхностях карточки — кремовой (`--cream-surface`) и тёмном низе
+     (`--card-background`) — и даёт контраст 15.7:1 во всех трёх темах. */
   .talk-card__title-btn {
-    display: block;
+    /* flex, а не block: одиночная строка центрируется в 44-пиксельной цели,
+       многострочная растёт вниз без «пустого хвоста» под текстом. */
+    display: flex;
+    align-items: center;
     inline-size: 100%;
+    /* Сенсорная цель ≥ 44px; многострочные заголовки растут сами. */
+    min-block-size: 44px;
     margin: 0;
-    padding: 0;
-    border: 0;
-    background: none;
-    color: inherit;
+    padding: var(--space-2) var(--space-3);
+    border: 1px solid color-mix(in srgb, #f8f2da 22%, transparent);
+    border-radius: var(--radius-md);
+    background: #171717;
+    color: #f8f2da;
     font: inherit;
     letter-spacing: inherit;
     text-align: start;
     cursor: pointer;
+  }
+
+  /* На сенсорных экранах ховера нет, поэтому отклик обязано дать :active. */
+  .talk-card__title-btn:active {
+    border-color: var(--border-active);
+    background: #2e2e2e;
+  }
+
+  /* Кольцо фокуса — outline, а не тень: читается и на кремовой поверхности,
+     и на тёмном низе, и не спорит с рамкой кнопки. */
+  .talk-card__title-btn:focus-visible {
+    outline: 2px solid var(--border-active);
+    outline-offset: 2px;
+  }
+
+  /* Декоративный ховер — только там, где он существует. */
+  @media (hover: hover) and (pointer: fine) {
+    .talk-card__title-btn:hover {
+      border-color: var(--border-active);
+      background: #2e2e2e;
+    }
+  }
+
+  /* На бумаге кнопка — просто заголовок: заливка и рамка сняты (иначе 91
+     карточка превращается в 91 плашку), текст чёрный на белом листе. */
+  @media print {
+    .talk-card__title-btn {
+      min-block-size: 0;
+      padding: 0;
+      border: 0;
+      background: none;
+      color: black;
+    }
   }
 
   /* Карточка с баннером держит заголовок на тёмном низе, а не на кремовой

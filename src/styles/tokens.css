@@ -257,6 +257,7 @@
 html {
   background-color: var(--background-primary);
   scrollbar-color: var(--border-color) var(--background-primary);
+  -webkit-tap-highlight-color: transparent;
 }
 
 body {
@@ -290,8 +291,10 @@ a {
   text-decoration-thickness: 1px;
 }
 
-a:hover {
-  color: var(--text-accent-hover);
+@media (hover: hover) and (pointer: fine) {
+  a:hover {
+    color: var(--text-accent-hover);
+  }
 }
 
 img,
@@ -305,6 +308,16 @@ input,
 select {
   font: inherit;
   color: inherit;
+}
+
+a,
+button,
+summary,
+label,
+input,
+select,
+textarea {
+  touch-action: manipulation;
 }
 
 :focus-visible {

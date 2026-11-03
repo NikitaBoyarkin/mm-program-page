@@ -30,13 +30,15 @@
 | `index.html` и 3 файла, запуск двойным кликом по `file://` | Astro: 4 маршрута и JSON-эндпоинт, `bun run build` |
 | Браузер рисует сетку из `window.MM_PROGRAM` | Сетка **лежит в HTML**: три страницы по 39 / 37 / 15 карточек, у каждого дня свой URL |
 | День переключается на клиенте, состояние живёт в памяти | День — это адрес: `/`, `/day/2/`, `/day/3/` — ссылки, история, шаринг |
-| `app.js` — IIFE на 780 строк без типов | `src/lib/program.ts` и `src/lib/ics.ts` — типизированное ядро и 56 юнит-тестов без браузера |
-| Тесты — Python и headless Chrome | `bun test` (56 тестов) и Playwright на собранной странице, включая прогон с выключенным JS |
+| `app.js` — IIFE на 780 строк без типов | `src/lib/program.ts` и `src/lib/ics.ts` — типизированное ядро и 66 юнит-тестов без браузера |
+| Тесты — Python и headless Chrome | `bun test` (66 тестов) и Playwright на собранной странице, включая прогон с выключенным JS |
 | Свой CSS на 2381 строку с фиолетовым брендом | Токены портфельной дизайн-системы: три темы, Inter и Cormorant, кремовые баннеры |
 
-На выходе — **150 КБ HTML (20.5 КБ gzip) на день программы и один клиентский чанк
-13.9 КБ (5.2 КБ gzip)**. Без JavaScript страница показывает всю сетку, табы дней, чипы
-треков и счётчик. Это проверяет тест, а не обещает README.
+На выходе — **158.8 КБ HTML (22.0 КБ gzip) на день программы и один клиентский чанк
+17.0 КБ raw (6.2 КБ gzip)**. Вес чанка замерен `gzip -9` на собранном
+`dist/_astro/ProgramPage.astro_astro_type_script_index_0_lang.*.js`. Без JavaScript
+страница показывает всю сетку, табы дней, чипы треков и счётчик. Это проверяет тест,
+а не обещает README.
 
 ## Измерения
 
@@ -90,7 +92,7 @@ src/
   styles/program.css         сетка, карточка, модалка, печать
 data/program.raw.json        сырой ответ API
 scripts/fetch-program.ts     загрузка, --check / --dry-run
-tests/lib/*.test.ts          56 юнит-тестов (bun test)
+tests/lib/*.test.ts          66 юнит-тестов (bun test)
 tests/built/program.spec.ts  браузерные (Playwright)
 docs/reference/*.png         скриншоты оригинала
 docs/screenshots/*.png       скриншоты сборки
@@ -107,7 +109,7 @@ bun run build              # статика в dist/
 bun run preview            # посмотреть сборку
 
 bun run check              # типы в .astro и .ts
-bun test                   # 56 юнит-тестов
+bun test                   # 66 юнит-тестов
 bun run test:built         # браузерные тесты
 
 bun run data:fetch         # перекачать API
@@ -156,7 +158,7 @@ GET https://lms.matemarketing.ru/api/event-program/event/6/
 ## Проверка
 
 ```bash
-bun test                  # 56 pass
+bun test                  # 66 pass
 bun run test:built        # Chromium
 ```
 

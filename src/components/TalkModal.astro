@@ -56,6 +56,84 @@
   </div>
 </div>
 
+<script is:inline>
+  // Пока диалог открыт, всё остальное — `inert`. Фокус-трап в `program-client.ts`
+  // держит Tab внутри диалога, но не мешает клику мышью или программному
+  // `focus()`; `inert` убирает остальной документ из таб-порядка и дерева
+  // доступности. Сам `.talk-modal` остаётся вне инертных поддеревьев — он ребёнок
+  // `main`, поэтому инертим `main.children` поштучно, а не `main` целиком.
+  //
+  // Закрытие снимает `inert` синхронно в capture-фазе: `closeModal()` возвращает
+  // фокус на кнопку-открывашку сразу после снятия класса, а MutationObserver
+  // успел бы только после — и `focus()` провалился бы в инертном поддереве.
+  (function () {
+    var modal = document.querySelector("div[data-modal]");
+    if (!modal) return;
+
+    // Что мы включили и в каком состоянии это было: `inert` у закрытого drawer'а
+    // уже стоит и снимать его на закрытии модалки нельзя.
+    var applied = [];
+
+    var release = function () {
+      while (applied.length) {
+        var item = applied.pop();
+        if (!item.inert) item.el.removeAttribute("inert");
+        if (item.ariaHidden === null) item.el.removeAttribute("aria-hidden");
+        else item.el.setAttribute("aria-hidden", item.ariaHidden);
+      }
+    };
+
+    var apply = function () {
+      if (applied.length) return;
+      var targets = [];
+      var outside = document.querySelectorAll(
+        "body > a.skip-link, body > header, body > nav, body > footer, body > .nav-scrim",
+      );
+      for (var i = 0; i < outside.length; i += 1) targets.push(outside[i]);
+      var main = document.getElementById("main");
+      if (main) {
+        for (var j = 0; j < main.children.length; j += 1) {
+          if (!main.children[j].contains(modal)) targets.push(main.children[j]);
+        }
+      }
+      for (var k = 0; k < targets.length; k += 1) {
+        var el = targets[k];
+        applied.push({
+          el: el,
+          inert: el.hasAttribute("inert"),
+          ariaHidden: el.getAttribute("aria-hidden"),
+        });
+        el.setAttribute("inert", "");
+        // Фолбэк для движков без `inert`: скринридер не должен читать фон.
+        el.setAttribute("aria-hidden", "true");
+      }
+    };
+
+    document.addEventListener(
+      "keydown",
+      function (event) {
+        if (event.key === "Escape" && !modal.hidden) release();
+      },
+      true,
+    );
+
+    document.addEventListener(
+      "click",
+      function (event) {
+        var target = event.target;
+        if (!(target instanceof Element)) return;
+        if (target.closest("[data-modal-close], [data-modal-backdrop]")) release();
+      },
+      true,
+    );
+
+    new MutationObserver(function () {
+      if (document.body.classList.contains("is-modal-open")) apply();
+      else release();
+    }).observe(document.body, { attributes: true, attributeFilter: ["class"] });
+  })();
+</script>
+
 <style>
   /* Спикеров в модалку вставляет `program-client.ts` уже после загрузки
      `/program.json`, поэтому узлы не получают scope-атрибут Astro — правила

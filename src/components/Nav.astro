@@ -58,28 +58,53 @@ const siteLinks = [
     }
   </ul>
 
-  <button
-    class="nav-toggle"
-    type="button"
-    data-nav-open
-    aria-expanded="false"
-    aria-controls="site-nav"
-    aria-label="Открыть меню"
-  >
-    <svg
-      viewBox="0 0 24 24"
-      width="20"
-      height="20"
-      fill="none"
-      stroke="currentColor"
-      stroke-width="2"
-      stroke-linecap="round"
-      aria-hidden="true"
-      focusable="false"
+  <div class="nav-top-actions">
+    <button
+      class="nav-icon-btn theme-toggle--header"
+      type="button"
+      data-theme-toggle
+      aria-label="Сменить тему"
+      title="Сменить тему: тёмная → светлая → киберпанк"
     >
-      <path d="M3 6h18M3 12h18M3 18h18"></path>
-    </svg>
-  </button>
+      <svg
+        viewBox="0 0 24 24"
+        width="20"
+        height="20"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="2"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+        aria-hidden="true"
+        focusable="false"
+      >
+        <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+      </svg>
+    </button>
+
+    <button
+      class="nav-toggle"
+      type="button"
+      data-nav-open
+      aria-expanded="false"
+      aria-controls="site-nav"
+      aria-label="Открыть меню"
+    >
+      <svg
+        viewBox="0 0 24 24"
+        width="20"
+        height="20"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="2"
+        stroke-linecap="round"
+        aria-hidden="true"
+        focusable="false"
+      >
+        <path d="M3 6h18M3 12h18M3 18h18"></path>
+      </svg>
+    </button>
+  </div>
 </header>
 
 <div class="nav-scrim" data-nav-close></div>
@@ -171,3 +196,78 @@ const siteLinks = [
     <p>Три темы: тёмная, светлая, киберпанк. Выбор запоминается в браузере.</p>
   </div>
 </nav>
+
+<style>
+  /* Кнопки справа в шапке: тема + меню. Группа забирает `margin-inline-start:
+     auto` у тумблера, иначе два auto-отступа делят свободное место и кнопки
+     разъезжаются от края. */
+  .nav-top-actions {
+    display: flex;
+    flex: none;
+    align-items: center;
+    gap: var(--space-2);
+    margin-inline-start: auto;
+  }
+
+  .nav-top-actions > .nav-toggle {
+    margin-inline-start: 0;
+  }
+
+  /* Тема доступна из шапки, не открывая drawer: на странице программы тема —
+     частая операция, а меню на мобиле ещё и перекрывает контент.
+     Стиль повторяет `.nav-toggle`, но отдельным классом: `.nav-toggle` в
+     `site.css` занят меню и гасится на печати. */
+  .nav-icon-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    inline-size: 44px;
+    block-size: 44px;
+    padding: 0;
+    /* Литералы, а не `--button-*`: в киберпанке те токены красят кнопку в
+       розовый. Пара #171717 / #f8f2da — контраст 15.7:1 в любой теме. */
+    border: 1px solid color-mix(in srgb, #f8f2da 22%, transparent);
+    border-radius: var(--radius-full);
+    background: #171717;
+    color: #f8f2da;
+    line-height: 1;
+    cursor: pointer;
+    transition:
+      transform 0.2s ease,
+      border-color 0.2s ease,
+      color 0.2s ease;
+  }
+
+  @media (hover: hover) and (pointer: fine) {
+    .nav-icon-btn:hover {
+      border-color: var(--border-active);
+      background: #2e2e2e;
+      color: #f8f2da;
+    }
+  }
+
+  .nav-icon-btn:active {
+    transform: scale(0.95);
+  }
+
+  .nav-icon-btn:focus-visible {
+    outline: 2px solid var(--text-accent);
+    outline-offset: 2px;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .nav-icon-btn {
+      transition: none;
+    }
+
+    .nav-icon-btn:active {
+      transform: none;
+    }
+  }
+
+  @media print {
+    .nav-top-actions {
+      display: none;
+    }
+  }
+</style>

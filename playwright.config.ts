@@ -3,10 +3,15 @@
  * `astro preview`, а не против dev-сервера, и ничего не мокают.
  *
  * Всё, кроме `testDir`/`webServer`, зафиксировано контрактом проверки:
- * один проект chromium (headless), без ретраев, `fullyParallel: false`
- * (тесты одного файла идут последовательно на одном сервере).
+ * без ретраев, `fullyParallel: false` (тесты одного файла идут
+ * последовательно на одном сервере).
+ *
+ * Проектов три: десктопный chromium 1280×900 и два мобильных. Мобильные
+ * запускают и общий набор (09–18), и тесты с собственным `test.use`:
+ * мобильная модель включается CSS-медиазапросом `max-width: 767.98px`,
+ * поэтому ширина окна — единственное, что её переключает.
  */
-import { defineConfig } from "playwright/test";
+import { defineConfig, devices } from "playwright/test";
 
 export default defineConfig({
   testDir: "tests/built",
@@ -30,6 +35,31 @@ export default defineConfig({
         browserName: "chromium",
         headless: true,
         viewport: { width: 1280, height: 900 },
+      },
+    },
+    // Узкая мобильная модель: 320 px — нижняя граница, на которой строка
+    // вкладок дней обязана вставать без горизонтального скролла.
+    {
+      name: "chromium-mobile",
+      use: {
+        browserName: "chromium",
+        headless: true,
+        viewport: { width: 320, height: 700 },
+        isMobile: true,
+        hasTouch: true,
+        deviceScaleFactor: 3,
+      },
+    },
+    // Второй движок — WebKit на iPhone 13 (390×844): sticky-цепочка, `inert`,
+    // `history.pushState` и `position: sticky` крестика модалки ведут себя
+    // иначе, чем в Chromium, и регрессии ловятся только здесь.
+    // Если браузер не установлен: `bunx playwright install webkit`.
+    {
+      name: "webkit-iphone",
+      use: {
+        ...devices["iPhone 13"],
+        browserName: "webkit",
+        headless: true,
       },
     },
   ],
