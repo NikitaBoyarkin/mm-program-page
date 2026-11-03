@@ -23,7 +23,8 @@ interface Props {
 const { day, ordinal } = Astro.props;
 const lang = "ru" as const;
 const title = `${t(lang, "pageTitle")} ${t(lang, "brandEvent")} — ${dayLongLabel(day.date, lang)}`;
-const description = `${t(lang, "pageTitle")} ${t(lang, "brandEvent")}, ${dayLongLabel(day.date, lang)}. ${t(lang, "metaDescription")}`;
+const description =
+  "Расписание докладов по залам и трекам, время по Москве. Поиск по спикеру, избранное и экспорт в календарь.";
 ---
 
 <Base

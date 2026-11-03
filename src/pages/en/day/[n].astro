@@ -25,7 +25,8 @@ interface Props {
 const { day, ordinal } = Astro.props;
 const lang = "en" as const;
 const title = `${t(lang, "pageTitle")} ${t(lang, "brandEvent")} — ${dayLongLabel(day.date, lang)}`;
-const description = `${t(lang, "pageTitle")} ${t(lang, "brandEvent")}, ${dayLongLabel(day.date, lang)}. ${t(lang, "metaDescription")}`;
+const description =
+  "Talks by hall and track, Moscow time. Speaker search, favorites and calendar export.";
 ---
 
 <Base

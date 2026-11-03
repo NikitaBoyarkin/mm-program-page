@@ -74,7 +74,7 @@ const RU = {
     "Права на дизайн, тексты программы, названия докладов и изображения принадлежат Матемаркетингу и спикерам. Это неофициальная учебная копия, не связанная с организаторами.",
   footerNote: "Собрано как разбор интерфейса: вёрстка и логика — учебные.",
   metaDescription:
-    "Программа конференции Матемаркетинг 2026: расписание докладов по дням, залам и трекам. Учебная копия страницы lms.matemarketing.ru.",
+    "91 доклад и 11 треков за три дня — 26 и 27 ноября плюс онлайн-день. Расписание по залам, поиск по спикеру, избранное и экспорт в календарь.",
 } as const;
 
 const EN: Record<keyof typeof RU, string> = {
@@ -138,7 +138,7 @@ const EN: Record<keyof typeof RU, string> = {
     "Design, program texts, talk titles and images belong to Matemarketing and the speakers. This is an unofficial study copy, not affiliated with the organizers.",
   footerNote: "Built as an interface study: the layout and logic are for learning.",
   metaDescription:
-    "Matemarketing 2026 conference program: talks by day, hall and track. A study copy of lms.matemarketing.ru.",
+    "91 talks across 11 tracks in three days — 26 and 27 November plus an online day. Schedule by hall, speaker search, favorites and calendar export.",
 };
 
 export const UI: Record<Lang, Record<keyof typeof RU, string>> = { ru: RU, en: EN };

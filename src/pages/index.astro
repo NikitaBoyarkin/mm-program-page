@@ -8,7 +8,7 @@ import { dayLongLabel } from "../i18n/format";
 const lang = "ru" as const;
 const day = dayByOrdinal(1);
 const title = `${t(lang, "pageTitle")} ${t(lang, "brandEvent")} — ${dayLongLabel(day.date, lang)}`;
-const description = `${t(lang, "pageTitle")} ${t(lang, "brandEvent")}, ${dayLongLabel(day.date, lang)}. ${t(lang, "metaDescription")}`;
+const description = t(lang, "metaDescription");
 ---
 
 <Base
