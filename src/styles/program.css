@@ -84,9 +84,9 @@ nav.day-tabs {
 }
 
 /* Чипы переносятся, а не скроллятся: тринадцать треков в строку не влезают ни
-   на одной ширине (натуральная ширина ~2,1k px), а горизонтальный скролл прячет
-   половину фильтров. На узких экранах ниже — обратно в одну строку со скроллом:
-   самый длинный чип шире вьюпорта, перенос дал бы обрезку. */
+   на одной ширине (натуральная ширина ~2,1k px). На телефоне перенос дал бы
+   8 строк над карточками, поэтому там чипы треков заменены нативным списком
+   (`.track-select`, см. медиаблок ниже) — см. `CONTRACT.md`. */
 .track-chips {
   display: flex;
   flex: 1 1 auto;
@@ -95,9 +95,17 @@ nav.day-tabs {
   min-inline-size: 0;
 }
 
+/* Мобильный выбор трека живёт только в медиаблоке: на десктопе это чипы. */
+.track-select {
+  display: none;
+}
+
 .track-chip {
   flex: none;
-  min-block-size: 32px;
+  /* 36px, а не 32: чип — настоящая цель нажатия на мобиле, и проект держит
+     собственный минимум 44px для кнопок; 36 — практический низ для чипа
+     в 12px шрифта без раздувания полосы фильтров. */
+  min-block-size: 36px;
   padding: 0.25rem 0.5rem;
   /* Литералы, а не тема: `--button-bg` в киберпанке розовый, а выбранный чип
      и так заливается акцентом — их нельзя разводить одинаковой заливкой. */
@@ -527,6 +535,9 @@ nav.day-tabs {
 .talk-card__speaker-info {
   display: flex;
   flex-direction: column;
+  /* 4px между именем и ролью: без зазора пятистрочная роль читается одним
+     полотном с именем — замер дал ровно 0px. */
+  gap: var(--space-1);
   min-inline-size: 0;
 }
 
@@ -556,14 +567,18 @@ nav.day-tabs {
 .social-links {
   display: flex;
   flex-wrap: wrap;
-  gap: var(--space-1);
+  /* 12px, а не 4: зона нажатия выросла до 36px (24 + 2 × 6, см. `::after`),
+     и при меньшем зазоре соседние зоны перекрывались бы. */
+  gap: var(--space-3);
   margin-block-start: 2px;
 }
 
 .social-link {
+  /* Контейнер для расширения зоны нажатия на псевдоэлементе. */
+  position: relative;
   display: inline-block;
   flex: none;
-  /* 24px — минимальный тап-таргет WCAG 2.5.8; маска клик не перекрывает. */
+  /* 24px — видимый размер маски (WCAG 2.5.8); зону нажатия добирает `::after`. */
   inline-size: 24px;
   block-size: 24px;
   background-color: currentColor;
@@ -577,6 +592,15 @@ nav.day-tabs {
   -webkit-mask-size: 14px;
   mask-size: 14px;
   transition: color 120ms ease;
+}
+
+/* Маска обязана остаться 24px, но палец в неё не попадает: псевдоэлемент
+   расширяет зону нажатия до 36×36 (24 + 2 × 6), а клик по нему всё равно
+   принадлежит самой ссылке. */
+.social-link::after {
+  content: "";
+  position: absolute;
+  inset: -6px;
 }
 
 .social-link:hover,
@@ -606,6 +630,9 @@ nav.day-tabs {
   color: var(--text-normal);
   font-size: 0.9375rem;
   line-height: 1.5;
+  /* Переносы включаются языком документа (`lang`), а не настройкой здесь. */
+  hyphens: auto;
+  hyphenate-limit-chars: 6 3 3;
   overflow-wrap: anywhere;
 }
 
@@ -623,10 +650,6 @@ nav.day-tabs {
   display: block;
   overflow: visible;
   -webkit-line-clamp: unset;
-}
-
-.talk-card--expanded .talk-card__theses {
-  overflow-y: auto;
 }
 
 .talk-card__toggle-btn {
@@ -1181,12 +1204,18 @@ html:has(body.is-search-open) {
     display: none;
   }
 
+  /* Зал уже назван бейджем ниже; в meta-строке компактной карточки остаётся трек. */
+  .talk-card__meta-hall {
+    display: none;
+  }
+
   /* Зал виден только здесь. Цвет наследуется от .talk-card__top: кремовая
      поверхность компактной карточки и прозрачная полоса баннерной дают разный
      ink без второй пары правил. */
   .talk-card__hall {
-    display: inline-flex;
-    align-items: center;
+    /* inline-block, а не inline-flex: у анонимного flex-item не работает
+       `text-overflow` — длинное имя зала обрезалось вровень, без «…». */
+    display: inline-block;
     max-inline-size: 100%;
     min-inline-size: 0;
     overflow: hidden;
@@ -1202,12 +1231,97 @@ html:has(body.is-search-open) {
     white-space: nowrap;
   }
 
+  /* Бейдж больше не flex-контейнер, поэтому общий `gap: 0.4em` здесь не
+     действует — отступ иконке задаёт её собственный margin. */
+  .talk-card__hall::before {
+    margin-inline-end: 0.4em;
+  }
+
+  /* 12 чипов занимают 2147px — в строку 358px они не влезают, а перенос даёт
+     8 строк / 252px над карточками. Поэтому на телефоне трек выбирает нативный
+     список ОС в одну строку (`.track-select`), а чипы треков остаются на
+     десктопе. «Избранное» — независимый фильтр, оно остаётся чипом. */
+  .track-chip[data-track] {
+    display: none;
+  }
+
   .track-chips {
     flex-basis: 100%;
     flex-wrap: nowrap;
     overflow-x: auto;
     overscroll-behavior-inline: contain;
     scrollbar-width: thin;
+  }
+
+  /* Обёртка — визуальный чип: настоящий `<select>` лежит поверх прозрачным
+     слоем, поэтому тап открывает системный список, а не нашу выпадашку. */
+  .track-select {
+    position: relative;
+    display: inline-flex;
+    /* Строка не должна скроллиться: «Избранное» фиксирован по контенту, список
+       забирает остаток и ужимает подпись — самый длинный трек иначе шире 320px. */
+    flex: 1 1 auto;
+    align-items: center;
+    gap: 0.4em;
+    min-inline-size: 0;
+    max-inline-size: 100%;
+    min-block-size: 36px;
+    padding: 0.25rem 0.5rem;
+    border: 1px solid color-mix(in srgb, #f8f2da 22%, transparent);
+    border-radius: var(--radius-full);
+    background: #171717;
+    color: #f8f2da;
+    font-family: var(--font-mono);
+    font-size: 0.75rem;
+    line-height: 1.2;
+    letter-spacing: 0.02em;
+    white-space: nowrap;
+    cursor: pointer;
+  }
+
+  .track-select::after {
+    content: "";
+    display: inline-block;
+    flex: none;
+    inline-size: 12px;
+    block-size: 12px;
+    background-color: currentColor;
+    -webkit-mask: var(--icon-chevron) center / contain no-repeat;
+    mask: var(--icon-chevron) center / contain no-repeat;
+    opacity: 0.7;
+  }
+
+  /* Самый длинный трек («Семантический слой и аналитические агенты») шире
+     строки: подпись режется, счётчик внутри списка остаётся целым. */
+  .track-select__value {
+    flex: 1 1 auto;
+    min-inline-size: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  /* 16px обязательны: на iOS поле мельче 16px вызывает авто-зум при фокусе.
+     Слой прозрачный — размер нужен только ради этого. */
+  .track-select__control {
+    position: absolute;
+    inset: 0;
+    inline-size: 100%;
+    block-size: 100%;
+    margin: 0;
+    padding: 0;
+    border: 0;
+    appearance: none;
+    background: transparent;
+    font-size: 16px;
+    color: transparent;
+    cursor: pointer;
+    opacity: 0;
+  }
+
+  /* Фокус-ринг рисует видимый слой: сам `<select>` прозрачный. */
+  .track-select:has(.track-select__control:focus-visible) {
+    outline: 2px solid var(--border-active);
+    outline-offset: 2px;
   }
 
   .talk-count {
@@ -1227,7 +1341,14 @@ html:has(body.is-search-open) {
   }
 
   .talk-modal {
-    padding: var(--space-2);
+    /* `viewport-fit=cover` задан в Base.astro, поэтому в ландшафте вырезы и
+       домашний индикатор реальны: отступы держим не меньше safe-area.
+       Верх — тоже max(): диалог центрируется, и при `92dvh` его верхняя кромка
+       на 390px попадает в полосу статус-бара. */
+    padding: max(var(--space-2), env(safe-area-inset-top))
+      max(var(--space-2), env(safe-area-inset-right))
+      max(var(--space-2), env(safe-area-inset-bottom))
+      max(var(--space-2), env(safe-area-inset-left));
   }
 
   .talk-modal__dialog {
@@ -1444,6 +1565,19 @@ html:has(body.is-search-open) {
   .day-tab::before {
     display: none;
   }
+}
+
+/* ── Кириллица: разрядка на капсах ───────────────────────────────────────── */
+/* Латинские 0.10–0.12em на капсах — норма, а на кириллице та же разрядка
+   рассыпает слово на буквы: при 12px шаг между буквами ~1.2px. 0.06em сохраняет
+   трекинг, но держит слово целым. Латинские значения выше не тронуты — им
+   разрядка нужна. Селектор бьёт и мобильное переопределение `.talk-card__hall`:
+   `:lang()` добавляет специфичности, это намеренно. */
+:lang(ru) .talk-card__media-meta,
+:lang(ru) .talk-card__hall,
+:lang(ru) .talk-modal__meta,
+:lang(ru) .program-grid__time-label {
+  letter-spacing: 0.06em;
 }
 
 /* ── Печать: карточки не рвутся, баннеры скрыты, всё на белом ───────────── */

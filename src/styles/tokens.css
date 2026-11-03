@@ -97,6 +97,9 @@
   --text-normal: #f8f2da;
   --text-muted: #b3b3ba;
   --border-color: #8076d7;
+  /* Граница поля ввода: на залитой поверхности (`--surface-secondary`)
+     волосяная линия не читается. Норма 3:1 для границы контрола. */
+  --border-strong: #9a93dd;
   --blockquote-border: #8076d7;
   --table-border: #8076d7;
   --surface-secondary: #120093;
@@ -193,6 +196,9 @@
   --text-muted: #52525b;
   /* #e4e4e7 даёт 1.09:1 на кремовой странице — границы контролов исчезают. */
   --border-color: #84848b;
+  /* То же назначение, что в тёмной теме: граница поля на `--surface-secondary`
+     держит 3:1 только с более тёмным оттенком. */
+  --border-strong: #6b6b73;
   --blockquote-border: #e4e4e7;
   --table-border: #e4e4e7;
   --surface-secondary: #d4d4d8;
@@ -231,6 +237,9 @@
   --text-normal: #f8f2da;
   --text-muted: #9a9ab4;
   --border-color: #4a4a57;
+  /* 1.91:1 у `--border-color` на поле ввода — границы не видно совсем;
+     3.3:1 на панели `#171717`. */
+  --border-strong: #6f6f80;
   --blockquote-border: #4a4a57;
   --table-border: #4a4a57;
   --surface-secondary: #1e1e22;

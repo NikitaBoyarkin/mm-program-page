@@ -15,7 +15,9 @@
   max-inline-size: var(--content-max);
   margin-inline: auto;
   padding-block: var(--space-8) var(--space-16);
-  padding-inline: var(--page-pad);
+  /* Ландшафт с вырезом сбоку: вырез шире --page-pad, поэтому floor — max(). */
+  padding-inline: max(var(--page-pad), env(safe-area-inset-left))
+    max(var(--page-pad), env(safe-area-inset-right));
 }
 
 .page:focus {
@@ -38,7 +40,7 @@
 .eyebrow {
   margin: 0;
   font-family: var(--font-mono);
-  font-size: 0.72rem;
+  font-size: 0.75rem;
   font-weight: 500;
   line-height: 1.4;
   text-transform: uppercase;
@@ -51,7 +53,7 @@ h1.page-title {
   font-family: var(--font-display);
   font-size: var(--type-page-title);
   font-weight: 600;
-  line-height: 1.02;
+  line-height: 1.06;
   letter-spacing: -0.02em;
   text-wrap: balance;
   overflow-wrap: anywhere;
@@ -99,6 +101,22 @@ dl.facts {
   line-height: 1.35;
   color: var(--text-normal);
   overflow-wrap: anywhere;
+}
+
+/* ── Кириллица в uppercase: трекинг только для латиницы ─────────────────── */
+/* Широкий разряд (0.10–0.14em) на латинице в 11–12px читается как капитель,
+   а на кириллице разваливает слово на буквы. Поэтому разряд ослаблен только
+   для :lang(ru) — те же классы на en остаются как были. */
+.eyebrow:lang(ru) {
+  letter-spacing: 0.07em;
+}
+
+.nav-brand-role:lang(ru) {
+  letter-spacing: 0.07em;
+}
+
+dl.facts dt:lang(ru) {
+  letter-spacing: 0.07em;
 }
 
 /* ── Кнопки ─────────────────────────────────────────────────────────────── */
@@ -196,9 +214,16 @@ header.nav-mobile {
   align-items: center;
   gap: var(--space-3);
   block-size: var(--nav-mobile-h);
+  /* box-sizing: border-box (tokens.css) уже в счёт, поэтому block-size
+     включает этот паддинг: 65px остаются контентной полосой под вырезом,
+     и 44px-кнопки центрируются в ней, а не в полосе статус-бара. */
+  padding-block-start: env(safe-area-inset-top);
   /* Контент панели выровнен по той же колонке, что .page: max() держит
-     паддинг на узких экранах, где (100% - content-max) уходит в минус. */
-  padding-inline: max(var(--page-pad), calc((100% - var(--content-max)) / 2));
+     паддинг на узких экранах, где (100% - content-max) уходит в минус,
+     и не даёт ландшафтному вырезу наехать на бренд и кнопки. */
+  padding-inline:
+    max(var(--page-pad), calc((100% - var(--content-max)) / 2), env(safe-area-inset-left))
+    max(var(--page-pad), calc((100% - var(--content-max)) / 2), env(safe-area-inset-right));
   background: color-mix(in srgb, var(--background-primary) 88%, transparent);
   border-block-end: 1px solid var(--border-color);
   backdrop-filter: blur(12px) saturate(140%);
@@ -256,7 +281,7 @@ header.nav-mobile {
 }
 
 .nav-brand-role {
-  font-size: 0.68rem;
+  font-size: 0.72rem;
   line-height: 1.3;
   text-transform: uppercase;
   letter-spacing: 0.14em;
@@ -264,6 +289,41 @@ header.nav-mobile {
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+}
+
+/* ── Шапка на телефоне: имя не влезает, место отдаётся кнопкам ──────────── */
+/* Замер: при 320px под имя остаётся 39px, а «Никита Бояркин» просит 119px —
+   рисуется «Ни…». При 390px 109px против 119px — «Никита Бояр…». Роль и так
+   обрезана до «ПРОДУКТОВЫ…», поэтому уходит первой: одна строка вместо двух
+   освобождает имя целиком. */
+@media (max-width: 479.98px) {
+  /* Селекторы с `header.nav-mobile` не для красоты: те же классы носит бренд
+     в drawer'е, а там места хватает и подпись нужна — у ссылки в панели нет
+     aria-label, скрытый текст оставил бы её безымянной. */
+  header.nav-mobile .nav-brand-role {
+    display: none;
+  }
+
+  header.nav-mobile {
+    gap: var(--space-2);
+    padding-inline:
+      max(var(--space-3), calc((100% - var(--content-max)) / 2), env(safe-area-inset-left))
+      max(var(--space-3), calc((100% - var(--content-max)) / 2), env(safe-area-inset-right));
+  }
+
+  /* 1rem = 16px: имя просит ~108px и влезает в оставшуюся полосу при ≥390px. */
+  header.nav-mobile .nav-brand-text b {
+    font-size: 1rem;
+  }
+}
+
+/* При 320px и 16px не хватает (имя ~108px против ~95px полосы): лучше один
+   логотип 28px, чем обрезанное «Ни…». Доступное имя ссылке даёт aria-label
+   в Nav.astro — не удаляйте его, иначе у ссылки-иконки не останется подписи. */
+@media (max-width: 379.98px) {
+  header.nav-mobile .nav-brand-text {
+    display: none;
+  }
 }
 
 ul.nav-inline {
@@ -378,15 +438,22 @@ ul.nav-inline {
 
 #site-nav {
   position: fixed;
-  inset-block: 0;
+  /* `inset-block: 0` считался от layout-вьюпорта: на мобиле панель вылезала
+     за экран, когда адресная строка разворачивалась. 100dvh следует за
+     визуальным вьюпортом. */
+  inset-block-start: 0;
+  block-size: 100dvh;
   inset-inline-start: 0;
   z-index: var(--z-panel);
   display: flex;
   flex-direction: column;
   gap: var(--space-4);
   inline-size: min(360px, 88vw);
-  /* В ландшафте слева вырез: фон тянется под него, контент отступает. */
-  padding: var(--space-5) var(--space-5) calc(var(--space-6) + env(safe-area-inset-bottom))
+  /* В ландшафте слева вырез: фон тянется под него, контент отступает.
+     Сверху — тоже вырез (`max()` с safe-area-inset-top), иначе первый пункт
+     уходит под статус-бар. */
+  padding: max(var(--space-5), env(safe-area-inset-top)) var(--space-5)
+    calc(var(--space-6) + env(safe-area-inset-bottom))
     calc(var(--space-5) + env(safe-area-inset-left));
   overflow-y: auto;
   overscroll-behavior: contain;
@@ -615,7 +682,11 @@ ul.drawer-links {
 .site-footer {
   max-inline-size: var(--content-max);
   margin-inline: auto;
-  padding: var(--space-8) var(--page-pad) var(--space-10);
+  /* Тот же ряд max(), что у .page и шапки: в ландшафте вырез сбоку шире
+     --page-pad, а снизу iPhone добавляет домашнюю полоску. */
+  padding: var(--space-8) max(var(--page-pad), env(safe-area-inset-right))
+    max(var(--space-10), env(safe-area-inset-bottom))
+    max(var(--page-pad), env(safe-area-inset-left));
   border-block-start: 1px solid var(--border-color);
   color: var(--text-muted);
   font-size: 0.875rem;
@@ -691,7 +762,9 @@ ul.drawer-links {
   }
 
   .site-footer {
-    padding-block-end: var(--space-8);
+    /* max(), а не голый --space-8: иначе мобильное правило снимает домашнюю
+       полоску, которую только что добавил базовый паддинг. */
+    padding-block-end: max(var(--space-8), env(safe-area-inset-bottom));
   }
 
   /* Блюр на каждой прокрутке пересчитывает подложку на GPU — на мобиле это
@@ -699,6 +772,28 @@ ul.drawer-links {
   header.nav-mobile {
     background: color-mix(in srgb, var(--background-primary) 97%, transparent);
     backdrop-filter: none;
+  }
+}
+
+/* ── Первый экран телефона: карточка доклада ближе к сгибу ──────────────── */
+/* Замер до правки: при 320×568 первый доклад начинался на y=865, при 390×844 —
+   на y=714. После сжатия воздуха: 828 и 693. Отжимаем только заголовок и
+   факты — интро читается целиком, факты остаются на месте.
+   Верхний padding .page и gap у dl.facts сюда не дублируются: блок
+   ≤767.98px выше уже даёт 24px и 12/16px — на этих ширинах они и так
+   выполнены, второй раз объявлять нечего. */
+@media (max-width: 479.98px) {
+  .page-head {
+    gap: var(--space-2);
+  }
+
+  dl.facts {
+    padding-block-start: var(--space-4);
+  }
+
+  /* 42.3px → 36px: две строки заголовка занимают ~76px вместо 86px. */
+  h1.page-title {
+    font-size: 2.25rem;
   }
 }
 

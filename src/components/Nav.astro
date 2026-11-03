@@ -39,7 +39,7 @@ const langCode = targetLang.toUpperCase();
 ---
 
 <header class="nav-mobile">
-  <a class="nav-brand" href={`${portfolio}/`}>
+  <a class="nav-brand" href={`${portfolio}/`} aria-label={t(lang, "brandName")}>
     <span class="nav-brand-icon" aria-hidden="true"></span>
     <span class="nav-brand-text">
       <b>{t(lang, "brandName")}</b>
@@ -171,8 +171,8 @@ const langCode = targetLang.toUpperCase();
     <a class="nav-brand" href={`${portfolio}/`}>
       <span class="nav-brand-icon" aria-hidden="true"></span>
       <span class="nav-brand-text">
-        <b>Никита Бояркин</b>
-        <span class="nav-brand-role">Продуктовый аналитик</span>
+        <b>{t(lang, "brandName")}</b>
+        <span class="nav-brand-role">{t(lang, "brandRole")}</span>
       </span>
     </a>
     <button class="drawer-close" type="button" data-nav-close aria-label={t(lang, "navClose")}>

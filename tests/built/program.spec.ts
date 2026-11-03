@@ -6,7 +6,7 @@
  * и WebKit iPhone 13 390×844.
  */
 import { readFile } from "node:fs/promises";
-import { expect, test, type APIRequestContext, type Page } from "playwright/test";
+import { expect, test, type APIRequestContext, type Locator, type Page } from "playwright/test";
 
 /**
  * `base` проекта (`astro.config.mjs`): страница живёт на подпути, корень
@@ -80,6 +80,18 @@ async function talkTitles(request: APIRequestContext): Promise<Map<number, strin
  * прозрачная обёртка) и высота не меньше 44 px — и в мобильном списке, и в
  * десктопной сетке, где заголовок может занять несколько строк.
  */
+/**
+ * Выбирает трек тем управлением, которое видно на текущей ширине: чип
+ * (десктоп) или нативный список в `label.track-select` (≤ 767.98 px, CONTRACT §4).
+ * `value === ""` снимает фильтр. `aria-pressed` у чипа проверяется отдельно —
+ * клиент обновляет его и у скрытого чипа, поэтому состояние одно.
+ */
+async function chooseTrack(page: Page, chip: Locator, value: string): Promise<void> {
+  const select = page.locator("[data-track-select]");
+  if (await select.isVisible()) await select.selectOption(value);
+  else await chip.click();
+}
+
 async function assertTitleButtons(page: Page, request: APIRequestContext): Promise<void> {
   const titles = await talkTitles(request);
 
@@ -192,8 +204,14 @@ test("05 · фильтр по треку: aria-pressed, одинаковый dat
 
   const chip = chips.nth(index);
 
-  await chip.click();
+  // На телефоне (≤ 767.98 px) чипы треков скрыты, и тот же фильтр выбирается
+  // нативным списком внутри `label.track-select` (CONTRACT §4).
+  await chooseTrack(page, chip, track);
   await expect(chip).toHaveAttribute("aria-pressed", "true");
+  if (await page.locator("[data-track-select]").isVisible()) {
+    await expect(page.locator("[data-track-select]")).toHaveValue(track);
+    await expect(page.locator("[data-track-select-value]")).toContainText("·");
+  }
 
   const tracks = await page
     .locator("div.program-grid__talk-cell[data-track]:visible")
@@ -206,8 +224,11 @@ test("05 · фильтр по треку: aria-pressed, одинаковый dat
   await expect(page.locator("[data-talk-count]")).toHaveText(String(visibleCards));
   expect(page.url()).toContain("track=");
 
-  await chip.click();
+  await chooseTrack(page, chip, "");
   await expect(chip).toHaveAttribute("aria-pressed", "false");
+  if (await page.locator("[data-track-select]").isVisible()) {
+    await expect(page.locator("[data-track-select-value]")).toHaveText(/Все треки|All tracks/);
+  }
   await expect(page.locator("[data-talk-count]")).toHaveText(String(DAY1_TALKS));
   expect(page.url()).not.toContain("track=");
 });
@@ -571,7 +592,7 @@ test.describe("мобильный 390×844", () => {
     expect(index, "в первый день должен найтись трек хотя бы с одним докладом").toBeGreaterThanOrEqual(0);
 
     const trackChip = chips.nth(index);
-    await trackChip.click();
+    await chooseTrack(page, trackChip, track);
     await expect(trackChip).toHaveAttribute("aria-pressed", "true");
 
     const trackOnly = await page.locator("article.talk-card:visible").count();

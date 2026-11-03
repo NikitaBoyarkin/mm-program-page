@@ -151,6 +151,22 @@ const hallsFact = lang === "en" ? `${hallCount} halls` : `${hallCount} зало�
         </button>
       ))
     }
+    {/* Телефонный выбор трека: 12 подписей — 2147px, в строку 358px не влезают,
+        а перенос даёт 8 строк над карточками. Обёртка выглядит чипом, но тап
+        открывает системный список; `<select>` прозрачный и лежит поверх.
+        Значение пишет клиент (`.track-select__value`), как и `aria-pressed`
+        чипов — оба вида читают одно состояние `activeTrack`. */}
+    <label class="track-select">
+      <span class="track-select__value" data-track-select-value>{t(lang, "allTracks")}</span>
+      <select class="track-select__control" data-track-select aria-label={t(lang, "trackSelectLabel")}>
+        <option value="">{t(lang, "allTracks")}</option>
+        {trackChips.map((chip) => (
+          <option value={chip.track}>
+            {trackLabel(lang, chip.track)} · {chip.count}
+          </option>
+        ))}
+      </select>
+    </label>
   </div>
 
   {/* `aria-live` на самом счётчике: фильтр переписывает число и слово без

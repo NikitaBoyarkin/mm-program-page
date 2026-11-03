@@ -67,5 +67,6 @@ const { lang } = Astro.props;
     <p class="search-hint" data-search-hint>{t(lang, "searchHint")}</p>
     <ul class="search-results" data-search-results role="list"></ul>
     <p class="search-empty" data-search-empty hidden>{t(lang, "searchEmpty")}</p>
+    <p class="visually-hidden" data-search-status role="status" aria-live="polite"></p>
   </div>
 </div>

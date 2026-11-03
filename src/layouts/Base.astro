@@ -56,7 +56,12 @@ const canonicalHref = canonical.href;
 // Картинка превью — абсолютный адрес: `og:image` не разрешает относительные,
 // а страница живёт под `base` project-страницы GitHub Pages.
 const ogImageHref = new URL(ogBannerUrl, Astro.site ?? Astro.url).href;
-const ogImageAlt = "Программа конференции Матемаркетинг 2026 — расписание докладов";
+// Alt баннера — на языке страницы: одна и та же картинка живёт и на /en/, а
+// подпись читает скринридер и соцсеть-превью.
+const ogImageAlt =
+  lang === "ru"
+    ? "Программа конференции Матемаркетинг 2026 — расписание докладов"
+    : "Matemarketing 2026 conference program — talk schedule";
 
 // `hreflang` только у страниц дня: 404 и корень локали не имеют пары «тот же
 // день в другом языке». `x-default` указывает на русскую версию — она первична.
@@ -80,7 +85,10 @@ const [ticketsBefore, ticketsAfter = ""] = t(lang, "footerTickets").split("{link
 <html lang={lang} data-lang={lang} data-theme="dark" data-day-id={dayId} data-day-date={dayDate}>
   <head>
     <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1, viewport-fit=cover, interactive-widget=resizes-content"
+    />
     <meta
       name="format-detection"
       content="telephone=no,date=no,address=no,email=no"

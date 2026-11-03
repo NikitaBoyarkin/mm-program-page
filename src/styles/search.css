@@ -41,12 +41,13 @@
   display: flex;
   flex-direction: column;
   inline-size: min(640px, 100%);
-  /* 10vh — панель ближе к шапке, чем модалка доклада: поиск открывают из
-     шапки, и взгляд уже там. */
-  margin-block-start: 10vh;
-  /* Остаток экрана: 100dvh за вычетом 10vh сверху и паддинга диалога сверху
+  /* 10dvh — панель ближе к шапке, чем модалка доклада: поиск открывают из
+     шапки, и взгляд уже там. `dvh`, а не `vh`: статический `vh` вместе с
+     `dvh` в одном calc сдвигал панель и укорачивал её на мобильных. */
+  margin-block-start: 10dvh;
+  /* Остаток экрана: 100dvh за вычетом 10dvh сверху и паддинга диалога сверху
      и снизу. Панель не выезжает за вьюпорт, а скроллится изнутри. */
-  max-block-size: calc(100dvh - 10vh - var(--space-8));
+  max-block-size: calc(100dvh - 10dvh - var(--space-8));
   overflow: hidden;
   border: 1px solid var(--border-color);
   border-radius: var(--radius-lg);
@@ -91,7 +92,9 @@
   /* 44px — цель нажатия для пальца, как у ссылок выдачи. */
   block-size: 44px;
   padding-inline: var(--space-3);
-  border: 1px solid var(--border-color);
+  /* В киберпанке `--border-color` даёт 1.91:1 к полю — граница не читается;
+     `--border-strong` поднимает её до ≈3.3:1 на панели (норма 3:1). */
+  border: 1px solid var(--border-strong);
   border-radius: var(--radius-md);
   background: var(--surface-secondary);
   color: var(--text-normal);
@@ -105,9 +108,16 @@
   color: var(--text-muted);
 }
 
+/* Рамка в 1px рядом с панелью не видна, поэтому поле — единственный контрол,
+   который не теряет глобальное `:focus-visible` кольцо из tokens.css: фокус
+   сюда ставится программно в момент открытия диалога. */
 .search-input:focus {
   border-color: var(--border-active);
-  outline: none;
+}
+
+.search-input:focus-visible {
+  outline: 2px solid var(--border-active);
+  outline-offset: 2px;
 }
 
 /* Свой крестик уже есть справа: системный `×` у `type="search"` дал бы два. */
@@ -243,7 +253,9 @@
 
 @media (max-width: 767.98px) {
   .search-dialog {
-    padding: 0;
+    /* Верх и низ приходят от панели: она на весь экран и забирает свои инсеты
+       на себя, а по бокам диалог стоит вплотную к краю. */
+    padding: 0 env(safe-area-inset-right) 0 env(safe-area-inset-left);
   }
 
   .search-dialog__panel {
@@ -252,6 +264,11 @@
        высоту, и список уезжал бы под неё. */
     block-size: 100dvh;
     max-block-size: 100dvh;
+    /* Панель на весь экран, поэтому статус-бар и домашний индикатор попадают
+       внутрь неё: без инсетов поле и крестик уезжают под часы и батарею.
+       Панель — flex-колонка, так что выдача просто получает скроллпорт короче. */
+    padding-block-start: env(safe-area-inset-top);
+    padding-block-end: env(safe-area-inset-bottom);
     margin-block-start: 0;
     border: 0;
     border-radius: 0;

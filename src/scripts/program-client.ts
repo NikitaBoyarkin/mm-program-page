@@ -166,6 +166,8 @@ let layerSeq = 0;
 let modalLayerToken = "";
 let drawerLayerToken = "";
 let searchLayerToken = "";
+/** Отложенный возврат фокуса в только что открытый drawer (см. `openDrawer`). */
+let focusTimer = 0;
 
 function currentLayerToken(): string {
   const state: unknown = window.history.state;
@@ -208,6 +210,62 @@ function initHistory(): void {
   });
 }
 
+/* ── Инертный фон для слоёв (drawer, поиск) ─────────────────────────── */
+/**
+ * `aria-modal="true"` и фокус-трап держат Tab, но не виртуальный курсор
+ * скринридера: Safari/VoiceOver продолжают читать страницу за скримом.
+ * `inert` + `aria-hidden` убирают фон из дерева доступности целиком —
+ * ровно то, что `TalkModal.astro` делает для модалки доклада.
+ *
+ * Записи хранят прежнее состояние: закрытая панель drawer'а либо инертна из
+ * инлайнового фолбэка в `Base.astro`, либо просто `visibility: hidden`
+ * (на страницах дня), и снимать чужой `inert` на закрытии поиска нельзя.
+ *
+ * `keep` — поддерево открытого слоя; всё, что его содержит, не инертится,
+ * иначе диалог оказался бы внутри инертного `main` и потерял фокус.
+ * `.nav-scrim` не инертится никогда: это тап-зона закрытия drawer'а.
+ */
+type InertRecord = { el: Element; inert: boolean; ariaHidden: string | null };
+
+const inertApplied: InertRecord[] = [];
+
+function inertBackground(keep: Element | null): void {
+  // Слой поверх слоя сегодня недостижим (открывашка поиска живёт в шапке,
+  // а шапка инертна при открытом drawer'е), но молча игнорировать `keep`
+  // нельзя: снимаем прошлый набор и применяем новый.
+  if (inertApplied.length) releaseInert();
+  const targets: Element[] = $$(
+    "body > a.skip-link, body > header, body > nav, body > footer",
+  );
+  const main = $("#main");
+  if (main) {
+    for (const child of Array.from(main.children)) {
+      if (!keep || !child.contains(keep)) targets.push(child);
+    }
+  }
+  for (const el of targets) {
+    if (keep && (el === keep || el.contains(keep))) continue;
+    inertApplied.push({
+      el,
+      inert: el.hasAttribute("inert"),
+      ariaHidden: el.getAttribute("aria-hidden"),
+    });
+    el.setAttribute("inert", "");
+    // Фолбэк для движков без `inert`: скринридер не должен читать фон.
+    el.setAttribute("aria-hidden", "true");
+  }
+}
+
+function releaseInert(): void {
+  while (inertApplied.length) {
+    const item = inertApplied.pop();
+    if (!item) break;
+    if (!item.inert) item.el.removeAttribute("inert");
+    if (item.ariaHidden === null) item.el.removeAttribute("aria-hidden");
+    else item.el.setAttribute("aria-hidden", item.ariaHidden);
+  }
+}
+
 /* ── 2. Drawer ─────────────────────────────────────────────────────── */
 
 function drawerTrigger(): HTMLButtonElement | null {
@@ -223,7 +281,32 @@ function openDrawer(): void {
   // `inert` убирает панель из таб-порядка и дерева доступности — то же, что
   // делает инлайновый фолбэк в `Base.astro` для страниц без этого скрипта.
   nav?.removeAttribute("inert");
-  nav?.querySelector<HTMLElement>("a, button")?.focus();
+  // Обратная сторона: страница за скримом уходит из таб-порядка и дерева
+  // доступности, иначе Tab после последнего пункта уводил в невидимый `main`.
+  inertBackground(nav);
+  // Панель въезжает 220ms, и всё это время `visibility` остаётся `hidden`:
+  // `focus()` по невидимому узлу молча не срабатывает (проверено замером:
+  // activeElement оставался `body` и через 500ms). Ждём `transitionend`
+  // по `visibility`, а таймаут страхует случай `prefers-reduced-motion`,
+  // где перехода нет вовсе.
+  const focusFirst = (): void => nav?.querySelector<HTMLElement>("a, button")?.focus();
+  if (nav) {
+    let focused = false;
+    const settle = (): void => {
+      // Панель могли закрыть раньше, чем сработал таймаут: фокус в закрытую
+      // (и уже инертную) панель — это украденный фокус у кнопки-открывашки.
+      if (focused || !document.body.classList.contains("nav-open")) return;
+      focused = true;
+      window.clearTimeout(focusTimer);
+      nav.removeEventListener("transitionend", onTransitionEnd);
+      focusFirst();
+    };
+    const onTransitionEnd = (event: Event): void => {
+      if (event.target === nav && (event as TransitionEvent).propertyName === "visibility") settle();
+    };
+    nav.addEventListener("transitionend", onTransitionEnd);
+    focusTimer = window.setTimeout(settle, 260);
+  }
   // Упрощённая версия приёма из модалки: запись в истории, чтобы системная
   // «Назад» закрывала меню, а не уводила со страницы.
   if (!drawerLayerToken && document.body.classList.contains("nav-open")) {
@@ -236,6 +319,12 @@ function hideDrawer(returnFocus = true): void {
   const wasOpen = document.body.classList.contains("nav-open");
   document.body.classList.remove("nav-open");
   drawerLayerToken = "";
+  // Ожидающий возврат фокуса из `openDrawer` больше не нужен.
+  window.clearTimeout(focusTimer);
+  // Снять `inert` с фона нужно ДО возврата фокуса: `focus()` внутри инертного
+  // поддерева молча не срабатывает. И до выхода по отсутствующей кнопке —
+  // иначе фон остался бы инертным до перезагрузки.
+  releaseInert();
   const trigger = drawerTrigger();
   if (!trigger) return;
   trigger.setAttribute("aria-expanded", "false");
@@ -335,6 +424,9 @@ function applyFilter(): void {
     empty.hidden = visible !== 0;
     empty.textContent = t(LANG, favoritesOnly ? "emptyFavorites" : "emptyTrack");
   }
+  // Карточка могла быть скрыта при первичном замере: теперь у неё есть бокс,
+  // и решение «нужна ли кнопка» можно принять честно.
+  syncExpandAffordance();
 
   syncTimeGroups();
 }
@@ -410,6 +502,22 @@ function syncDayTabTracks(): void {
   }
 }
 
+/**
+ * Один и тот же `activeTrack` читают два вида управления: чипы (десктоп) и
+ * нативный список (телефон, см. `.track-select`). Чипы переключает цикл выше,
+ * список — здесь: значение и подпись видимой обёртки.
+ */
+function syncTrackSelect(): void {
+  const select = $<HTMLSelectElement>("[data-track-select]");
+  const value = $<HTMLElement>("[data-track-select-value]");
+  if (!select) return;
+  select.value = activeTrack ?? "";
+  if (value) {
+    const option = select.selectedOptions[0] ?? select.options[select.selectedIndex];
+    value.textContent = (option?.textContent ?? t(LANG, "allTracks")).trim();
+  }
+}
+
 function setActiveTrack(track: string | null, updateUrl = true): void {
   const chips = trackChips();
   const known = track !== null && chips.some((chip) => chip.dataset.track === track) ? track : null;
@@ -420,6 +528,7 @@ function setActiveTrack(track: string | null, updateUrl = true): void {
     chip.setAttribute("aria-pressed", String(pressed));
     chip.classList.toggle("track-chip--active", pressed);
   }
+  syncTrackSelect();
 
   applyFilter();
   syncDayTabTracks();
@@ -436,6 +545,14 @@ function initFilter(): void {
       setActiveTrack(activeTrack === track ? null : track);
     });
   }
+
+  // Телефонный список открывает системный пикер; `change` приходит и без
+  // выбора (отмена) — тогда значение равно прежнему и фильтр не меняется.
+  const select = $<HTMLSelectElement>("[data-track-select]");
+  select?.addEventListener("change", () => {
+    setActiveTrack(select.value || null);
+  });
+  syncTrackSelect();
 
   let raw: string | null = null;
   try {
@@ -596,6 +713,54 @@ function initFavorites(): void {
 
 /* ── 5. «Подробнее» в карточке ─────────────────────────────────────── */
 
+/**
+ * Кламп не виден в `scrollHeight` (там всегда высота клампа), поэтому меряем
+ * «до/после»: снимаем кламп на один кадр, сравниваем высоту и возвращаем как
+ * было. Возвращает `null`, если у карточки сейчас нет бокса (скрыта фильтром):
+ * по нулевой высоте решать нельзя, состояние кнопки в этом случае не трогаем.
+ */
+function isClamped(paragraph: HTMLElement): boolean | null {
+  if (!paragraph.getClientRects().length) return null;
+  const inline = paragraph.style;
+  const saved = {
+    clamp: inline.webkitLineClamp,
+    display: inline.display,
+    overflow: inline.overflow,
+  };
+  inline.webkitLineClamp = "unset";
+  inline.display = "block";
+  inline.overflow = "visible";
+  const full = paragraph.getBoundingClientRect().height;
+  inline.webkitLineClamp = saved.clamp;
+  inline.display = saved.display;
+  inline.overflow = saved.overflow;
+  const clamped = paragraph.getBoundingClientRect().height;
+  return full > clamped + 1;
+}
+
+/**
+ * На билде `canExpand` считает символы, а кламп — строки: 150 знаков дают
+ * 5+ строк на 320px и 4 строки на десктопной карточке 391px. Поэтому кнопка
+ * есть с запасом у всех «длинных», а здесь прячется та, что ничего не
+ * раскрывает — иначе в десктопной сетке «Подробнее» открывало пустоту.
+ */
+function syncExpandAffordance(): void {
+  for (const button of $$<HTMLButtonElement>("button.talk-card__toggle-btn[data-more]")) {
+    const card = button.closest<HTMLElement>("article.talk-card");
+    const paragraph = card?.querySelector<HTMLElement>(".talk-card__theses p");
+    if (!card || !paragraph) {
+      button.hidden = true;
+      continue;
+    }
+    if (card.classList.contains("talk-card--expanded")) {
+      button.hidden = false;
+      continue;
+    }
+    const clamped = isClamped(paragraph);
+    if (clamped !== null) button.hidden = !clamped;
+  }
+}
+
 function initExpand(): void {
   for (const button of $$<HTMLButtonElement>("button.talk-card__toggle-btn[data-more]")) {
     button.addEventListener("click", (event) => {
@@ -609,6 +774,15 @@ function initExpand(): void {
       button.textContent = t(LANG, expanded ? "less" : "more");
     });
   }
+
+  syncExpandAffordance();
+  // Порог «5 строк» зависит от ширины: 320 → 254px текста, 1440 → 349px.
+  // После поворота экрана кнопка должна появиться/исчезнуть сама.
+  let resizeTimer = 0;
+  window.addEventListener("resize", () => {
+    window.clearTimeout(resizeTimer);
+    resizeTimer = window.setTimeout(syncExpandAffordance, 200);
+  });
 }
 
 /* ── Данные: ленивый мемоизированный fetch ─────────────────────────── */
@@ -862,13 +1036,15 @@ function fillMeta(talk: Talk): void {
     ["talk-modal__time-badge", formatRange(talk)],
     ["talk-modal__hall-badge", talk.hall],
   ];
-  parts.forEach(([className, text], index) => {
-    if (index > 0) meta.appendChild(document.createTextNode(" · "));
+  // Пилюли разделяет `gap` контейнера, а не текстовый узел «·»: в `flex-wrap`
+  // разделитель становится отдельным элементом и переносится один, оставляя
+  // висячую точку в конце строки (видно на 390px после бейджа времени).
+  for (const [className, text] of parts) {
     const span = document.createElement("span");
     span.className = className;
     span.textContent = text;
     meta.appendChild(span);
-  });
+  }
 }
 
 function fillSpeakers(talk: Talk): void {
@@ -1149,6 +1325,9 @@ function openSearch(): void {
   // Свой класс, а не `is-modal-open`: тот включает inert-менеджер из
   // `TalkModal.astro`, и поле поиска оказалось бы внутри инертного `main`.
   document.body.classList.add("is-search-open");
+  // Поэтому фон инертится здесь, вручную: `aria-modal` без `inert` оставляет
+  // весь документ доступным для виртуального курсора скринридера.
+  inertBackground(dialog);
   $<HTMLInputElement>("[data-search-input]")?.focus();
 }
 
@@ -1160,6 +1339,10 @@ function hideSearch(returnFocus = true): void {
   dialog.hidden = true;
   searchLayerToken = "";
   document.body.classList.remove("is-search-open");
+  releaseInert();
+  // Живая область не должна переживать закрытие: иначе тот же запрос при
+  // следующем открытии не изменит текст и не будет объявлен.
+  announceSearch(null);
 
   const trigger = searchTrigger();
   trigger?.setAttribute("aria-expanded", "false");
@@ -1191,6 +1374,16 @@ function clearResults(): void {
   const empty = $<HTMLElement>("[data-search-empty]");
   if (hint) hint.hidden = false;
   if (empty) empty.hidden = true;
+  // Пустая область: старое «12 докладов» не должно пережить очистку ввода.
+  announceSearch(null);
+}
+
+/** Что сказать в живую область поиска: `null` — очистить, не объявляя. */
+function announceSearch(count: number | null): void {
+  const status = $<HTMLElement>("[data-search-status]");
+  if (!status) return;
+  if (count === null) status.textContent = "";
+  else status.textContent = count > 0 ? `${count} ${pluralTalks(count, LANG)}` : t(LANG, "searchEmpty");
 }
 
 /** Только `createElement`/`textContent`: данные из JSON не идут в `innerHTML`. */
@@ -1228,6 +1421,9 @@ function renderResults(program: Program, query: string): void {
   }
 
   if (empty) empty.hidden = found.length !== 0;
+  // Живая область: без неё скринридер не узнаёт ни числа результатов,
+  // ни «ничего не найдено» — визуальная выдача для него не меняется.
+  announceSearch(found.length);
 }
 
 function runSearch(query: string): void {

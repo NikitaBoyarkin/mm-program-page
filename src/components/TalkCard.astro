@@ -28,8 +28,12 @@ const lectors = talk.lectors
   .filter((lector) => lector.name.trim() !== "")
   .map((lector) => ({ ...lector, socials: lector.socials ?? [] }));
 const theses = (talk.short || firstParagraph(talk.description)).trim();
-/** Кнопка нужна только там, где текст реально не влезает в 5 строк клампа. */
-const canExpand = theses.length > 240;
+/** Кнопка нужна только там, где текст реально не влезает в 5 строк клампа.
+    Порог считается по строкам, а не по «длинный/короткий»: при карточке 254px
+    на 320px пять строк держат ≈165 знаков, поэтому 150 — безопасный низ.
+    Замер дня 1: 8 карточек на 179–239 знаках вылезали за кламп на 22–90px
+    (до 4 скрытых строк) и оставались без кнопки. */
+const canExpand = theses.length > 150;
 const trackText = talk.track.trim() ? trackLabel(lang, talk.track) : t(lang, "noTrack");
 const hallText = hallLabel(lang, talk.hall);
 
@@ -110,7 +114,7 @@ const STAR =
             </h3>
             <div class="talk-card__media-meta">
               <span class="talk-card__meta-item">{trackText}</span>
-              <span class="talk-card__meta-item">{hallText}</span>
+              <span class="talk-card__meta-item talk-card__meta-hall">{hallText}</span>
             </div>
           </div>
         )

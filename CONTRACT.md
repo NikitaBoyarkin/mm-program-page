@@ -63,7 +63,8 @@
 `--icon-star`/`--icon-star-filled`, `--icon-download`, `--icon-ticket`, `--icon-chevron`,
 `--icon-tag`, `--icon-expand`). Разметка остаётся текстовой, поэтому селекторы Playwright и порядок узлов не
 меняются. Точки: `dt` фактов (класс `facts__item--*`), `.day-tab` (скрыт ≤ 767.98 px — иначе
-полоса табов переполняет 320 px), чипы избранного и треков, экспорт `.ics`, бейджи времени и
+полоса табов переполняет 320 px), чипы избранного и треков (на телефоне вместо чипов
+треков — `label.track-select` с нативным `select`), экспорт `.ics`, бейджи времени и
 зала, «Подробнее» (шеврон переворачивается по `aria-expanded`), мета-кейсы, «Купить» и
 «Избранное» в модалке. Новая иконка = `--icon-*` + селектор в общем рецепте.
 
@@ -194,6 +195,9 @@ div.program-toolbar
   div.track-chips[data-track-chips]
     button.track-chip[data-fav-filter][aria-pressed]        ← всегда первый чип, без data-track
     button.track-chip[data-track][aria-pressed] × N          ← чипы треков из чипов
+    label.track-select                                      ← телефонный выбор трека (≤ 767.98 px)
+      span.track-select__value[data-track-select-value]
+      select.track-select__control[data-track-select] > option[value] × N+1
   p.talk-count > span[data-talk-count] + span[data-talk-count-label]
   button.button[data-export-ics]
 section.program-grid[data-grid][style=--mm-hall-count:N]
@@ -226,6 +230,7 @@ div.search-dialog[data-search-dialog][hidden]
     p.search-hint[data-search-hint]
     ul.search-results[data-search-results][role=list]
     p.search-empty[data-search-empty][hidden]
+    p.search-status.visually-hidden[data-search-status][role=status][aria-live=polite]
 ```
 
 Результат поиска клиент создаёт как `li > a.search-result[href] >
@@ -262,7 +267,7 @@ span.search-result__day + span.search-result__title + span.search-result__meta`;
 | `.talk-card__media` у `.talk-card--compact` | остаётся: в нём живёт `h3` с кнопкой заголовка |
 | `.talk-card__time` | скрыт — время несёт разделитель |
 | `.talk-card__hall` | виден только здесь; на десктопе `display: none` |
-| `.talk-card__title-btn`, `.track-chip` | заголовок-кнопка — `min-block-size: 44px` (сенсорная цель, а не только визуальная высота), подписи не мельче 0.75 rem. Чип компактнее — `32px`: он в ряду фильтров, 44 px на каждом давали три строки тулбара; 32 ≥ 24 px (WCAG 2.5.8 AA) |
+| `.talk-card__title-btn`, `.track-chip` | заголовок-кнопка — `min-block-size: 44px` (сенсорная цель, а не только визуальная высота), подписи не мельче 0.75 rem. Чип компактнее — `36px`: он в ряду фильтров, 44 px на каждом давали три строки тулбара; 36 ≥ 24 px (WCAG 2.5.8 AA) с запасом на палец |
 | `.talk-card__favorite`, `.talk-card__toggle-btn`, `.talk-modal__close` | целевой размер 44 px даёт псевдоэлемент (`::after`/`::before`), глиф остаётся прежнего размера |
 | `header.nav-mobile` | `backdrop-filter: none`: блюр на каждой прокрутке дороже, чем даёт, а фон `color-mix(… 97%)` и так почти непрозрачен |
 | `nav.day-tabs` | липкие под шапкой, `flex-wrap: nowrap`; подпись вкладки без даты (`.day-tab__date` скрыт), поэтому три вкладки встают в строку даже на 320 px. Горизонтальный скролл остаётся страховкой, а не основным способом добраться до третьего дня |
@@ -293,6 +298,13 @@ span.search-result__day + span.search-result__title + span.search-result__meta`;
    Второй, независимый переключатель — «Избранное»: `button.track-chip[data-fav-filter]`,
    первый в `.track-chips`, **без `data-track`**, поэтому селектор чипов трека
    (`[data-track-chips] > button.track-chip[data-track]`) его не подхватывает.
+   На телефоне (≤ 767.98 px) чипы треков скрыты, а тот же `activeTrack` выбирается
+   нативным `select[data-track-select]` внутри `label.track-select`: 12 подписей — 2147 px,
+   в строку 358 px они не влезают, а перенос даёт 8 строк / 252 px над карточками.
+   Обёртка выглядит чипом, сам `select` прозрачен и лежит поверх — тап открывает системный
+   список. Оба вида читают и пишут одно состояние: чипы продолжают получать `aria-pressed`
+   и остаются в DOM (селекторы тестов не зависят от ширины), `change` списка зовёт тот же
+   `setActiveTrack`.
    Условия складываются по «И»: видима ячейка, у которой (трек не выбран или совпал)
    И (избранное выключено или доклад в избранном); в URL попадает только `?track=`.
    Число в чипе — размер избранного, обновляется вместе с `[data-favorites-count]`;
@@ -330,6 +342,9 @@ span.search-result__day + span.search-result__title + span.search-result__meta`;
     страница дня + `?talk=<id>`. Лок скролла — свой класс `body.is-search-open`,
     а **не** `is-modal-open`: тот включает inert-менеджер `TalkModal.astro`, и диалог
     поиска (он ребёнок `main`) стал бы недоступен для фокуса и скринридера.
+    Поэтому фон инертится отдельно, из `program-client.ts`: `body > header/nav/footer`,
+    `skip-link` и те дети `main`, что не содержат диалог. Тот же помощник держит
+    фон инертным при открытом drawer'е — до этого Tab уходил из меню в невидимый `main`.
 
 ## Доступность и качество
 
@@ -338,6 +353,10 @@ span.search-result__day + span.search-result__title + span.search-result__meta`;
   доступности, поэтому `aria-hidden` не нужен — смысл несёт подпись рядом.
 - Счётчик докладов — `p.talk-count[aria-live=polite]`: фильтр переписывает число и слово,
   и скринридер слышит новое значение, не теряя фокуса.
+- Счётчик выдачи поиска — `p.search-status[data-search-status][role=status][aria-live=polite]`
+  (визуально скрыт): клиент пишет туда «N докладов» или «Ничего не найдено», иначе выдача
+  менялась бы для скринридера молча. На закрытии текст очищается, чтобы тот же запрос
+  при следующем открытии снова был объявлен.
 - Пока модалка открыта, весь фон получает `inert` (плюс `aria-hidden` как фолбэк без
   поддержки `inert`); ставит и снимает его `MutationObserver` в `TalkModal.astro`.
 - Табы дней — ссылки с `aria-current`; чипы — `button` с `aria-pressed`; карточка открывается
