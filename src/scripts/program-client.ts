@@ -6,20 +6,23 @@
  * переключатель темы, drawer, фильтры (трек и избранное), «Подробнее»,
  * модалка доклада и экспорт `.ics`.
  *
- * Данные (`Program`) приходят из prerendered-эндпоинта `/program.json`
- * лениво — только при первом открытии модалки или экспорте календаря. Промис
- * мемоизирован, ошибка показывается тостом; в консоль не пишем ничего.
+ * Данные (`Program`) приходят из prerendered-эндпоинта `<локаль>/program.json`
+ * лениво — только при первом открытии модалки, поиске или экспорте календаря.
+ * Промис мемоизирован, ошибка показывается тостом; в консоль не пишем ничего.
  */
+import { pluralTalks } from "../i18n/format";
+import { dayHrefFor } from "../i18n/paths";
+import { t, type Lang } from "../i18n/ui";
 import { buildCalendar, calendarFilename, downloadIcs } from "../lib/ics";
 import {
   BASE_URL,
   formatRange,
   isTime,
-  pluralTalks,
   type Day,
   type Program,
   type Talk,
 } from "../lib/program";
+import { searchTalks } from "../lib/search";
 import { THEMES, THEME_COLORS, nextTheme, type Theme } from "../lib/theme";
 import { SOCIAL_LABELS } from "../lib/socials";
 import { createMorph } from "morphicons/dom";
@@ -38,9 +41,8 @@ const SKELETON_CLASS = "talk-modal__media--loading";
 /** Порог мобильной модели (см. `CONTRACT.md`): список, а не сжатая сетка. */
 const MOBILE_QUERY = "(max-width: 767.98px)";
 
-/** Пустые состояния различаются формулировкой: причина пустоты видна текстом. */
-const EMPTY_TRACK_TEXT = "По этому треку в выбранный день докладов нет.";
-const EMPTY_FAVORITES_TEXT = "В избранном пока нет докладов этого дня";
+/** Язык страницы ставит `Base.astro` в `data-lang`; прочее — русский. */
+const LANG: Lang = document.documentElement.dataset.lang === "en" ? "en" : "ru";
 
 const FOCUSABLE =
   'a[href], button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])';
@@ -158,11 +160,12 @@ function initTheme(): void {
  * вопрос «эта запись — моя?»: если записи нет (рассинхрон истории,
  * `pushState` упал), `back()` не вызывается и со страницы не выкидывает.
  */
-type LayerName = "modal" | "drawer";
+type LayerName = "modal" | "drawer" | "search";
 
 let layerSeq = 0;
 let modalLayerToken = "";
 let drawerLayerToken = "";
+let searchLayerToken = "";
 
 function currentLayerToken(): string {
   const state: unknown = window.history.state;
@@ -192,6 +195,11 @@ function initHistory(): void {
     const token = currentLayerToken();
     // Слой закрывается только если запись действительно ушла: чужой
     // `popstate` (например, от `?track=` в другой записи) ничего не трогает.
+    // Поиск — самый верхний слой, поэтому проверяется первым.
+    if (searchLayerToken && searchLayerToken !== token) {
+      hideSearch();
+      return;
+    }
     if (modalLayerToken && modalLayerToken !== token) {
       hideModal();
       return;
@@ -211,7 +219,7 @@ function openDrawer(): void {
   document.body.classList.add("nav-open");
   const trigger = drawerTrigger();
   trigger?.setAttribute("aria-expanded", "true");
-  trigger?.setAttribute("aria-label", "Закрыть меню");
+  trigger?.setAttribute("aria-label", t(LANG, "navClose"));
   // `inert` убирает панель из таб-порядка и дерева доступности — то же, что
   // делает инлайновый фолбэк в `Base.astro` для страниц без этого скрипта.
   nav?.removeAttribute("inert");
@@ -231,7 +239,7 @@ function hideDrawer(returnFocus = true): void {
   const trigger = drawerTrigger();
   if (!trigger) return;
   trigger.setAttribute("aria-expanded", "false");
-  trigger.setAttribute("aria-label", "Открыть меню");
+  trigger.setAttribute("aria-label", t(LANG, "navOpen"));
   $("nav#site-nav")?.setAttribute("inert", "");
   if (wasOpen && returnFocus) trigger.focus();
 }
@@ -321,11 +329,11 @@ function applyFilter(): void {
   const count = $("[data-talk-count]");
   if (count) count.textContent = String(visible);
   const label = $("[data-talk-count-label]");
-  if (label) label.textContent = pluralTalks(visible);
+  if (label) label.textContent = pluralTalks(visible, LANG);
   const empty = $<HTMLElement>("[data-empty]");
   if (empty) {
     empty.hidden = visible !== 0;
-    empty.textContent = favoritesOnly ? EMPTY_FAVORITES_TEXT : EMPTY_TRACK_TEXT;
+    empty.textContent = t(LANG, favoritesOnly ? "emptyFavorites" : "emptyTrack");
   }
 
   syncTimeGroups();
@@ -521,8 +529,8 @@ function syncModalFav(): void {
   const active = modalTalk !== null && favorites.has(modalTalk.id);
   button.setAttribute("aria-pressed", String(active));
   button.classList.toggle("talk-card__favorite--active", active);
-  button.setAttribute("aria-label", active ? "Убрать из избранного" : "Добавить в избранное");
-  const label = active ? "В избранном" : "В избранное";
+  button.setAttribute("aria-label", t(LANG, active ? "modalFavRemove" : "modalFavAdd"));
+  const label = t(LANG, active ? "modalFavActive" : "modalFavAdd");
   const slot = button.querySelector<HTMLElement>("[data-modal-fav-label]");
   if (slot) slot.textContent = label;
   else if (!button.childElementCount) button.textContent = label;
@@ -540,8 +548,11 @@ function syncFavorites(): void {
       .closest(".talk-card")
       ?.querySelector(".talk-card__title-btn")
       ?.textContent?.trim();
-    const verb = active ? "Убрать из избранного" : "В избранное";
-    button.setAttribute("aria-label", title ? `${verb}: ${title}` : verb);
+    const verb = t(LANG, active ? "modalFavRemove" : "modalFavAdd");
+    button.setAttribute(
+      "aria-label",
+      title ? t(LANG, active ? "cardFavRemove" : "cardFavAdd", { title }) : verb,
+    );
     button.title = verb;
   }
 
@@ -595,7 +606,7 @@ function initExpand(): void {
       if (!card) return;
       const expanded = card.classList.toggle("talk-card--expanded");
       button.setAttribute("aria-expanded", String(expanded));
-      button.textContent = expanded ? "Свернуть" : "Подробнее";
+      button.textContent = t(LANG, expanded ? "less" : "more");
     });
   }
 }
@@ -607,8 +618,10 @@ let programPromise: Promise<Program> | null = null;
 function loadProgram(): Promise<Program> {
   if (!programPromise) {
     // `BASE_URL` из ядра: `/` на корне, `/repo/` при `base` в конфиге. Абсолютный
-    // `/program.json` ломался бы на project-странице GitHub Pages.
-    programPromise = fetch(`${BASE_URL}program.json`, { headers: { accept: "application/json" } })
+    // `/program.json` ломался бы на project-странице GitHub Pages. Язык — свой
+    // префикс: `/en/program.json` уже переведён на билде.
+    const dataUrl = `${BASE_URL}${LANG === "en" ? "en/" : ""}program.json`;
+    programPromise = fetch(dataUrl, { headers: { accept: "application/json" } })
       .then((response) => {
         if (!response.ok) throw new Error(`program.json: HTTP ${response.status}`);
         return response.json() as Promise<Program>;
@@ -845,7 +858,7 @@ function fillMeta(talk: Talk): void {
   meta.replaceChildren();
 
   const parts: Array<[string, string]> = [
-    ["talk-modal__track-chip", talk.track || "Без трека"],
+    ["talk-modal__track-chip", talk.track || t(LANG, "noTrack")],
     ["talk-modal__time-badge", formatRange(talk)],
     ["talk-modal__hall-badge", talk.hall],
   ];
@@ -877,7 +890,7 @@ function fillText(talk: Talk): void {
     .split(/\n\s*\n/)
     .map((part) => part.trim())
     .filter(Boolean);
-  for (const part of paragraphs.length ? paragraphs : ["Описание доклада пока не добавлено."]) {
+  for (const part of paragraphs.length ? paragraphs : [t(LANG, "noDescription")]) {
     const paragraph = document.createElement("p");
     paragraph.textContent = part;
     text.appendChild(paragraph);
@@ -983,7 +996,8 @@ function setBusy(button: HTMLElement | null, busy: boolean): void {
   }
 }
 
-function openTalk(talkId: number, opener: HTMLElement): void {
+/** `opener` пуст у deep-link: доклад может быть с другого дня. */
+function openTalk(talkId: number, opener: HTMLElement | null): void {
   if (!modalRoot() || !modalDialog()) return;
   modalOpener = opener;
   // Отклик в первую секунду: `/program.json` может ещё ехать, но тап уже
@@ -994,22 +1008,22 @@ function openTalk(talkId: number, opener: HTMLElement): void {
       const talk = program.talks.find((item) => item.id === talkId);
       if (!talk) {
         modalOpener = null;
-        toast("Доклад не найден");
+        toast(t(LANG, "toastTalkNotFound"));
         return;
       }
       showModal(talk);
     })
     .catch(() => {
       modalOpener = null;
-      toast("Не удалось загрузить программу");
+      toast(t(LANG, "toastLoadFailed"));
     })
     .finally(() => setBusy(opener, false));
 }
 
-function onDialogKeydown(event: KeyboardEvent): void {
-  if (event.key !== "Tab") return;
-  const dialog = modalDialog();
-  if (!dialog) return;
+/** Общий трап Tab: модалка доклада и диалог поиска держат фокус внутри. */
+function trapTab(event: KeyboardEvent, root: HTMLElement | null): void {
+  if (event.key !== "Tab" || !root) return;
+  const dialog = root;
 
   const items = focusable(dialog);
   if (!items.length) {
@@ -1053,7 +1067,7 @@ function initModal(): void {
   for (const backdrop of $$("[data-modal-backdrop]")) {
     backdrop.addEventListener("click", () => closeModal());
   }
-  dialog.addEventListener("keydown", onDialogKeydown);
+  dialog.addEventListener("keydown", (event) => trapTab(event, modalDialog()));
 }
 
 /* ── 7. Экспорт .ics ───────────────────────────────────────────────── */
@@ -1089,17 +1103,205 @@ function exportIcs(): void {
         (talk) => ids.has(talk.id) && isTime(talk.start) && isTime(talk.end),
       );
       if (!day || !talks.length) {
-        toast("Нет докладов для экспорта");
+        toast(t(LANG, "toastNoExport"));
         return;
       }
       downloadIcs(calendarFilename(day), buildCalendar(day, talks));
-      toast(`В календарь: ${talks.length} докладов`);
+      toast(
+        t(LANG, "toastExported", {
+          count: `${talks.length} ${pluralTalks(talks.length, LANG)}`,
+        }),
+      );
     })
-    .catch(() => toast("Не удалось загрузить программу"));
+    .catch(() => toast(t(LANG, "toastLoadFailed")));
 }
 
 function initExport(): void {
   $<HTMLButtonElement>("button[data-export-ics]")?.addEventListener("click", () => exportIcs());
+}
+
+/* ── 7a. Поиск по программе ────────────────────────────────────────── */
+
+/** Номер запроса: ответ на устаревший ввод не должен перетереть свежий. */
+let searchSeq = 0;
+
+const searchDialog = (): HTMLElement | null => $<HTMLElement>("[data-search-dialog]");
+const searchPanel = (): HTMLElement | null => $<HTMLElement>("[data-search-panel]");
+const searchResults = (): HTMLElement | null => $<HTMLElement>("[data-search-results]");
+const searchTrigger = (): HTMLButtonElement | null =>
+  $<HTMLButtonElement>("button[data-search-open]");
+
+function isSearchOpen(): boolean {
+  const dialog = searchDialog();
+  return !!dialog && !dialog.hidden;
+}
+
+function openSearch(): void {
+  const dialog = searchDialog();
+  if (!dialog || !dialog.hidden) return;
+
+  searchTrigger()?.setAttribute("aria-expanded", "true");
+  // Та же запись истории, что у модалки и drawer'а: системная «Назад»
+  // закрывает поиск, а не уводит со страницы.
+  if (!searchLayerToken) searchLayerToken = pushLayer("search");
+
+  dialog.hidden = false;
+  // Свой класс, а не `is-modal-open`: тот включает inert-менеджер из
+  // `TalkModal.astro`, и поле поиска оказалось бы внутри инертного `main`.
+  document.body.classList.add("is-search-open");
+  $<HTMLInputElement>("[data-search-input]")?.focus();
+}
+
+/** Скрытие без истории — единственная точка, где диалог реально исчезает. */
+function hideSearch(returnFocus = true): void {
+  const dialog = searchDialog();
+  if (!dialog || dialog.hidden) return;
+
+  dialog.hidden = true;
+  searchLayerToken = "";
+  document.body.classList.remove("is-search-open");
+
+  const trigger = searchTrigger();
+  trigger?.setAttribute("aria-expanded", "false");
+  if (returnFocus && trigger?.isConnected) trigger.focus();
+}
+
+function closeSearch(viaHistory = true): void {
+  if (!isSearchOpen()) return;
+  const token = searchLayerToken;
+  hideSearch();
+  if (viaHistory && token && currentLayerToken() === token) window.history.back();
+}
+
+/**
+ * Адрес страницы дня доклада: дни сортируются по `order`, первый живёт на
+ * корне локали, остальные — в `day/<ordinal>/`.
+ */
+function talkHref(program: Program, talk: Talk): string {
+  const ordered = [...program.days].sort((a, b) => a.order - b.order);
+  const index = ordered.findIndex((day) => day.id === talk.dayId);
+  const ordinal = index < 0 ? 1 : index + 1;
+  return `${dayHrefFor(LANG, ordinal)}?talk=${talk.id}`;
+}
+
+/** Пустой ввод — не «все доклады»: подсказка возвращается, список пуст. */
+function clearResults(): void {
+  searchResults()?.replaceChildren();
+  const hint = $<HTMLElement>("[data-search-hint]");
+  const empty = $<HTMLElement>("[data-search-empty]");
+  if (hint) hint.hidden = false;
+  if (empty) empty.hidden = true;
+}
+
+/** Только `createElement`/`textContent`: данные из JSON не идут в `innerHTML`. */
+function renderResults(program: Program, query: string): void {
+  const list = searchResults();
+  if (!list) return;
+  list.replaceChildren();
+
+  const hint = $<HTMLElement>("[data-search-hint]");
+  const empty = $<HTMLElement>("[data-search-empty]");
+  if (hint) hint.hidden = true;
+
+  const found = searchTalks(program, query);
+  for (const talk of found) {
+    const item = document.createElement("li");
+    const link = document.createElement("a");
+    link.className = "search-result";
+    link.href = talkHref(program, talk);
+
+    const day = document.createElement("span");
+    day.className = "search-result__day";
+    day.textContent = program.days.find((entry) => entry.id === talk.dayId)?.name ?? "";
+
+    const title = document.createElement("span");
+    title.className = "search-result__title";
+    title.textContent = talk.title;
+
+    const meta = document.createElement("span");
+    meta.className = "search-result__meta";
+    meta.textContent = `${talk.start} · ${talk.hall}`;
+
+    link.append(day, title, meta);
+    item.appendChild(link);
+    list.appendChild(item);
+  }
+
+  if (empty) empty.hidden = found.length !== 0;
+}
+
+function runSearch(query: string): void {
+  const seq = ++searchSeq;
+  if (!query.trim()) {
+    clearResults();
+    return;
+  }
+
+  loadProgram()
+    .then((program) => {
+      // Пока ехали данные, пользователь мог набрать другое — рендерим только
+      // ответ на последний запрос.
+      if (seq !== searchSeq) return;
+      renderResults(program, query);
+    })
+    .catch(() => {
+      if (seq !== searchSeq) return;
+      // Ошибка данных — существующим тостом, не в консоль.
+      toast(t(LANG, "toastLoadFailed"));
+    });
+}
+
+function initSearch(): void {
+  const dialog = searchDialog();
+  const panel = searchPanel();
+  const form = $<HTMLFormElement>("[data-search-form]");
+  const input = $<HTMLInputElement>("[data-search-input]");
+  if (!dialog || !panel || !form || !input) return;
+
+  // `aria-controls` кнопки в шапке ссылается на этот id: разметку диалога
+  // держит `SearchDialog.astro`, поэтому id ставим здесь, когда скрипт есть.
+  if (!dialog.id) dialog.id = "search-dialog";
+
+  // Триггер — делегирование, как у темы: кнопка живёт в `Nav.astro`.
+  document.addEventListener("click", (event) => {
+    const target = event.target;
+    if (!(target instanceof Element) || !target.closest("[data-search-open]")) return;
+    openSearch();
+  });
+
+  for (const button of $$("[data-search-close]")) {
+    button.addEventListener("click", () => closeSearch());
+  }
+
+  form.addEventListener("submit", (event) => {
+    event.preventDefault();
+    runSearch(input.value);
+  });
+  input.addEventListener("input", () => runSearch(input.value));
+
+  panel.addEventListener("keydown", (event) => trapTab(event, panel));
+}
+
+/**
+ * `?talk=<id>` — ссылка из поиска на другой день: доклад открывается сразу,
+ * как если бы пользователь нажал его карточку. `openTalk` сам дожидается
+ * `loadProgram()`.
+ */
+function initDeepLink(): void {
+  let raw: string | null = null;
+  try {
+    raw = new URLSearchParams(window.location.search).get("talk");
+  } catch {
+    raw = null;
+  }
+  // Только цифры: id уходит в CSS-селектор ниже.
+  if (!raw || !/^\d+$/.test(raw)) return;
+
+  const id = Number(raw);
+  if (!Number.isFinite(id)) return;
+
+  const opener = $<HTMLButtonElement>(`button.talk-card__title-btn[data-talk-id="${id}"]`);
+  openTalk(id, opener);
 }
 
 /* ── 8–9. Запуск ───────────────────────────────────────────────────── */
@@ -1118,6 +1320,7 @@ export function init(): void {
   initTimeGroups();
   initExpand();
   initModal();
+  initSearch();
   initExport();
   initHistory();
   initWarmup();
@@ -1126,6 +1329,12 @@ export function init(): void {
   // Esc: сначала закрываем верхний слой, потом drawer.
   document.addEventListener("keydown", (event) => {
     if (event.key !== "Escape") return;
+    // Поиск — верхний слой: Esc закрывает его первым, даже если снизу
+    // открыта модалка.
+    if (isSearchOpen()) {
+      closeSearch();
+      return;
+    }
     const modal = modalRoot();
     if (modal && !modal.hidden) {
       closeModal();
@@ -1133,6 +1342,9 @@ export function init(): void {
     }
     if (document.body.classList.contains("nav-open")) closeDrawer();
   });
+
+  // Deep-link последним: обработчики слоёв уже на месте.
+  initDeepLink();
 }
 
 if (document.readyState === "loading") {

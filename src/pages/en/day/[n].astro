@@ -1,0 +1,40 @@
+---
+import Base from "../../../layouts/Base.astro";
+import ProgramPage from "../../../components/ProgramPage.astro";
+import { dayLongLabel } from "../../../i18n/format";
+import { t } from "../../../i18n/ui";
+import { days, type Day } from "../../../lib/program";
+
+// Та же раскладка, что у русской ветки: первый день живёт на `/en/`, поэтому
+// в `day/N/` попадают только дни со второго.
+export function getStaticPaths() {
+  return days()
+    .map((day, index) => ({ day, ordinal: index + 1 }))
+    .filter((entry) => entry.ordinal > 1)
+    .map((entry) => ({
+      params: { n: String(entry.ordinal) },
+      props: { day: entry.day, ordinal: entry.ordinal },
+    }));
+}
+
+interface Props {
+  day: Day;
+  ordinal: number;
+}
+
+const { day, ordinal } = Astro.props;
+const lang = "en" as const;
+const title = `${t(lang, "pageTitle")} ${t(lang, "brandEvent")} — ${dayLongLabel(day.date, lang)}`;
+const description = `${t(lang, "pageTitle")} ${t(lang, "brandEvent")}, ${dayLongLabel(day.date, lang)}. ${t(lang, "metaDescription")}`;
+---
+
+<Base
+  title={title}
+  description={description}
+  lang={lang}
+  dayId={day.id}
+  dayDate={day.date}
+  dayOrdinal={ordinal}
+>
+  <ProgramPage day={day} ordinal={ordinal} lang={lang} />
+</Base>

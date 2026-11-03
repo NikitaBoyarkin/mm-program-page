@@ -1,7 +1,9 @@
 ---
 import Base from "../../layouts/Base.astro";
 import ProgramPage from "../../components/ProgramPage.astro";
-import { dayLongLabel, days, type Day } from "../../lib/program";
+import { dayLongLabel } from "../../i18n/format";
+import { t } from "../../i18n/ui";
+import { days, type Day } from "../../lib/program";
 
 export function getStaticPaths() {
   return days()
@@ -19,10 +21,18 @@ interface Props {
 }
 
 const { day, ordinal } = Astro.props;
-const title = `Программа Матемаркетинг 2026 — ${day.name}`;
-const description = `Программа конференции Матемаркетинг 2026, ${dayLongLabel(day.date)}: доклады по залам, трекам и времени. Учебная копия страницы lms.matemarketing.ru.`;
+const lang = "ru" as const;
+const title = `${t(lang, "pageTitle")} ${t(lang, "brandEvent")} — ${dayLongLabel(day.date, lang)}`;
+const description = `${t(lang, "pageTitle")} ${t(lang, "brandEvent")}, ${dayLongLabel(day.date, lang)}. ${t(lang, "metaDescription")}`;
 ---
 
-<Base title={title} description={description} dayId={day.id} dayDate={day.date} dayOrdinal={ordinal}>
-  <ProgramPage day={day} ordinal={ordinal} />
+<Base
+  title={title}
+  description={description}
+  lang={lang}
+  dayId={day.id}
+  dayDate={day.date}
+  dayOrdinal={ordinal}
+>
+  <ProgramPage day={day} ordinal={ordinal} lang={lang} />
 </Base>

@@ -1,0 +1,286 @@
+/* ==========================================================================
+   Диалог поиска по программе.
+   Стили лежат отдельным файлом, потому что результаты вставляет
+   `program-client.ts` уже после загрузки: узлы `.search-result` не получают
+   scope-атрибут Astro, и правило из `<style>` компонента до них бы не дошло.
+   Импорт из frontmatter делает этот файл глобальным — это здесь и нужно.
+
+   Поверхности и цвета — только через токены из `tokens.css`: диалог должен
+   следовать теме (тёмная / светлая / киберпанк) без отдельных hex.
+   ========================================================================== */
+
+.search-dialog {
+  position: fixed;
+  inset: 0;
+  z-index: var(--z-dialog);
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  padding: var(--space-4);
+  animation: mm-search-fade 140ms ease-out;
+}
+
+/* `display: flex` перебил бы браузерное `[hidden] { display: none }`, поэтому
+   закрытое состояние объявляем явно — иначе диалог висел бы поверх страницы. */
+.search-dialog[hidden] {
+  display: none;
+}
+
+.search-dialog__backdrop {
+  position: absolute;
+  inset: 0;
+  /* Та же пара, что у бэкдропа модалки: диалоги в программе затемняют фон
+     одинаково, иначе открытие поиска «прыгает» по яркости. */
+  background: color-mix(in srgb, var(--background-primary) 78%, transparent);
+  backdrop-filter: blur(4px);
+}
+
+.search-dialog__panel {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  inline-size: min(640px, 100%);
+  /* 10vh — панель ближе к шапке, чем модалка доклада: поиск открывают из
+     шапки, и взгляд уже там. */
+  margin-block-start: 10vh;
+  /* Остаток экрана: 100dvh за вычетом 10vh сверху и паддинга диалога сверху
+     и снизу. Панель не выезжает за вьюпорт, а скроллится изнутри. */
+  max-block-size: calc(100dvh - 10vh - var(--space-8));
+  overflow: hidden;
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-lg);
+  background-color: var(--background-primary);
+  box-shadow: 0 32px 80px var(--shadow-color);
+  animation: mm-search-rise 140ms ease-out;
+}
+
+/* Панель получает фокус программно (`tabindex="-1"`), рамка вокруг неё
+   выглядела бы как ошибка вёрстки. */
+.search-dialog__panel:focus {
+  outline: none;
+}
+
+@keyframes mm-search-fade {
+  from {
+    opacity: 0;
+  }
+}
+
+@keyframes mm-search-rise {
+  from {
+    opacity: 0;
+    transform: translateY(-6px);
+  }
+}
+
+/* ── Строка ввода ───────────────────────────────────────────────────────── */
+
+.search-form {
+  display: flex;
+  flex: none;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-3);
+  border-block-end: 1px solid var(--border-color);
+}
+
+.search-input {
+  flex: 1 1 auto;
+  min-inline-size: 0;
+  /* 44px — цель нажатия для пальца, как у ссылок выдачи. */
+  block-size: 44px;
+  padding-inline: var(--space-3);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  background: var(--surface-secondary);
+  color: var(--text-normal);
+  font-size: 1rem;
+  transition:
+    border-color 0.15s ease,
+    background-color 0.15s ease;
+}
+
+.search-input::placeholder {
+  color: var(--text-muted);
+}
+
+.search-input:focus {
+  border-color: var(--border-active);
+  outline: none;
+}
+
+/* Свой крестик уже есть справа: системный `×` у `type="search"` дал бы два. */
+.search-input::-webkit-search-cancel-button,
+.search-input::-webkit-search-decoration {
+  appearance: none;
+}
+
+.search-close {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  justify-content: center;
+  inline-size: 44px;
+  block-size: 44px;
+  padding: 0;
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-full);
+  background: transparent;
+  color: var(--text-muted);
+  cursor: pointer;
+  transition:
+    color 0.15s ease,
+    border-color 0.15s ease,
+    background-color 0.15s ease;
+}
+
+.search-close:active {
+  transform: scale(0.94);
+}
+
+/* ── Подсказка и выдача ─────────────────────────────────────────────────── */
+
+.search-hint {
+  flex: none;
+  padding: var(--space-2) var(--space-4) 0;
+  color: var(--text-muted);
+  font-size: 0.8rem;
+  line-height: 1.4;
+}
+
+.search-results {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  gap: 2px;
+  /* Без этого колоночный flex не даёт списку сжаться, и `overflow-y` не
+     включается — панель растёт вместо того, чтобы скроллиться. */
+  min-block-size: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  margin: 0;
+  padding: var(--space-2);
+  list-style: none;
+}
+
+.search-result {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  /* 44px — минимальная цель нажатия даже для результата из одной короткой
+     строки. */
+  min-block-size: 44px;
+  padding: var(--space-2) var(--space-3);
+  border-radius: var(--radius-md);
+  color: var(--text-normal);
+  text-decoration: none;
+  transition:
+    background-color 0.15s ease,
+    color 0.15s ease;
+}
+
+/* Заголовок доклада — обычный текст, не display-сериф: в списке из 12 строк
+   крупный заголовок превращается в кашу. */
+.search-result__title {
+  color: var(--text-normal);
+  font-size: 0.95rem;
+  font-weight: 500;
+  line-height: 1.35;
+}
+
+.search-result__day {
+  color: var(--text-muted);
+  font-size: 0.72rem;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.search-result__meta {
+  color: var(--text-muted);
+  font-size: 0.8rem;
+  line-height: 1.35;
+}
+
+.search-empty {
+  flex: none;
+  padding: var(--space-6) var(--space-4);
+  color: var(--text-muted);
+  text-align: center;
+}
+
+.search-empty[hidden] {
+  display: none;
+}
+
+/* Наведение — только там, где есть настоящий курсор: на тач-экране `:hover`
+   залипает на последнем нажатом элементе и подсвечивает «чужую» строку. */
+@media (hover: hover) and (pointer: fine) {
+  .search-close:hover {
+    border-color: var(--border-active);
+    color: var(--text-normal);
+  }
+
+  .search-result:hover {
+    background: var(--interactive-hover);
+    color: var(--text-normal);
+  }
+
+  .search-result:hover .search-result__title {
+    color: var(--text-accent);
+  }
+}
+
+/* Глобальное `:focus-visible` из tokens.css ставит `border-radius:
+   var(--radius-sm)`, и скругление строки дёргалось бы при фокусе. */
+.search-result:focus-visible {
+  border-radius: var(--radius-md);
+  outline: 2px solid var(--border-active);
+  outline-offset: -2px;
+}
+
+/* ── Телефон: панель на весь экран ──────────────────────────────────────── */
+
+@media (max-width: 767.98px) {
+  .search-dialog {
+    padding: 0;
+  }
+
+  .search-dialog__panel {
+    inline-size: 100%;
+    /* `100dvh`, а не `100vh`: адресная строка мобильного браузера съедает
+       высоту, и список уезжал бы под неё. */
+    block-size: 100dvh;
+    max-block-size: 100dvh;
+    margin-block-start: 0;
+    border: 0;
+    border-radius: 0;
+  }
+}
+
+/* ── Печать: диалог — экранная надстройка ───────────────────────────────── */
+
+@media print {
+  .search-dialog {
+    display: none !important;
+  }
+}
+
+/* ── Уменьшенная анимация ───────────────────────────────────────────────── */
+
+@media (prefers-reduced-motion: reduce) {
+  .search-dialog,
+  .search-dialog__panel {
+    animation: none;
+  }
+
+  .search-close,
+  .search-input,
+  .search-result {
+    transition: none;
+  }
+
+  .search-close:active {
+    transform: none;
+  }
+}

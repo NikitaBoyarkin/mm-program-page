@@ -1022,13 +1022,15 @@ h2.talk-modal__title {
   color: #171717;
 }
 
-body.is-modal-open {
+body.is-modal-open,
+body.is-search-open {
   overflow: hidden;
 }
 
 /* Дубль на корневой скроллер: на iOS `overflow` у `body` не гасит «резину»
    вьюпорта. Тот же приём, что у drawer в `site.css`. */
-html:has(body.is-modal-open) {
+html:has(body.is-modal-open),
+html:has(body.is-search-open) {
   overflow: hidden;
 }
 

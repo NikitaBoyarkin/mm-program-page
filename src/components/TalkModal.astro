@@ -4,6 +4,13 @@
  * `src/scripts/program-client.ts` из `/program.json` — разметка на билде,
  * данные по запросу. Пока модалка закрыта, она `hidden` и не в a11y-дереве.
  */
+import { t, type Lang } from "../i18n/ui";
+
+interface Props {
+  lang: Lang;
+}
+
+const { lang } = Astro.props;
 ---
 
 <div class="talk-modal" data-modal hidden>
@@ -16,7 +23,7 @@
     data-modal-dialog
     tabindex="-1"
   >
-    <button class="talk-modal__close" type="button" data-modal-close aria-label="Закрыть">
+    <button class="talk-modal__close" type="button" data-modal-close aria-label={t(lang, "modalClose")}>
       <svg
         viewBox="0 0 24 24"
         width="20"
@@ -46,10 +53,10 @@
           target="_blank"
           rel="noopener"
         >
-          Купить билет
+          {t(lang, "modalBuy")}
         </a>
         <button class="talk-modal__fav" type="button" data-modal-fav aria-pressed="false">
-          В избранное
+          {t(lang, "modalFavAdd")}
         </button>
       </div>
     </div>

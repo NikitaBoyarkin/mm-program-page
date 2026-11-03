@@ -7,7 +7,8 @@
 
 Программа конференции `https://lms.matemarketing.ru/events/all/6/program` (Матемаркетинг 2026),
 собранная как Astro-проект: три пререндеренных дня, сетка «время × залы», карточки докладов,
-фильтр по трекам, избранное, модалка, экспорт дня в `.ics`.
+фильтр по трекам, избранное, модалка, экспорт дня в `.ics`. Две локали (RU/EN) и клиентский
+поиск по всем трём дням.
 
 Статический вывод (`output: "static"`), без адаптера и без бэкенда. `bun run build` → `dist/`,
 который живёт на любом статик-хостинге. `file://` не поддерживается: роутам и ассетам нужен
@@ -20,6 +21,15 @@
 | `src/data/program.json` | data | нормализованный слепок API — единственный источник данных |
 | `src/data/socials.json` | data | overlay соцсетей лекторов: имя → `telegram/linkedin/youtube/site`. Отдельный файл: `data:fetch` пересобирает `program.json` побайтово и стёр бы поле. Ключ — полное имя из слепка (все 94 уникальны), значение — только подтверждённые `https`-ссылки |
 | `src/lib/socials.ts` | core | сети и подписи — один источник для Astro-разметки и клиента. Геометрии иконок здесь нет: SVG-пути живут только в `src/styles/program.css` как CSS-маски `.social-link--<network>` |
+| `src/i18n/ui.ts` | i18n | словарь оболочки RU/EN: шапка, табы, фильтры, модалка, поиск, подвал. `UiKey` выводится из русской ветки, поэтому пропуск в `en` — ошибка типов |
+| `src/i18n/format.ts` | i18n | подписи дат и числительных по языкам; русская ветка побайтово совпадает с замороженным ядром |
+| `src/i18n/paths.ts` | i18n | адреса от `BASE_URL` с префиксом языка: `/`, `/day/N/`, `/en/`, `/en/day/N/` |
+| `src/data/program.en.json` | data | overlay перевода контента: `tracks`/`halls`/`days` + `talks` по id доклада. Отдельный файл: `data:fetch` пересобирает `program.json` побайтово и стёр бы переводы (та же причина, что у `socials.json`) |
+| `src/lib/localize.ts` | core | overlay → `Talk`/`Program`: `localizeTalk` переводит только текстовые поля, `localizeProgram` — ещё `track/hall/day` |
+| `src/lib/search.ts` | core | чистый поиск без DOM и `fetch`: нормализация, ранги, дедупликация по id, лимит 12 |
+| `src/components/SearchDialog.astro` | view | каркас диалога поиска: `data-search-*`, пустой список на билде |
+| `src/pages/en/index.astro`, `src/pages/en/day/[n].astro` | view | английские дни: `/en/` и `/en/day/2..N/` |
+| `src/pages/en/program.json.ts` | data | `/en/program.json` — тот же слепок с переведёнными на билде текстами |
 | `data/program.raw.json` | data | сырой ответ API (вход пересборки) |
 | `scripts/fetch-program.ts` | data | `--fetch` / `--check` / `--dry-run`, нормализация |
 | `src/lib/program.ts` | core | типы + чистые функции домена (заморожено) |
@@ -28,18 +38,20 @@
 | `src/lib/analytics.ts` | core | UTM-атрибуция и единственный канал в PostHog (`track`, супер-свойства) |
 | `src/components/Analytics.astro` | view | ленивый `init` PostHog, `outbound_click` |
 | `src/layouts/Base.astro` | view | `<head>`, тема до отрисовки, шапка, подвал |
-| `src/components/Nav.astro` | view | шапка, drawer, дни, тумблер темы (луна в разметке), счётчик избранного |
+| `src/components/Nav.astro` | view | шапка, drawer, дни, тумблер темы (луна в разметке), счётчик избранного, кнопка поиска и переключатель `.nav-lang` |
 | `src/components/ProgramPage.astro` | view | день: шапка, табы, чипы, тулбар, сетка, модалка |
 | `src/components/TalkCard.astro` | view | карточка доклада; звезда избранного (контур → заливка через `fill-opacity`) |
 | `src/components/TalkModal.astro` | view | оболочка диалога |
 | `src/pages/index.astro`, `src/pages/day/[n].astro` | view | три пререндеренных дня |
 | `src/pages/program.json.ts` | data | `/program.json` — тот же слепок для клиента |
-| `src/scripts/program-client.ts` | client | единственный JS: тема (морф иконки), drawer, фильтр, избранное, модалка, `.ics` |
+| `src/scripts/program-client.ts` | client | единственный JS: тема (морф иконки), drawer, фильтр, избранное, модалка, `.ics`, поиск, `?talk=<id>` |
 | `src/styles/tokens.css` | design | токены трёх тем + шрифты + типографическая шкала (заморожено) |
 | `src/styles/site.css` | design | каркас страницы |
 | `src/styles/program.css` | design | сетка, карточка, модалка, печать |
-| `tests/lib/*.test.ts` | verify | юнит-тесты ядра (`bun test`) |
-| `tests/built/program.spec.ts` | verify | 28 браузерных тестов сборки (Playwright) в трёх проектах — 84 прогона |
+| `src/styles/search.css` | design | диалог поиска; файл глобальный, потому что результаты вставляет клиент уже после отрисовки и узлы `.search-result` не получают scope-атрибут Astro |
+| `tests/lib/*.test.ts` | verify | 117 юнит-тестов ядра, i18n и поиска (`bun test tests/lib`, 6 файлов) |
+| `tests/built/program.spec.ts` | verify | 28 браузерных тестов сборки (Playwright) |
+| `tests/built/i18n-search.spec.ts` | verify | 8 тестов EN-маршрутов, переключателя языка и поиска; вместе 36 тестов × 3 проекта = 108 прогонов |
 | `package.json`, `bun.lock` | deps | версии сборки; `morphicons` запинен на `1.7.0` — иконки тем |
 
 Иконка темы живёт в двух видах: луна в разметке (`.astro` не знает о `localStorage`) и
@@ -82,6 +94,41 @@
 site`. Ссылка принимается только при подтверждённой личности (ФИО + компания/роль), иначе
 спикер остаётся без иконок — покрытие намеренно частичное.
 
+## Языки (i18n)
+
+Локали — `ru` (по умолчанию) и `en`. Язык определяется маршрутом, а не настройкой браузера:
+переключатель — обычная ссылка на тот же день в другом языке.
+
+| Маршрут | Что отдаёт |
+| --- | --- |
+| `/`, `/day/N/` | страница дня на русском |
+| `/en/`, `/en/day/N/` | та же страница на английском |
+| `/program.json` | русский слепок для клиента |
+| `/en/program.json` | тот же слепок с переведёнными текстами, собранный на билде |
+
+- `<html lang="ru|en" data-lang="ru|en" …>`: `lang` — для скринридеров и поиска, `data-lang`
+  читает клиент (`LANG` в `program-client.ts`), чтобы запросить свою версию JSON.
+- `hreflang`: у каждой страницы дня, включая корень локали (`/` ↔ `/en/`),
+  `<link rel="alternate" hreflang="ru|en">` и `hreflang="x-default"` → русская версия
+  (первична). У 404 `dayOrdinal` нет, поэтому атрибутов там нет.
+- Оболочка (кнопки, табы, фильтры, подвал, поиск) — словарь `src/i18n/ui.ts`. Контент
+  (заголовки, описания, роли) — overlay `src/data/program.en.json`: `tracks`, `halls`, `days`
+  и `talks` по id доклада с полями `title/short/description/lectorRoles`. Файл отдельный,
+  потому что `data:fetch` пересобирает `program.json` побайтово.
+- `localizeTalk` переводит только текстовые поля (`title`, `short`, `description`,
+  `lectors[].role`); `id`, `dayId`, `start`, `end`, `track`, `hall` остаются оригинальными.
+  `localizeProgram` дополнительно переводит `track`, `hall`, `days[].name` и `days[].halls` —
+  этот результат уходит в `/en/program.json`.
+- **`data-track` в разметке всегда русский.** По нему фильтрует клиент и он же связывает
+  карточку с чипом; переведённое значение сломало бы селектор
+  `[data-track-chips] > button.track-chip[data-track]`. Подпись чипа переводится отдельно
+  (`trackLabel`), текст на карточке — тоже.
+- Переключатель `.nav-lang` — ссылка на тот же день другой локали (`switchLangHref`),
+  подпись — код цели (`EN`/`RU`), `hreflang` и `lang` — целевой язык.
+- Английские тексты докладов — **машинный перевод** (неофициальный). Это принятое
+  ограничение, а не эталон: при расхождении исходный русский текст из `program.json` считается
+  источником истины.
+
 ## Типы и функции ядра (`src/lib/program.ts`, `src/lib/ics.ts`)
 
 `Program, Day, Talk, Hall, Track, Lector`; `PROGRAM`; `minutes, isTime, formatRange, days,
@@ -104,17 +151,19 @@ buildCalendar, calendarFilename, downloadIcs`.
 ## Разметка: CSS ↔ JS ↔ view контракт
 
 ```
-html[data-theme=dark|light|cyberpunk][data-day-id][data-day-date]
+html[data-theme=dark|light|cyberpunk][data-lang=ru|en][data-day-id][data-day-date]
   body > a.skip-link + header.nav-mobile + div.nav-scrim + nav#site-nav + main#main.page + footer.site-footer
 ```
 
 Шапка и меню: `header.nav-mobile > div.nav-top-actions` с
-`button.nav-icon-btn.theme-toggle--header[data-theme-toggle]` (тема из шапки, без меню) и
-`button.nav-toggle[data-nav-open][aria-expanded][aria-controls=site-nav]`; второй
-`button.theme-toggle[data-theme-toggle]` и `[data-favorites-count]` живут в `.drawer-foot`
-внутри `nav#site-nav`, где также `ul.drawer-links > a.drawer-link.is-current`. Оба тумблера
-темы несут `data-theme-toggle` и обрабатываются делегированным слушателем. Ещё:
-`div.nav-scrim[data-nav-close]`, `body.nav-open`.
+`button.nav-icon-btn[data-search-open][aria-controls=search-dialog][aria-expanded]` (только на
+страницах дня), `a.nav-icon-btn.nav-lang[href][hreflang][lang]` (переключатель языка, текст
+`EN`/`RU`), `button.nav-icon-btn.theme-toggle--header[data-theme-toggle]` (тема из шапки, без
+меню) и `button.nav-toggle[data-nav-open][aria-expanded][aria-controls=site-nav]`; второй
+`button.theme-toggle[data-theme-toggle]`, `[data-favorites-count]` и второй `a.nav-lang`
+живут в `.drawer-foot` внутри `nav#site-nav`, где также `ul.drawer-links >
+a.drawer-link.is-current`. Оба тумблера темы несут `data-theme-toggle` и обрабатываются
+делегированным слушателем. Ещё: `div.nav-scrim[data-nav-close]`, `body.nav-open`.
 
 Программа:
 
@@ -147,7 +196,23 @@ div.talk-modal[data-modal][hidden]
     div.talk-modal__media[data-modal-media]
     div.talk-modal__body > [data-modal-meta] + h2#talk-modal-title[data-modal-title] + [data-modal-speakers] + [data-modal-text] + a.talk-modal__buy + button[data-modal-fav]
 div.mm-toast[role=status]
+div.search-dialog[data-search-dialog][hidden]
+  div.search-dialog__backdrop[data-search-close]
+  div.search-dialog__panel[role=dialog][aria-modal=true][aria-labelledby=search-title][data-search-panel][tabindex=-1]
+    h2#search-title.visually-hidden
+    form.search-form[role=search][data-search-form]
+      input.search-input[type=search][data-search-input][autocomplete=off]
+      button.search-close[type=button][data-search-close][aria-label]
+    p.search-hint[data-search-hint]
+    ul.search-results[data-search-results][role=list]
+    p.search-empty[data-search-empty][hidden]
 ```
+
+Результат поиска клиент создаёт как `li > a.search-result[href] >
+span.search-result__day + span.search-result__title + span.search-result__meta`; `href` —
+страница дня доклада (`dayHrefFor`) с `?talk=<id>`. Пустой список на билде: доклады
+подставляет клиент после загрузки `/program.json`, иначе каждый день тащил бы всю программу
+в HTML. `?talk=<id>` открывает модалку этого доклада при загрузке страницы (`initDeepLink`).
 
 `[data-modal-speakers]` клиент заполняет строками `div.talk-modal__speaker` (фото/инициалы + имя +
 роль + тот же `span.social-links > a.social-link`, что и в карточке). Пустой `socials` не рендерит
@@ -200,8 +265,8 @@ div.mm-toast[role=status]
 2. **Drawer**: `body.nav-open`, `aria-expanded`, закрытие по `Esc`, scrim'у и ссылке, возврат
    фокуса на триггер. Тумблер меню виден на всех ширинах: drawer остаётся единственным путём
    к дням. Тема — уже нет: второй тумблер живёт в шапке и работает без открытия меню.
-3. **День**: обычная ссылка (`/`, `/day/2/`, `/day/3/`); `aria-current="page"` у активного.
-   Клиент день не переключает.
+3. **День**: обычная ссылка (`/`, `/day/2/`, `/day/3/`; в EN — `/en/`, `/en/day/2/`,
+   `/en/day/3/`); `aria-current="page"` у активного. Клиент день не переключает.
 4. **Фильтр**: один активный чип трека (`aria-pressed`), ячейки чужого трека получают
    `hidden`, пустые ячейки остаются, счётчик и подпись пересчитываются, состояние живёт
    в `?track=` (`history.replaceState`), при 0 докладов показывается `[data-empty]`.
@@ -230,10 +295,21 @@ div.mm-toast[role=status]
    модалку и не уводит со страницы, а пользовательское закрытие вызывает `history.back()` —
    только если верхняя запись ещё наша, иначе `back()` выкинул бы со страницы. Тот же
    механизм у drawer'а: обе панели открываются через `pushLayer`, а закрываются своими
-   `closeDrawer`/`closeModal` с общей проверкой `mmLayerToken`.
+   `closeDrawer`/`closeModal` с общей проверкой `mmLayerToken`. Поиск — третий слой того же
+   механизма.
 9. **`.ics`**: экспортирует видимые доклады дня (с учётом фильтра) через `buildCalendar`
    и `downloadIcs`; имя файла `matemarketing-<YYYY-MM-DD>.ics`; пустой набор → тост.
 10. **Тост**: `div.mm-toast[role=status]`, живёт ~2.5 с.
+11. **Поиск**: `button[data-search-open]` открывает `div.search-dialog` (`hidden = false`,
+    фокус в `[data-search-input]`, запись истории через `pushLayer("search")`); закрывают
+    backdrop, кнопка и `Esc`, фокус возвращается на триггер. `Esc` закрывает верхний слой:
+    **поиск → модалка → drawer**. Дебаунс не нужен: `loadProgram` уже держит данные в кэше,
+    ранжирование локальное; ответы нумеруются `searchSeq`, поэтому устаревший ответ не
+    перетирает свежий. Пустой ввод — подсказка и пустой список, а не «все доклады».
+    Запрос сравнивается через `includes`, а не `RegExp`. `href` результата —
+    страница дня + `?talk=<id>`. Лок скролла — свой класс `body.is-search-open`,
+    а **не** `is-modal-open`: тот включает inert-менеджер `TalkModal.astro`, и диалог
+    поиска (он ребёнок `main`) стал бы недоступен для фокуса и скринридера.
 
 ## Доступность и качество
 
@@ -244,6 +320,9 @@ div.mm-toast[role=status]
   поддержки `inert`); ставит и снимает его `MutationObserver` в `TalkModal.astro`.
 - Табы дней — ссылки с `aria-current`; чипы — `button` с `aria-pressed`; карточка открывается
   кнопкой заголовка (не `tabindex` на `article`).
+- Диалог поиска: `role="dialog"`, `aria-modal="true"`, `aria-labelledby="search-title"`,
+  фокус-трап по `Tab` внутри `[data-search-panel]`, возврат фокуса на
+  `button[data-search-open]`; у триггера `aria-controls="search-dialog"` и `aria-expanded`.
 - Фокус-видимый на всём интерактиве; `:focus-visible` объявлен в токенах.
 - `prefers-reduced-motion: reduce` снимает переходы; `@media print` даёт белый лист без
   баннеров и навигации.

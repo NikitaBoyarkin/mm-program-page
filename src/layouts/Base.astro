@@ -6,6 +6,8 @@
  */
 import Analytics from "../components/Analytics.astro";
 import Nav from "../components/Nav.astro";
+import { dayHrefFor } from "../i18n/paths";
+import { t, type Lang } from "../i18n/ui";
 import { BASE_URL } from "../lib/program";
 import "../styles/tokens.css";
 import "../styles/site.css";
@@ -20,6 +22,8 @@ import cormorantCyrillicUrl from "../assets/fonts/cormorant-cyrillic.woff2?url";
 interface Props {
   title: string;
   description?: string;
+  /** Язык страницы: `lang` у `<html>`, словарь подвала, `og:locale`. */
+  lang?: Lang;
   /** День программы — уходит на `<html>`, чтобы клиент не искал его заново. */
   dayId?: number | string;
   /** Дата дня, `YYYY-MM-DD`. */
@@ -30,7 +34,8 @@ interface Props {
 
 const {
   title,
-  description = "Программа конференции Матемаркетинг 2026: расписание докладов по дням, залам и трекам. Учебная копия страницы lms.matemarketing.ru.",
+  lang = "ru",
+  description = t(lang, "metaDescription"),
   dayId,
   dayDate,
   dayOrdinal,
@@ -43,10 +48,27 @@ const canonical = new URL(Astro.url.pathname, Astro.site ?? Astro.url);
 canonical.search = "";
 canonical.hash = "";
 const canonicalHref = canonical.href;
+
+// `hreflang` только у страниц дня: 404 и корень локали не имеют пары «тот же
+// день в другом языке». `x-default` указывает на русскую версию — она первична.
+const origin = Astro.site ?? Astro.url;
+const alternates =
+  dayOrdinal == null
+    ? []
+    : (["ru", "en"] as const).map((code) => ({
+        hreflang: code,
+        href: new URL(dayHrefFor(code, dayOrdinal), origin).href,
+      }));
+const defaultAlternate = alternates.find((alternate) => alternate.hreflang === "ru");
+
+// Подвал собирается из шаблона с маркером `{link}`: перевод остаётся строкой,
+// а `<a>` встаёт в позицию маркера — так ссылка не растворяется в переводе.
+const [sourceBefore, sourceAfter = ""] = t(lang, "footerSource").split("{link}");
+const [ticketsBefore, ticketsAfter = ""] = t(lang, "footerTickets").split("{link}");
 ---
 
 <!doctype html>
-<html lang="ru" data-theme="dark" data-day-id={dayId} data-day-date={dayDate}>
+<html lang={lang} data-lang={lang} data-theme="dark" data-day-id={dayId} data-day-date={dayDate}>
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
@@ -97,12 +119,20 @@ const canonicalHref = canonical.href;
     <meta id="theme-color" name="theme-color" content="#1400c3" />
 
     <link rel="canonical" href={canonicalHref} />
+    {
+      alternates.map((alternate) => (
+        <link rel="alternate" hreflang={alternate.hreflang} href={alternate.href} />
+      ))
+    }
+    {defaultAlternate && (
+      <link rel="alternate" hreflang="x-default" href={defaultAlternate.href} />
+    )}
 
-    <meta property="og:site_name" content="Никита Бояркин" />
+    <meta property="og:site_name" content={t(lang, "brandName")} />
     <meta property="og:title" content={title} />
     <meta property="og:description" content={description} />
     <meta property="og:type" content="website" />
-    <meta property="og:locale" content="ru_RU" />
+    <meta property="og:locale" content={lang === "en" ? "en_US" : "ru_RU"} />
     <meta property="og:url" content={canonicalHref} />
     <meta name="twitter:card" content="summary" />
     <meta name="twitter:title" content={title} />
@@ -133,9 +163,10 @@ const canonicalHref = canonical.href;
   </head>
 
   <body>
-    <a class="skip-link" href="#main">Перейти к содержимому</a>
+    <a class="skip-link" href="#main">{t(lang, "skipLink")}</a>
 
-    <Nav ordinal={dayOrdinal} />
+    {/* Поиск есть только на страницах дня: у 404 нет ни диалога, ни скрипта. */}
+    <Nav ordinal={dayOrdinal} lang={lang} search={Boolean(dayOrdinal)} />
 
     <main id="main" class="page" tabindex="-1">
       <slot />
@@ -143,21 +174,18 @@ const canonicalHref = canonical.href;
 
     <footer class="site-footer">
       <p>
-        Учебная копия страницы
-        <a href="https://lms.matemarketing.ru/events/all/6/program" target="_blank" rel="noopener"
-          >первоисточника</a
-        >. Данные и медиа не перепубликуются, а подтягиваются с CDN Матемаркетинга.
+        {sourceBefore}<a
+          href="https://lms.matemarketing.ru/events/all/6/program"
+          target="_blank"
+          rel="noopener">{t(lang, "footerSourceLink")}</a>{sourceAfter}
       </p>
       <p>
-        <a href="https://matemarketing.ru/tickets/" target="_blank" rel="noopener">Билеты</a>
-        на конференцию — на сайте организатора.
+        {ticketsBefore}<a href="https://matemarketing.ru/tickets/" target="_blank" rel="noopener"
+          >{t(lang, "footerTicketsLink")}</a
+        >{ticketsAfter}
       </p>
-      <p>
-        Права на дизайн, тексты программы, названия докладов и изображения принадлежат
-        Матемаркетингу и спикерам. Это неофициальная учебная копия, не связанная с
-        организаторами.
-      </p>
-      <p class="site-footer__note">Собрано как разбор интерфейса: вёрстка и логика — учебные.</p>
+      <p>{t(lang, "footerRights")}</p>
+      <p class="site-footer__note">{t(lang, "footerNote")}</p>
     </footer>
 
     <script is:inline>
@@ -194,6 +222,11 @@ const canonicalHref = canonical.href;
           var toggle = document.querySelector("[data-nav-open]");
           if (!nav || !toggle) return;
 
+          // Подписи приходят из словаря через `data-label-*`: инлайновый скрипт
+          // не знает языка страницы, а русские строки остаются фолбэком.
+          var labelOpen = toggle.getAttribute("data-label-open") || "Открыть меню";
+          var labelClose = toggle.getAttribute("data-label-close") || "Закрыть меню";
+
           var isOpen = function () {
             return document.body.classList.contains("nav-open");
           };
@@ -202,7 +235,7 @@ const canonicalHref = canonical.href;
             var hadFocus = nav.contains(document.activeElement);
             document.body.classList.toggle("nav-open", open);
             toggle.setAttribute("aria-expanded", String(open));
-            toggle.setAttribute("aria-label", open ? "Закрыть меню" : "Открыть меню");
+            toggle.setAttribute("aria-label", open ? labelClose : labelOpen);
             // `visibility: hidden` уже убирает панель из таб-порядка, `inert`
             // добавляет то же самое для скринридеров и старых движков.
             if (open) nav.removeAttribute("inert");

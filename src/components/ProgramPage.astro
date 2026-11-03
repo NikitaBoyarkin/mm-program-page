@@ -4,23 +4,24 @@
  * на билде: страница читается и печатается без JS. Клиентский скрипт только
  * фильтрует, открывает модалку, помнит избранное и собирает `.ics`.
  */
+import { dayLabel, dayLongLabel, pluralDays, pluralTalks } from "../i18n/format";
+import { dayHrefFor } from "../i18n/paths";
+import { t, type Lang } from "../i18n/ui";
+import { hallLabel, dayNameLabel, localizeTalk, trackLabel } from "../lib/localize";
 import {
   PROGRAM,
-  dayHref,
-  dayLabel,
-  dayLongLabel,
   days,
   hallsOfDay,
   isPlaceable,
   occupiedCells,
   placeTalks,
-  pluralTalks,
   startsOf,
   talksOfDay,
   tracksOfProgram,
   type Day,
   type PlacedTalk,
 } from "../lib/program";
+import SearchDialog from "./SearchDialog.astro";
 import TalkCard from "./TalkCard.astro";
 import TalkModal from "./TalkModal.astro";
 import "../styles/program.css";
@@ -28,9 +29,10 @@ import "../styles/program.css";
 interface Props {
   day: Day;
   ordinal: number;
+  lang: Lang;
 }
 
-const { day, ordinal } = Astro.props;
+const { day, ordinal, lang } = Astro.props;
 
 const allDays = days();
 const dayTalks = talksOfDay(day);
@@ -70,37 +72,49 @@ const trackChips = tracksOfProgram().map((track) => ({
   track,
   count: placeable.filter((talk) => talk.track === track).length,
 }));
+
+const trackCount = tracksOfProgram().length;
+const hallCount = PROGRAM.halls.length;
+// Числительных для «треков»/«залов» в словаре нет: английская форма одна на
+// любое число, русская сохраняет прежнюю подпись побайтово.
+const tracksFact = lang === "en" ? `${trackCount} tracks` : `${trackCount} треков`;
+const hallsFact = lang === "en" ? `${hallCount} halls` : `${hallCount} залов`;
 ---
 
 <header class="page-head">
-  <p class="eyebrow">Матемаркетинг 2026 · {dayLongLabel(day.date)}</p>
-  <h1 class="page-title">Программа конференции</h1>
+  <p class="eyebrow">{t(lang, "brandEvent")} · {dayLongLabel(day.date, lang)}</p>
+  <h1 class="page-title">{t(lang, "pageTitle")}</h1>
   <p class="page-intro">
-    {day.name} программы: {total}
-    {pluralTalks(total)} в {halls.length} залах. Время указано по Москве; сетка
-    повторяет страницу первоисточника, но собрана на билде.
+    {
+      t(lang, "introLine", {
+        day: dayNameLabel(lang, day.name),
+        n: total,
+        talks: pluralTalks(total, lang),
+        halls: halls.length,
+      })
+    }
   </p>
   <dl class="facts">
     <div class="facts__item">
-      <dt>Длительность</dt>
-      <dd>{allDays.length} дня</dd>
+      <dt>{t(lang, "factsDuration")}</dt>
+      <dd>{allDays.length} {pluralDays(allDays.length, lang)}</dd>
     </div>
     <div class="facts__item">
-      <dt>Доклады</dt>
-      <dd>{PROGRAM.talks.length} {pluralTalks(PROGRAM.talks.length)}</dd>
+      <dt>{t(lang, "factsTalks")}</dt>
+      <dd>{PROGRAM.talks.length} {pluralTalks(PROGRAM.talks.length, lang)}</dd>
     </div>
     <div class="facts__item">
-      <dt>Треки</dt>
-      <dd>{tracksOfProgram().length} треков</dd>
+      <dt>{t(lang, "factsTracks")}</dt>
+      <dd>{tracksFact}</dd>
     </div>
     <div class="facts__item">
-      <dt>Залы</dt>
-      <dd>{PROGRAM.halls.length} залов</dd>
+      <dt>{t(lang, "factsHalls")}</dt>
+      <dd>{hallsFact}</dd>
     </div>
   </dl>
 </header>
 
-<nav class="day-tabs" data-day-tabs aria-label="Дни программы">
+<nav class="day-tabs" data-day-tabs aria-label={t(lang, "dayTabsLabel")}>
   {
     allDays.map((item, index) => {
       const value = index + 1;
@@ -108,11 +122,11 @@ const trackChips = tracksOfProgram().map((track) => ({
       return (
         <a
           class:list={["day-tab", current ? "day-tab--active" : null]}
-          href={dayHref(value)}
+          href={dayHrefFor(lang, value)}
           aria-current={current ? "page" : undefined}
         >
-          <span class="day-tab__num">{item.name}</span>
-          <span class="day-tab__date">{dayLabel(item.date)}</span>
+          <span class="day-tab__num">{dayNameLabel(lang, item.name)}</span>
+          <span class="day-tab__date">{dayLabel(item.date, lang)}</span>
         </a>
       );
     })
@@ -120,19 +134,19 @@ const trackChips = tracksOfProgram().map((track) => ({
 </nav>
 
 <div class="program-toolbar">
-  <div class="track-chips" data-track-chips role="group" aria-label="Фильтры программы">
+  <div class="track-chips" data-track-chips role="group" aria-label={t(lang, "trackFiltersLabel")}>
     {/* Избранное — второй, независимый от трека фильтр. Стоит первым и намеренно
         не несёт `data-track`: селектор чипов трека его не подхватывает, а
         счётчик избранного обновляет клиент вместе с `[data-favorites-count]`.
         Без JS чип читается как выключенный переключатель с нулём. */}
     <button class="track-chip" type="button" data-fav-filter aria-pressed="false">
-      <span class="track-chip__name">Избранное</span>
+      <span class="track-chip__name">{t(lang, "favoritesChip")}</span>
       <span class="track-chip__count" data-fav-filter-count>0</span>
     </button>
     {
       trackChips.map((chip) => (
         <button class="track-chip" type="button" data-track={chip.track} aria-pressed="false">
-          <span class="track-chip__name">{chip.track}</span>
+          <span class="track-chip__name">{trackLabel(lang, chip.track)}</span>
           <span class="track-chip__count">{chip.count}</span>
         </button>
       ))
@@ -143,11 +157,11 @@ const trackChips = tracksOfProgram().map((track) => ({
       перерисовки сетки, и без live-региона скринридер молчит о результате. */}
   <p class="talk-count" aria-live="polite">
     <span data-talk-count>{total}</span>
-    <span data-talk-count-label>{pluralTalks(total)}</span>
+    <span data-talk-count-label>{pluralTalks(total, lang)}</span>
   </p>
 
   <button class="button button--ghost" type="button" data-export-ics>
-    Загрузить .ics
+    {t(lang, "exportIcs")}
   </button>
 </div>
 
@@ -155,10 +169,10 @@ const trackChips = tracksOfProgram().map((track) => ({
   {/* Уровень h2 обязателен: без него заголовки карточек (h3) идут сразу после
       h1, и скринридер видит пропуск уровня на всех трёх страницах. Заголовок
       скрыт визуально: заголовок страницы и табы уже задают контекст. */}
-  <h2 class="visually-hidden" id="schedule-title">Расписание докладов</h2>
+  <h2 class="visually-hidden" id="schedule-title">{t(lang, "scheduleTitle")}</h2>
   <div class="program-grid__halls-header">
-    <div class="program-grid__time-label">Время</div>
-    {halls.map((hall) => <div class="program-grid__hall-name">{hall}</div>)}
+    <div class="program-grid__time-label">{t(lang, "timeHeader")}</div>
+    {halls.map((hall) => <div class="program-grid__hall-name">{hallLabel(lang, hall)}</div>)}
   </div>
 
   <div class="program-grid__content">
@@ -186,7 +200,11 @@ const trackChips = tracksOfProgram().map((track) => ({
             data-span={cell.slot.span > 1 ? cell.slot.span : undefined}
             style={`grid-area:${cell.slot.row} / ${cell.slot.column} / span ${cell.slot.span}`}
           >
-            <TalkCard talk={cell.slot.talk} />
+            <TalkCard
+              talk={localizeTalk(lang, cell.slot.talk)}
+              trackKey={cell.slot.talk.track}
+              lang={lang}
+            />
           </div>
         );
       })
@@ -195,10 +213,11 @@ const trackChips = tracksOfProgram().map((track) => ({
 </section>
 
 <p class="program-empty" data-empty hidden>
-  По этому треку в выбранный день докладов нет.
+  {t(lang, "emptyTrack")}
 </p>
 
-<TalkModal />
+<TalkModal lang={lang} />
+<SearchDialog lang={lang} />
 
 <script>
   import "../scripts/program-client.ts";

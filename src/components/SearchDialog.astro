@@ -1,0 +1,71 @@
+---
+/**
+ * Диалог поиска по программе: разметка и общие стили.
+ *
+ * Содержимое — только каркас. Клиентскую логику (открытие/закрытие, фокус-трап,
+ * заполнение `[data-search-results]`) пишет `program-client.ts`; поэтому контракт
+ * здесь — атрибуты `data-search-*`, а не события. Пока диалог закрыт, он `hidden`
+ * и не попадает в дерево доступности.
+ *
+ * Список результатов пуст на билде: доклады подставляет клиент после загрузки
+ * `/program.json`, иначе каждый день тащил бы всю программу в HTML.
+ */
+import { t, type Lang } from "../i18n/ui";
+import "../styles/search.css";
+
+interface Props {
+  lang: Lang;
+}
+
+const { lang } = Astro.props;
+---
+
+<div class="search-dialog" data-search-dialog hidden>
+  <div class="search-dialog__backdrop" data-search-close></div>
+  <div
+    class="search-dialog__panel"
+    role="dialog"
+    aria-modal="true"
+    aria-labelledby="search-title"
+    data-search-panel
+    tabindex="-1"
+  >
+    <h2 class="visually-hidden" id="search-title">{t(lang, "searchTitle")}</h2>
+
+    <form class="search-form" role="search" data-search-form>
+      <input
+        class="search-input"
+        type="search"
+        data-search-input
+        autocomplete="off"
+        spellcheck="false"
+        placeholder={t(lang, "searchPlaceholder")}
+        aria-label={t(lang, "searchPlaceholder")}
+      />
+      <button
+        class="search-close"
+        type="button"
+        data-search-close
+        aria-label={t(lang, "searchClose")}
+      >
+        <svg
+          viewBox="0 0 24 24"
+          width="20"
+          height="20"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2"
+          stroke-linecap="round"
+          aria-hidden="true"
+          focusable="false"
+        >
+          <path d="M6 6l12 12M18 6L6 18"></path>
+        </svg>
+      </button>
+    </form>
+
+    <p class="search-hint" data-search-hint>{t(lang, "searchHint")}</p>
+    <ul class="search-results" data-search-results role="list"></ul>
+    <p class="search-empty" data-search-empty hidden>{t(lang, "searchEmpty")}</p>
+  </div>
+</div>

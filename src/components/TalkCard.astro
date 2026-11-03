@@ -3,14 +3,19 @@
  * Карточка доклада. Рендерится на билде целиком: время, звёздочка, спикеры,
  * тезисы и «Подробнее». JS только переключает состояния — разметку не создаёт.
  */
+import { t, type Lang } from "../i18n/ui";
+import { hallLabel, trackLabel } from "../lib/localize";
 import { firstParagraph, formatRange, type Talk } from "../lib/program";
 import { SOCIAL_LABELS } from "../lib/socials";
 
 interface Props {
   talk: Talk;
+  /** Оригинальный ключ трека: по нему фильтрует клиент, поэтому не переводится. */
+  trackKey?: string;
+  lang: Lang;
 }
 
-const { talk } = Astro.props;
+const { talk, trackKey, lang } = Astro.props;
 
 /** Только `https:`: поля приходят из чужого API и не должны стать beacon'ом. */
 const safeUrl = (value: string | null): string | null => {
@@ -25,7 +30,8 @@ const lectors = talk.lectors
 const theses = (talk.short || firstParagraph(talk.description)).trim();
 /** Кнопка нужна только там, где текст реально не влезает в 5 строк клампа. */
 const canExpand = theses.length > 240;
-const trackLabel = talk.track.trim() ? talk.track : "Без трека";
+const trackText = talk.track.trim() ? trackLabel(lang, talk.track) : t(lang, "noTrack");
+const hallText = hallLabel(lang, talk.hall);
 
 const initials = (name: string): string =>
   name
@@ -43,22 +49,22 @@ const STAR =
 <article
   class:list={["talk-card", image ? null : "talk-card--compact"]}
   data-talk-id={talk.id}
-  data-track={talk.track}
+  data-track={trackKey ?? talk.track}
 >
   <div class="talk-card__top">
     <div class="talk-card__header">
       <span class="talk-card__time">{formatRange(talk)}</span>
       {/* Бейдж зала видён только в мобильной модели списка: в сетке зал задан
           колонкой, и на десктопе элемент скрыт стилем (`program.css`). */}
-      <span class="talk-card__hall">{talk.hall}</span>
+      <span class="talk-card__hall">{hallText}</span>
       <button
         class="talk-card__favorite"
         type="button"
         data-fav
         data-talk-id={talk.id}
         aria-pressed="false"
-        aria-label={`В избранное: ${talk.title}`}
-        title="В избранное"
+        aria-label={t(lang, "cardFavAdd", { title: talk.title })}
+        title={t(lang, "modalFavAdd")}
       >
         <svg
           viewBox="0 0 24 24"
@@ -103,8 +109,8 @@ const STAR =
               </button>
             </h3>
             <div class="talk-card__media-meta">
-              <span class="talk-card__meta-item">{trackLabel}</span>
-              <span class="talk-card__meta-item">{talk.hall}</span>
+              <span class="talk-card__meta-item">{trackText}</span>
+              <span class="talk-card__meta-item">{hallText}</span>
             </div>
           </div>
         )
@@ -189,7 +195,7 @@ const STAR =
       {
         canExpand && (
           <button class="talk-card__toggle-btn" type="button" data-more aria-expanded="false">
-            Подробнее
+            {t(lang, "more")}
           </button>
         )
       }

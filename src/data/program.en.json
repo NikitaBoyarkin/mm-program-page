@@ -1,0 +1,754 @@
+{
+  "tracks": {
+    "ТРАНСФОРМАЦИЯ": "TRANSFORMATION",
+    "СЕМАНТИЧЕСКИЙ СЛОЙ И АНАЛИТИЧЕСКИЕ АГЕНТЫ": "SEMANTIC LAYER AND ANALYTICAL AGENTS",
+    "АРХИТЕКТУРА": "ARCHITECTURE",
+    "АВИТО": "AVITO",
+    "МАСТЕР-КЛАССЫ": "MASTER CLASSES",
+    "БЕЗОПАСНОСТЬ ИИ": "AI SAFETY",
+    "ЭКСПЕРИМЕНТЫ": "EXPERIMENTS",
+    "МАРКЕТИНГОВАЯ АНАЛИТИКА": "MARKETING ANALYTICS",
+    "ДИСКУССИИ": "DISCUSSIONS",
+    "HR-ТРЕК": "HR TRACK",
+    "KEYNOTES": "KEYNOTES"
+  },
+  "halls": {
+    "Молекула": "Molecule",
+    "Атом": "Atom",
+    "Архангельск": "Arkhangelsk",
+    "Физика": "Physics",
+    "Кинетика": "Kinetics",
+    "Трансформер": "Transformer",
+    "Онлайн-зал №1": "Online Hall 1",
+    "Онлайн-зал №2": "Online Hall 2",
+    "Онлайн-зал №3": "Online Hall 3"
+  },
+  "days": {
+    "1 день": "Day 1",
+    "2 день": "Day 2",
+    "Онлайн-день": "Online day"
+  },
+  "talks": {
+    "267": {
+      "title": "How progress in modern multimodal models affects the DS/DA/ML profession",
+      "short": "Valery Babushkin, senior chief boss at BP.",
+      "description": "",
+      "lectorRoles": [
+        "Senior chief boss, BP"
+      ]
+    },
+    "268": {
+      "title": "How to measure AI adoption in a large company",
+      "short": "A systematic approach to assessing AI Adoption inside a large company: from solution architecture to a detailed breakdown of the methods applied. Attendees will get a framework for evaluating the effectiveness of AI initiatives, allowing them to manage the process of neural network adoption based on data.",
+      "description": "How to assess the success of AI process adoption. Without clear metrics, AI transformation risks turning into blind hype that brings no measurable benefit to the business. The talk examines a systematic approach to assessing AI Adoption inside a large company: how to measure what many consider unmeasurable.\n\nThe speaker will break AI transformation down into specific areas and draw the boundary between what really lends itself to digitization and what cannot be measured. You will see how the analytics of AI Adoption at Nebius is structured from the inside: from solution architecture to a detailed breakdown of the methods applied. Drawing on the experience of successful corporate transformations in BI, Lean and Kaizen, the speaker will show not only working mechanics, but also break down his own mistakes, honestly highlighting situations in which standard approaches do not work.\n\nAs a result you will get real examples of metrics and analytics that can be immediately transferred to your own business. The talk will give product managers and CPOs a transparent framework for evaluating the effectiveness of AI initiatives, allowing them to manage the process of neural network adoption based on numbers rather than intuition",
+      "lectorRoles": [
+        "AI adoption lead, Nebius group"
+      ]
+    },
+    "269": {
+      "title": "Antifragile metrics: when analytics starts to drive decisions",
+      "short": "The main result of analytics is expressed not by the accuracy of numbers, but by which decisions the company makes on their basis. What to do when familiar product metrics have stopped reflecting the long-term health of the product, and different teams understand differently what exactly counts as success? You will learn how to change the approach to product measurement and influence real business decisions",
+      "description": "The main result of analytics is expressed not by the accuracy of numbers, but by which decisions the company makes on their basis. The talk is about what to do when familiar product metrics have stopped reflecting the long-term health of the product, and different teams understand differently what exactly counts as success? You will learn how to change the approach to product measurement and influence real business decisions",
+      "lectorRoles": [
+        "Director of the media platform analytics department, VK offline"
+      ]
+    },
+    "270": {
+      "title": "Optimization traps: when uncoordinated decisions make the overall result worse",
+      "short": "Game theory for analysts. In his lecture on game theory, Alexey Savvateev will explain the Nash equilibrium concept in accessible terms and show through a series of examples how the interaction of selfish participants can lead to a collective loss. Braess's paradox, the prisoner's dilemma, the tragedy of the commons — in all these situations equilibrium logic does not guarantee a satisfactory outcome from the standpoint of the global benefit to society. Particular attention will be paid to how changing the rules of the game changes people's behavior, which must be taken into account when designing incentive schemes. No special mathematical background is required, but a willingness to reason will come in handy.",
+      "description": "In his lecture on game theory, Alexey Savvateev will explain the Nash equilibrium concept in accessible terms and show through a series of examples how the interaction of selfish participants can lead to a collective loss.\n\nBraess's paradox, the prisoner's dilemma, the tragedy of the commons — in all these situations equilibrium logic does not guarantee a satisfactory outcome from the standpoint of the global benefit to society.\n\nParticular attention will be paid to how changing the rules of the game changes people's behavior, which must be taken into account when designing incentive schemes.\n\nNo special mathematical background is required, but a willingness to reason will come in handy.",
+      "lectorRoles": [
+        "Russian mathematician and specialist in mathematical economics, science popularizer"
+      ]
+    },
+    "271": {
+      "title": "Mind outside the head: from the stone hand axe to artificial intelligence",
+      "short": "How our brain created knowledge and how the artificial information environment affects it, when AI changes the cultural environment faster than human biology.",
+      "description": "Mind was not a predetermined goal of evolution — human intelligence emerged and developed not only inside the brain: tools preserved ways of acting, language transmitted experience, social groups accumulated knowledge, and writing and digital technologies created humanity's external memory.\n\nOne of the main amplifiers of human intelligence was the transmission of knowledge — language, imitation, teaching and a long childhood made cumulative culture possible. Human history is the history of external carriers of mind, and if earlier tools mostly stored and retrieved knowledge, generative systems are starting to assemble answers, offer explanations and take part in decision-making.\n\nStanislav Drobyshevsky traces this trajectory from stone technologies and the origin of speech to writing, digital data and generative models. Why was intelligence not an inevitable goal of evolution? How did cooperation help sapiens turn individual experience into culture? Which abilities do we gain and lose by handing memory and thinking over to external tools? And what can anthropology really say about humans in the age of AI?\n\nThis is a lecture about how the biological brain created an external world of knowledge and how the artificial information environment affects it, when AI changes the cultural environment faster than human biology",
+      "lectorRoles": [
+        "Russian paleoanthropologist and science popularizer"
+      ]
+    },
+    "272": {
+      "title": "A/B tests on employees: from AI copilots to sales scripts",
+      "short": "The specifics of testing AI copilots and other internal products and company processes, in order to answer precisely the question \"did the new tool change employees' work enough to make scaling it worthwhile\".",
+      "description": "Internal products — AI tools, telephony, sales scripts — require experimental validation, but classic A/B testing breaks down quickly here. Instead of millions of independent users you have dozens or hundreds of employees, where the test group talks to the control group and the results depend on team structure and incentive systems. The talk examines the experience of Avito Sales Tech in running A/B tests of internal products on small fixed samples (dozens of managers).\n\nThe speaker will show how to get a statistically reliable causal answer under strong, specific network effects. You will learn how to choose the level of randomization (employee, team or work period) and what price the move from individual to team-level testing carries.\n\nWe will go through working with small samples: group balancing, use of the pre-period, CUPED and validating the design on historical A/A tests. A separate block covers accounting for external factors: how to separate the learning period for a new tool from a lasting effect and how to factor in current incentives and motivation (KPI).\n\nAttendees will learn to design informative experiments even on dozens of employees. The talk will provide a framework for evaluating internal AI solutions, CRM and processes: how to build a causal chain from a workflow change to a business effect. You will understand why access to a tool does not mean exposure, and how to correctly link growth in intermediate work metrics to the resulting economic benefit when deciding whether to scale a product",
+      "lectorRoles": [
+        "Analytics team lead, Avito"
+      ]
+    },
+    "273": {
+      "title": "It's not all that good: what an A/B test doesn't tell us about users",
+      "short": "How a deep analysis of an A/B test audience helps find unexpected experiment effects, make more precise product decisions, and improve the quality and accuracy of recommendations.",
+      "description": "A/B tests help make product decisions, but average experiment results do not always reflect what is happening with individual user groups. In the talk we will look at a content platform case and show how a deeper look at the audience helps find unexpected experiment effects and make more precise decisions about product development. And also how this affects the way content that suits a particular user profile is recommended",
+      "lectorRoles": [
+        "Head of the ML analytics team, VK (Dzen)",
+        "Senior technical analyst, VK"
+      ]
+    },
+    "274": {
+      "title": "How to calculate the cumulative effect of a series of experiments: measuring the impact of ML improvements on product metrics",
+      "short": "Retrospective assessment of the cumulative effect on the product from a series of consecutive experiments. Methods for estimating the cumulative effect and when a counterfactual scenario is necessary.",
+      "description": "Retrospective assessment of the cumulative effect on the product from a series of consecutive experiments. Methods for estimating the cumulative effect and when a counterfactual scenario is necessary",
+      "lectorRoles": [
+        "Analyst in the recommendations and search group, VK Музыка, VK"
+      ]
+    },
+    "275": {
+      "title": "How to measure the effect of product changes without an A/B test?",
+      "short": "In our case we cannot split sellers into groups A and B: that would mean giving different sellers different promotion conditions. So a classic A/B test is impossible. The solution is synthetic control: it makes it possible to measure the effect of changes without directly splitting sellers into test and control groups",
+      "description": "E-commerce platforms constantly experiment with internal promotion algorithms and pricing. However, when testing minimum ad rate thresholds, a classic A/B test turns out to be legally impossible: randomly splitting sellers into test and control groups means giving them different commercial terms, which directly violates antitrust law. This creates a deadlock: how do you measure price elasticity and test product hypotheses when classic user randomization is strictly prohibited? The talk covers RWB's experience of estimating causal relationships under hard constraints using the synthetic control method.\n\nThe speaker will show the internal mechanics of the tool: changes are rolled out not to individual sellers but to entire product categories. You will learn how regression models based on \"donor categories\" with similar historical behavior are used to predict a synthetic control trend for the test group. Special attention will be paid to testing statistical significance in complex non-parametric approaches — Kuramagomed will walk through the math of calculating it via a permutation test to estimate the real incremental effect of a price change.\n\nListeners will get a detailed \"in plain terms\" explanation of how the synthetic control method works and will understand its mathematical connection to the popular Difference-in-Differences approach. The talk will give product analysts and data scientists a ready-made framework for legally and statistically valid testing of pricing hypotheses where standard A/B platforms are completely powerless.",
+      "lectorRoles": [
+        "Senior product analyst, RWB"
+      ]
+    },
+    "276": {
+      "title": "The pitfalls of LLM labeling in effect estimation",
+      "short": "Review sentiment, contact topic, product category — until recently all of this was labeled by hand, and now it is labeled by language models. Along with that, the status of the numbers computed on such labeling has changed. The dashboard metric and the experiment's target metric are no longer observed — they are predicted. Can you compute statistics on a metric that a model assigned, and what is wrong with that statistics?",
+      "description": "Handing the classification of texts (sentiment, topics, categories) over to language models made labeling fast and cheap. However, along with this the status of the numbers the business sees on dashboards changed: the target metric is no longer observed directly but predicted. The industry tends to assume that checking the classifier's overall accuracy is enough to launch a pipeline, but in practice this approach leads to fundamental distortions in the estimation of product and marketing effects.\n\nThe talk examines the mathematical nature of the error in neural-network labeling: the model does not err randomly but where the text is harder. The bias in a share depends on the share itself, so data from different segments is not comparable, and if the difficulty of texts changes over time, a dynamics that does not exist appears in the metrics. The speaker will show why in A/B tests classic randomization does not save you from a distorted measurement of the outcome. You will learn how an LLM classifier can compress a real effect, depriving the experiment of its built-in statistical power and invalidating the MDE calculation. Separately, the popular myth that a consensus of several different LLMs guarantees reliability will be dismantled (spoiler: their errors are often correlated).\n\nAttendees will get a rigorous statistical method for correcting these distortions based on prediction-powered inference. The talk will provide a ready algorithm: how, using a small manually labeled validation sample, to estimate and subtract the model's bias. You will learn how to build a pipeline in which the unbiasedness of the final estimates is guaranteed by the sampling design rather than by the quality of the neural network itself.",
+      "lectorRoles": [
+        "PhD in economics, researcher at the Faculty of Economics, MSU, expert in causal inference econometrics and experimental methods"
+      ]
+    },
+    "277": {
+      "title": "How a single SQL query can show that your attribution is lying to you",
+      "short": "The speaker shares SQL code that lets you check whether your attribution model is honest on your own data, plus a faster marker of incorrect source evaluation in one-touch models. Attendees will get a reusable analytical framework for quickly quantifying problems with one-touch attribution, which distorts the real contribution of advertising channels in B2B products and services with long deal cycles.",
+      "description": "In B2B products and services with a long deal cycle, standard one-touch attribution models (first touch / last touch) predictably distort the real contribution of advertising channels. At M2, the hypothesis that such models were inadequate led to an attempt to implement multi-touch attribution. However, instead of a classic story of successful development, the speaker will walk through a case where building a multi-touch model initially failed — but it was precisely this failure that exposed fundamental problems in the traffic evaluation system.\n\nInstead of weeks of designing custom algorithmic models, the team spent only two days on diagnostics using a standard stack: the Yandex Metrica Logs API and any DBMS. The talk examines the logic of this research in detail. The speaker will show the specific SQL query used in the study and will also share an even faster marker that your standard attribution models are evaluating sources incorrectly. This is an engineering breakdown of how to \"cut the corner\" and cheaply verify the problem without over-engineering and ML models.\n\nAttendees will get a reusable analytical framework for quickly quantifying problems with one-touch attribution. The talk will show how the results of this short study at the level of raw logs forced the business to reconsider its strategy: to stop scaling classic performance acquisition and shift focus toward brandformance. You will take away a ready-made SQL template that lets you check the honesty of your current attribution on your own data",
+      "lectorRoles": [
+        "Marketing analyst, M2"
+      ]
+    },
+    "278": {
+      "title": "How to turn thousands of conversations into data marketing can make decisions on",
+      "short": "Transforming raw voice logs into structured datasets with neural networks. We build automatic transcription, intent tagging and emotion recognition to turn speech into data suitable for quantitative analysis",
+      "description": "Traditional qualitative analysis of customer communications does not scale: manual call listening covers only a small share of dialogues. As a result, a mass of unstructured information (objections, insights, behavior patterns) remains a blind spot for analytics. The talk examines a method for transforming raw voice logs into structured datasets using neural networks. On a dataset from the UIS platform, the speaker will show how to build automatic transcription, intent tagging and emotion recognition in order to turn speech into metrics suitable for quantitative analysis.\n\nThe talk is based on a detailed breakdown of three applied business cases. First: parsing a mass of calls to identify real objections, which made it possible to rebuild product pages and double the conversion to inquiries on current traffic. Second: building a process for predictively identifying dissatisfied customers, which reduced the number of negative reviews by 70%. Third: a 6% increase in success conversion through adjusting scripts based on semantic analysis. The speaker will justify the methods used and examine the operational limitations of AI models: transcription cost, accuracy problems in specific niches, and the team's own mistakes during implementation.\n\nAttendees will learn how to build a pipeline for turning unstructured speech into tabular data for research. The talk will provide an understanding of the methodology: how to correctly tag calls and link speech analytics data to business results. You will understand which tasks machine dialogue analysis is economically justified in, and which — where it fails and requires manual validation or classic research methods.",
+      "lectorRoles": [
+        "Head of product direction, UIS"
+      ]
+    },
+    "279": {
+      "title": "Evaluating the effectiveness of “flight” offline advertising",
+      "short": "A step-by-step guide to assembling a Bayesian MMM for “flight” placements and a model diagnostics checklist. A breakdown of working with adstock (the effect of fading memory of advertising) and saturation (diminishing returns on investment)",
+      "description": "When it comes to evaluating marketing effectiveness, analysts are used to relying on high-frequency digital channel data. However, the harsh reality of large brands is a complex mix of digital and offline, often launched in “flights” (bursts) with weekly aggregation. As a result, after three years of active campaigns you have only about 150 rows of data. Under such conditions, classic ML (linear regression, XGBoost) breaks down and produces negative weights for channels that actually work, while time-series models (Prophet) err in forecasting during a flight-based advertising campaign and do not answer the main business question — “what drove the sales?”\n\nThe talk breaks down in detail the process of building marketing mix models (MMM) based on Bayesian regression — an approach that lets you extract the maximum of insights from a minimal amount of information. The speaker will justify why this particular mathematical apparatus saves you in conditions of data hunger and will show how to integrate business rules directly into the model through prior distributions (priors). In practice, you will work through how to correctly program adstock (the effect of fading memory of advertising) and saturation (diminishing returns on investment).\n\nAs a result, you will take away a step-by-step guide to assembling a Bayesian MMM for “flight” placements. The talk will arm you with an exhaustive model diagnostics checklist: from purely statistical metrics (like R-hat) to calibration on external data and sanity checks. You will learn to build offline advertising evaluation models in a way that the business will finally believe.",
+      "lectorRoles": [
+        "Data scientist, CUBE"
+      ]
+    },
+    "280": {
+      "title": "A metric for media advertising: why it is sometimes better to build new than to change the old",
+      "short": "A new data model makes it possible to build a flexible attribution window, link media impressions with Metrica goals and AppMetrica events, and add new parameters and traffic-quality metrics.",
+      "description": "Media advertising has historically suffered from fragmented data: classic analytics tools struggle to connect upper-funnel impressions with final conversions, especially when the user journey crosses web and mobile apps. When the old system's architecture stops coping with cross-platform tasks and strict attribution limits, the business faces a choice: endlessly refactor the legacy or design the base from scratch. The talk covers the experience of the Yandex team, which chose the radical path of rebuilding the architecture.\n\nThe speaker will break down the design of the new data model in detail and show how abandoning the old logic made it possible to implement a truly flexible attribution window. The main focus of the talk is the mechanics of stitching disparate signals into a single user journey. You will learn how, under the hood, a seamless link is built between raw media impressions, goal actions from classic Metrica, and in-app events from AppMetrica, providing conversion transparency regardless of platform.\n\nA separate block will be devoted to extending the analytics toolkit on the new architecture. Listeners will see how the built-in flexibility allows enriching data with custom parameters and introducing advanced traffic-quality metrics. The talk will help data team leads make informed decisions about rebuilding internal analytics platforms, and will give analysts an understanding of how to transparently assess the impact of top-of-funnel campaigns on final revenue.",
+      "lectorRoles": [
+        "Product manager, Yandex"
+      ]
+    },
+    "281": {
+      "title": "The anatomy of churn in SaaS products: 9 cuts that show the real reason customers leave",
+      "short": "Approaches and methods for analyzing cohorts, plans, lifecycle stages, behavior, reasons for leaving and more.",
+      "description": "Customer churn is often perceived by the business as a single flat metric, which inevitably leads to wrong product decisions. Treating churn rate as an unambiguous evil hides the real dynamics: looking at the overall number, a company cannot see the difference between failed onboarding, a downgrade by loyal users and the natural departure of a non-target audience. The talk breaks down a research approach to deep churn segmentation that lets you find the true points of revenue loss in SaaS products.\n\nThe speaker will present a methodology for decomposing churn into nine key analytical cuts. You will learn how to properly cross-analyze cohorts, pricing plans, lifecycle stages and the behavioral patterns of churning users. The mechanics of working with qualitative data on reasons for leaving will be shown, along with ways to link it to quantitative product metrics. Special attention is paid to the concept of «good churn» — situations where losing a customer is mathematically and strategically good for the business, and attempts to retain them bring more losses than value.\n\nListeners will get a ready-made analytical framework for diagnosing churn. The talk will help move from passively watching an overall figure to targeted work with segments: you will start to clearly understand which users need to be won back by any means and which are better let go.",
+      "lectorRoles": [
+        "Chief Customer Office, Dynamic Yield and Algolia (IT consulting)"
+      ]
+    },
+    "282": {
+      "title": "Managing ad traffic during periods of high utilization",
+      "short": "When utilization is at its peak, you cannot show the business multiple-fold growth, nor give partners the required volumes at the expense of free traffic. We share our utilization calculation methodology, approaches to media planning and ways to cool down traffic.",
+      "description": "When a site's ad inventory hits the utilization ceiling, the classic extensive monetization model breaks down. The business keeps demanding multiple-fold revenue growth by inertia, advertisers expect the usual volumes, but there are simply no free impressions left. An attempt to aggressively grow inventory leads to audience burnout and a drop in efficiency, while refusing partners leads to lost budgets. The talk covers Magnit AdTech's experience of managing a Retail Media ecosystem under a severe shortage of free capacity.",
+      "lectorRoles": [
+        "CAO Adtech, Magnit AdTech"
+      ]
+    },
+    "283": {
+      "title": "Data catalog as a product: how to digitize data flows and close key user scenarios across the business",
+      "short": "Turning a data catalog from a \"registry of tables\" into an internal product at the ecosystem level, building an architectural frame, and then \"sewing\" into it the logic that closes real user scenarios of analysts, engineers and data owners.",
+      "description": "How to turn a data catalog from a \"registry of tables\" into an internal product at the ecosystem level: digitize the main data flows and objects across the holding, build an architectural frame, and then \"sew\" into it the logic that closes real user scenarios of analysts, engineers and data owners. Which product principles are important in this process, how to build synergy of functions and how to scale data management.",
+      "lectorRoles": [
+        "OneData"
+      ]
+    },
+    "285": {
+      "title": "A mission-based model for order clustering",
+      "short": "We cluster tens of millions of baskets and show that instead of clear missions there is a continuum with anchors. We explain how to separate the purpose of an order from basket size and discount, which quality metrics to compute before A/B and why we moved from clusters to the «occasion × product group» matrix",
+      "description": "A beautiful idea: all orders fall into clear clusters. In reality there are no clusters, only a continuum of order purposes — not clouds at a distance from each other, but one complex figure with density clusters — «anchors».\n\nWe went through a hierarchy of basket representations and saw how these anchors manifest. And how their names drift: «Sweet gift» in June turns into a bag of charcoal for a barbecue, at graduation parties into chocolates, around New Year into alcohol. «For my beloved self» means toilet paper, cat litter and mosquito repellent.\n\nWe will tell you how to build such a model on your own data, which quality metrics to compute before A/B and why we did not turn it into a production tool. And where we went next: to the «occasion × product group» matrix and new levers for raising ARPU",
+      "lectorRoles": [
+        "Head of Commercial Analytics, Магнит Доставка"
+      ]
+    },
+    "286": {
+      "title": "When PSM no longer works: moving to system dynamics simulation models",
+      "short": "A system dynamics simulation model calibrated to actual business metrics, answering the question of what will happen to the metrics if business parameters are varied.",
+      "description": "Estimating the economic effect of business expansion under limited resources is a complex task, since classic A/B testing does not work here. In the Yandex.Drive case, opening new service zones in a city with a shared fleet inevitably led to cannibalization of old zones. Running a per-user test is impossible because of network effects, and using switchback experiments (by geo and time) leads to the opened geography starting to unpredictably “flicker.” To bypass these limitations, the team developed an approach to experimentation using a synthetic control group. A carsharing simulator — a system dynamics simulation model — is used as the synthetic control group, acting as the control group.\n\nThe talk covers the simulator's architecture and the process of calibrating it to actual business metrics. The model describes the equilibrium between demand, car availability, conversion, orders, and fleet utilization. You will learn how, with such a simulator, to forecast changes in key indicators: total revenue, dynamic profit, car idle time, and revenue per car-day when varying business parameters (geography, average check, order duration). The speaker will justify the use of simulation modeling in conditions where other incrementality evaluation methods are inapplicable, and will highlight situations in which this approach does not work.\n\nListeners will learn how to apply system dynamics to estimate revenue increment and sales cannibalization. The talk will show the process of creating a test environment that allows forecasting the behavior of complex systems under changes in external conditions (for example, how the first snow will affect demand and the SLA of the delivery service). As a result, you will get a working tool for tuning dynamic pricing algorithms and dealing with excess supply in services with shared resources.",
+      "lectorRoles": [
+        "Analyst, Yandex.Drive"
+      ]
+    },
+    "287": {
+      "title": "Finding suspicious patterns in user behavior",
+      "short": "How antifraud analytics turns behavioral and content signals into product restrictions, how their effectiveness is measured, and how to evaluate detector quality on historical data.",
+      "description": "Using a hypothetical case of spam in comments on public posts, we will look at how an analyst can identify suspicious user behavior. We will talk about how to look for behavioral and technical signals, formulate rules for detecting spam, test them on historical data and evaluate the quality of triggers. We will separately discuss the trade-off between missed violations and false positives, and also why one rule is not enough and how violators' behavior can change in response to restrictions.\n\nThe case will be based on synthetic data and illustrate the analytical process rather than building an antifraud system from scratch.",
+      "lectorRoles": [
+        "Fraud Detection Analyst"
+      ]
+    },
+    "288": {
+      "title": "AI agents: how progress becomes everyday practice (and where you can already do without a subscription)",
+      "short": "Working scenarios without a subscription to Claude Code, Codex and other cutting-edge solutions. Which tasks are solvable right now on a fully open stack, and where limitations remain. Experiments with Goose, Qwen and DeepSeek",
+      "description": "AI agents are already helping to perform entire work tasks. This became possible thanks to the development of both the models themselves and the environment they work in — tools, skills, and feedback mechanisms. But how far have we progressed over the past year? And what capabilities are available today without a subscription to Claude Code, Codex and other cutting-edge solutions?\n\nIn this talk we will trace the evolution of agents and break down how improvements in different parts of the system add up to a practical result. We will discuss the capabilities of small models and the role of the harness — the environment that organizes the agent's work. We will assess which general-purpose tasks are solvable right now on a fully open stack. And with our own experiments with Goose, Qwen and DeepSeek we will show which scenarios already work and where limitations remain.\n\nKey questions covered in the talk:\n\n* what has changed in AI agent capabilities over the past year;\n\n* how close modern open models have come to the flagships (current and last year's);\n\n* why the harness and skills can matter more than the model itself;\n\n* when a self-directed agent is useful and when a strict pipeline is needed;\n\n* how to evaluate the practical value of AI progress;\n\n* which tasks are solvable on the open stack right now;",
+      "lectorRoles": [
+        "Lecturer at MIPT, expert in multimodal data analysis"
+      ]
+    },
+    "289": {
+      "title": "How AI is changing BI: where we stumble, what works and where we run next",
+      "short": "Dashboards stop being someone's job, while semantics and context have not yet become someone's job. How BI at Авито lived through 2026 in this fog: data content certification, domain AI readiness, skills and knowledge bases, prerequisites for an AI analyst, solved and unsolved problems. No success stories, but with a therapeutic effect",
+      "description": "Dashboards stop being someone's job, while semantics and context have not yet become someone's job. The focus of BI has shifted from «a factory of reports as products» to governance, metrics and the knowledge graph. Self-service BI has been reborn as agentic self-service.\n\nI will tell how at Авито we lived through 2026 in this fog, what we changed over the year and which expectations turned out to be overestimated. I will break down why certification of marts, metrics and dashboards has returned to focus and whether everyone can afford the prerequisites of an AI analyst. I will show how we grow the AI readiness of domains through federated data governance, metadata generation and a network of BI partners. There will also be problems that we cannot solve yet.\n\nA talk without success stories, but with a therapeutic effect. It is for BI developers, leads and heads who do not yet feel new ground under their feet, those who are deciding what to do with BI in the AI world. You will compare your vision with the experience of Авито, take away working ideas and leave with the feeling that you are not running in the fog alone.",
+      "lectorRoles": [
+        "Head of BI, Авито"
+      ]
+    },
+    "290": {
+      "title": "How much analytical work can be handed to an agent and how to verify it is done",
+      "short": "Eight steps from an analytical task to an accepted agent answer with checks at different stages: transferability is determined not by the complexity of the task, but by whether the decisions it requires are declared; an undeclared decision will still be made — by a layer, a mart or a model; acceptance depends on the image of the result, and acceptance itself has a blind spot.",
+      "description": "The use of AI analysts is becoming a mass trend, but there is almost nothing to verify their work on real data with: without a manual duplicate query, the correctness of a calculation is not confirmed. So you can approach from the other side — not \"what the agent can do\", but \"what needs to be done with the task, the data and the scaffolding so that a correct answer becomes more likely\".\n\nThe result is a framework of eight steps from statement to accepted result, and at each step there is a check and a typical failure that occurs regardless of model and domain.\n\nA live analytical backlog is laid out by image of the result - what appears when a task is closed: a number, an export, a dashboard, a pipeline cell, an edit to a report, a study, an agreement on a metric definition, an A/B test.\n\nThe first conclusion: transferability is determined not by the complexity of the task, but by whether the decisions it requires are declared. An undeclared decision will still be made: by a layer, a mart or a model, each time anew. And declaring is not enough. Between \"we described this\" and \"the agent sees this\" lies the scaffolding, and it loses: a significant part of the decisions recorded in model comments and tests does not reach the agent's context, and including a layer with table descriptions in one of the measurements actually narrowed the input.\n\nHence the second conclusion, less obvious: the answer is not the only outcome of the work.\n\nAn agent can stop and list what is missing, and each non-answer has its own party to blame: the framing of the question, the absence of an object in the data, the semantic layer, or the discipline of recording results.\n\nIt turns out that not everything is fixed by prompt and context.\n\nWork must be accepted by image of the result: a number has its own truth, an export has another — a set of rows and a control aggregate, a study has none at all, and there the stability of the conclusion is checked, not correctness.\n\nThe talk examines several techniques with measured boundaries: comparison with a known answer, decomposition of a number into summands, checking that nothing extra was affected, addition in two ways, reading what the agent decided itself, recalculation with a different decision.\n\nAttendees will get a sequence of actions that raises the share of correct answers, and a way to check each step for themselves: whether the declared decisions reach the agent, what changes in the input when a layer is enabled, and what to accept each image of the result with.\n\nAnd separately - how to check your own check.",
+      "lectorRoles": [
+        "Head of product analytics for commercial products, Samokat.tech"
+      ]
+    },
+    "291": {
+      "title": "The pretrain data factory: how to turn the web, documents, audio and video into a training corpus",
+      "short": "Data quality control at big tech scale without manual labeling and the specifics of preparing media sources. The architecture of a pretrain corpus preparation pipeline and a checklist of what to cut off so as not to burn expensive compute on dirty data",
+      "description": "When a model is trained on a complex mixture of web, images, audio or video, data preparation stops being a set of one-off scripts. It turns into a large-scale engineering product — a \"data factory\" with a continuous stream of raw sources at the input and a standardized training corpus at the output. The talk examines the construction of an end-to-end conveyor that replaces disparate scripts with a unified architecture for collecting, cleaning, deduplicating, filtering and packaging data for all modalities.\n\nThe speaker will break down in detail the structure of a multimodal pipeline based on distributed systems. You will learn how to control data quality at industrial scale without manual labeling, using extraction algorithms, automatic classifiers, scoring and heuristics. The audience will break down at which stages the cost of computation grows nonlinearly, and how to correctly prioritize sources so as not to spend unique resources on low-quality data.\n\nAs a result you will get a reference architecture of a pretrain corpus preparation pipeline, ready to be adapted to your tasks. You will see how to assess the labor intensity of processing different modalities already at the planning stage, combining strict data engineering with project management.",
+      "lectorRoles": [
+        "Executive director, Sber"
+      ]
+    },
+    "292": {
+      "title": "How much context does AI really need?",
+      "short": "We will compare how AI works with a database schema, data, technical metadata and a full semantic layer. We will look at which part of business context AI can recover from the schema and the data itself, and which part it must be given explicitly by the company, without turning the construction of a semantic layer into a multi-year project of describing the entire company.",
+      "description": "",
+      "lectorRoles": [
+        "Head of the analytics and data infrastructure department"
+      ]
+    },
+    "293": {
+      "title": "Is the analyst market overheated or do candidates just not know how to sell themselves?",
+      "short": "We'll honestly break down what is actually valued in interviews and how to stand out among other candidates. We'll talk about salaries, strange company requirements and matching with the future team. We'll find out where it's better to grow as a specialist, where to go for money, and what matters more when choosing an offer: title, interesting tasks, people or salary.",
+      "description": "The product analytics market often seems overheated, and the employment process — opaque. Candidates face a string of rejections, inexplicable salary spreads on identical positions and strange hiring conditions. The talk examines the underside of job hunting in IT: without abstract advice and stories of \"successful success\", exclusively on the basis of real interviews, salary negotiations and one's own mistakes.\n\nThe talk examines in detail the process of evaluating vacancies and employers. The speaker will explain why financial conditions on similar positions differ drastically, what actually hides behind loud job titles, and how to stand out among competitors. The audience will break down the typical screw-ups of hiring companies and the non-obvious red flags one can encounter in an interview, including specific cases from big tech.\n\nAttendees will learn how to objectively assess their value on the market and not measure professionalism by the number of rejections. The talk will give a list of questions about tasks, processes and conditions that must be asked of the hiring manager before accepting an offer, in order to choose a job by real substance rather than by the signboard.",
+      "lectorRoles": [
+        "Product analyst, Avito"
+      ]
+    },
+    "294": {
+      "title": "How to manage the probation period and what is wrong with it",
+      "short": "A candidate sold themselves perfectly in the interview, but it turned out that something was off and they need to be fired. What to do if HR does not agree to fire based on the results of the probation period, but you don't want to be a hostage of the situation either.",
+      "description": "The probation period was conceived as a legal tool to protect the business from hiring mistakes, but in practice it often turns into a legal trap. The situation where a candidate brilliantly sold themselves in the interview but completely failed the real tasks is familiar to every manager. However, an attempt to part ways with such an employee regularly runs into the resistance of the HR department, which blocks dismissal under the article because of the high risks of labor disputes. As a result, the hiring manager becomes a hostage of their own mistake and is forced to drag along an incompetent specialist. The talk examines the legal and management mechanics of safely parting ways with employees who have not passed probation.\n\nThe speaker will show how to set up the process of assigning tasks and control so that dismissal becomes a predictable procedure rather than a stress for the whole company. You will learn how to correctly formalize expectations in the first days of work, correctly record intermediate results and assemble an ironclad evidence base of non-conformity to the position held. Separate attention is paid to the algorithm for interacting with internal lawyers and HR staff: how to argue your position, remove colleagues' fears about inspections and formalize the parting without the slightest litigation prospects for the employee.\n\nAttendees will get a strict management framework that allows turning the probation period from a paper formality into a really working filter. The talk will give leaders a clear toolkit for protecting their interests, so as to quickly and legally clean the team of unsuitable people without damage to work processes and the employer brand.",
+      "lectorRoles": [
+        "Director of the HR management department, Cordison"
+      ]
+    },
+    "295": {
+      "title": "What AI-harness is and why the system matters more than a specific model",
+      "short": "Setting up the scaffolding and MCP servers to automate routine work. A breakdown of scaling mistakes, operational limitations and the tasks where LLMs absolutely must not be left unchecked",
+      "description": "The drive to take routine load off analysts (ad-hoc queries, incident investigation) often runs into the complexity of setting up and maintaining AI tools. In the Uzum Market case, the team came to use Opencode as a tool that covers 90% of routine tasks with minimal effort. As a result, every stakeholder got a \"$100-a-month junior analyst\": just enter credentials to the needed systems, and all permitted skills, MCPs and models appear as a single web interface.\n\nThe talk examines in detail the technical implementation and architecture of such an AI Harness: how to deploy it on a small server in just a week and ensure full controllability. The speaker will show the transformation of work processes: Uzum analysts no longer write SQL queries by hand, 90% of dashboards are created by agents from scratch (from a Jira task to the final visual), and investigating DAG failures takes minutes. Scaling mistakes, operational limitations and tasks where LLMs absolutely must not be left unchecked will also be examined.\n\nAttendees will learn how to choose and configure scaffolding and MCP servers to automate routine work. The talk will give concrete advice on introducing the tool into teams and help analysts move into the role of leaders of mini-teams of AI agents, multiplying the speed of qualitative research.",
+      "lectorRoles": [
+        "Team Lead of marketing analytics, Uzum"
+      ]
+    },
+    "296": {
+      "title": "Democratizing data access in the AI era: how to build a semantic layer in a company from scratch",
+      "short": "Designing a semantic layer and integrating it with Looker. Covers operational constraints, non-obvious technical challenges and our own mistakes.",
+      "description": "Moving to AI analytics is impossible without a single dictionary of metrics. If algorithms are let straight into the raw tables of the corporate warehouse, the business gets neural network hallucinations and discrepancies in key metrics. The foundation for data democratization is a semantic layer that translates business terms into strict logic that both LLM agents and ordinary employees can understand. The talk uses the example of the Careem superapp infrastructure to break down the process of designing such a layer from scratch.\n\nThe speaker will show how a micro-team of three people deployed an MVP of the semantic layer on the open-source Cube platform and proved to the business that the approach works. He will talk about the technical architecture of the solution and the nuances of integrating with Looker. Hamid will separately address the buy vs build choice: which tools are worth paying enterprise cheques for, and what is more profitable to build in-house (a comparison of Cube, Looker and Superset).\n\nThe main part of the talk is devoted to rollout under high load: operational constraints and technical difficulties that appear when the whole company gets access to data. Hamid will break down the process mistakes of the Careem team that any data function will face when connecting AI to a real warehouse. As a result you will get a blueprint for building a semantic layer where manual control by the data team remains only where automation cannot replace it.",
+      "lectorRoles": [
+        "Head of Analytics, Careem"
+      ]
+    },
+    "297": {
+      "title": "Analytics data architecture for an AI product: how to get rid of lags on billions of events",
+      "short": "A proven scheme for building high-load pipelines for preparing ML datasets, crawling and ETL. How to embed business logic in the data model, and why abandoning streaming aggregation of global states makes the system resilient",
+      "description": "Building analytics under extreme loads often leads to incidents. The talk examines a production case from Sber: the system processed a stream of 200 thousand events per second with an accumulated base of half a trillion records. An attempt to compute URL state aggregations \"on the fly\" via a Materialized View in ClickHouse led to Too many parts, a halt of backfill processes and the formation of a lag of a billion events in the main realtime loop.\n\nThe speaker will break down this architectural mistake in detail and show how the incident forced the team to completely rebuild the system. You will learn why the business requirement to \"see the metric quickly\" does not mean realtime computation. The audience will study a batch loop of four layers (Raw → State → Mart → History). We will break down how to compute the historical state of an object from a compact State layer instead of reading the entire base of raw events, and how to publish a mart atomically so as to free dashboards from the \"flickering\" of incomplete data.\n\nAs a result you will get a proven way of building high-load pipelines for preparing ML datasets, crawling and ETL. The talk will give clear criteria: when complex analytics must be moved into a separate batch loop, how to embed business logic in the data model, and why abandoning streaming aggregation of global states makes the system resilient.",
+      "lectorRoles": [
+        "Head of direction, Sber"
+      ]
+    },
+    "298": {
+      "title": "A systematic approach in agentic coding: how to be sure this is a working product without reviewing tens of thousands of lines of code",
+      "short": "A working bundle of open-source tools for agentic coding. The OpenSpec and OpenSpec+ development methodology. Turning chaotic generation into a predictable and controlled engineering process.",
+      "description": "A systematic approach in agentic coding: how to be sure this is a working product without reviewing tens of thousands of lines of code\n\nThe speaker will break down approaches to creating products with agents and show a working bundle of open-source AI coding tools. The solution is based on the OpenSpec development methodology and its improved version OpenSpec+. You will learn in which situations this bundle works and in which it does not, and why the main price for product quality is a multiple increase in token consumption.\n\nListeners will get a set of ready-made recipes for your harness, capable of rebuilding the stochastic process of AI code generation into a controlled engineering process.",
+      "lectorRoles": [
+        "Chief data analyst, IT holding T1"
+      ]
+    },
+    "299": {
+      "title": "The leader's AI operating system: an architecture of 17 roles and 13 procedures",
+      "short": "How to turn work with LLMs into a sustainable management method and optimize the managerial decision-making process",
+      "description": "Managerial decision-making amid frequent shifts in priorities requires rethinking the basic operational routine. The talk examines an engineering approach to personal management: creating an AI operating system based on autonomous agents. This is not a set of disparate prompts, but an architecture consisting of 17 roles with clear competence boundaries and 13 regular procedures embedded in the real daily work of the director of an analytical function.\n\nThe speaker will break down the mechanics of the system in detail. You will learn how a radical reduction in the cost of management procedures changes the decision-making process: for example, a preliminary breakdown of a task that previously required two hours and was often ignored now takes 30 minutes and is always performed algorithmically. The audience will study the structure of \"rehearsal panels\" — AI profiles of real stakeholders that allow running an argument through criticism before a meeting. A separate block is devoted to an automatic context layer that deterministically loads goals, current focus and open threads into every session. The speaker will also break down system failures, including an incident where four independent agents generated a convincing but completely false conclusion.\n\nAttendees will get a scheme for assessing the cost of their own management procedures in order to transfer them into the AI loop. The talk will give concrete mechanics for assembling the context layer and setting up isolated AI critics for preparing for reviews, difficult 1-1s or budget defenses. As a result you will learn how to turn work with LLMs from chaotic requests into a sustainable management method whose architecture has proven its viability both in an enterprise environment and in the production of a medtech startup.",
+      "lectorRoles": [
+        "Analytics director, T-Bank"
+      ]
+    },
+    "300": {
+      "title": "The price of a result: how we stabilize contact cost at Avito?",
+      "short": "What we do to make pricing at Avito fairer for the seller by optimizing contact cost.",
+      "description": "What we do to make pricing at Avito fairer for the seller by optimizing contact cost",
+      "lectorRoles": [
+        "Senior analyst on the pricing team, Avito"
+      ]
+    },
+    "301": {
+      "title": "How we built analytics in an AI assistant for sellers",
+      "short": "We parsed the \"black box\" of seller-assistant dialogues, even without using LLM judges. We managed to fully build funnels of recommendation execution, identify the main user scenarios for using the assistant and measure the quality of the AI assistant.",
+      "description": "We parsed the \"black box\" of seller-assistant dialogues, even without using LLM judges. We managed to fully build funnels of recommendation execution, identify the main user scenarios for using the assistant and measure the quality of the AI assistant",
+      "lectorRoles": [
+        "Analyst, Communications",
+        "Senior analyst, Communications"
+      ]
+    },
+    "302": {
+      "title": "How to send communications so as not to overspam users and turn this into a system",
+      "short": "We turned mass CRM pushes into a system that automatically adjusts the volume and composition of the audience to the balance of supply and demand on the part-time work platform. We break down the path from calculating segments and prioritizing users to verifying the solution with an A/B test. As a result, users began receiving six times fewer pushes without a decrease in the number of shift bookings.",
+      "description": "We turned mass CRM pushes into a system that automatically adjusts the volume and composition of the audience to the balance of supply and demand on the part-time work platform. We break down the path from calculating segments and prioritizing users to verifying the solution with an A/B test. As a result, users began receiving six times fewer pushes without a decrease in the number of shift bookings",
+      "lectorRoles": [
+        "Senior analyst, Avito Jobs"
+      ]
+    },
+    "303": {
+      "title": "Monetization feed on the home page: a dozen iterations and an uplift we did not believe",
+      "short": "The cross-category monetization feed on the home page is one of the most lucrative rollouts of the monetization efficiency team. I'll tell how we learned to bring quality paid traffic from the home page. Separately I'll break down the main lesson for analytics: why in A/B tests that change ranking, a per-user split inflates the revenue effect many times over, how we caught this and measured it.",
+      "description": "The cross-category monetization feed on the home page is one of the most lucrative rollouts of the monetization efficiency team. I'll tell how we learned to bring quality paid traffic from the home page. Separately I'll break down the main lesson for analytics: why in A/B tests that change ranking, a per-user split inflates the revenue effect many times over, how we caught this and measured it",
+      "lectorRoles": [
+        "Avito Tech"
+      ]
+    },
+    "304": {
+      "title": "An analyst as a team lead of AI agents: three AI engineering cases, from channel scoring to dashboard development",
+      "short": "We turn AI from a code generator into a managed executor capable of taking a task from a vague business question to a verifiable result.",
+      "description": "In agentic analytics, a senior specialist often becomes the bottleneck: they have to get up to speed in a new industry, reconstruct logic from documents, design a methodology, write SQL and verify the result. Generating code via LLM speeds up only a small part of this process, leaving the main problem — context handover and control over metrics. The master class covers the next stage in the evolution of the AI-first workspace: how to turn AI from a code generator into a managed executor capable of taking a task from a vague business question to a verifiable result.\n\nThe speaker will walk through three real production cases. First: an audit of a pharma company's ad placements (12 million visits), where the agent built a pipeline for UTM normalization, metric calculation and scoring of 56 segments. Second: a product CJM funnel for a fintech, where the agent designed an MVP of ClickHouse marts taking into account the identity bridge and checks for user stitching conflicts. Third: oversight of an external Power BI developer, where the agent reconstructed requirements from meeting transcripts, prepared DAX instructions and audited the finished report, finding critical errors in the data grain and LTV calculation.\n\nListeners will learn how to reformat their backlog for delegation to AI agents and build a \"context → plan → implementation → verification\" loop. You will learn to turn documents and data schemas into reusable context, define hard boundaries of delegation and fix acceptance criteria for automated checks, so that you can safely make business decisions based on AI work",
+      "lectorRoles": [
+        "Head of analytics, JetStyle"
+      ]
+    },
+    "305": {
+      "title": "Building a Discovery pack for testing product hypotheses",
+      "short": "Assembling agentic systems that deliver results of stable quality. An engineering breakdown of components and architecture patterns for AI solutions.",
+      "description": "In a workshop based on Yandex Ai Studio we will assemble a multi-agent system for running fast product research — from idea to reporting presentation:\n\n- We will create an assistant for formulating hypotheses\n\n- We will create a researcher agent for the market and competitors\n\n- We prepare skills for processing research data — generating a Lean Canvas, User Story Map, wireframes\n\n- We create a presentation generator\n\n- We will set up quality control points (Human-in-the-Loop)\n\nBy the end of the workshop attendees will understand how to assemble agentic systems that deliver results of stable quality, which components and patterns the architecture of AI solutions is built from, and where AI can actually speed up a product manager's work and where the automation's output needs validation.",
+      "lectorRoles": [
+        "Head of strategic projects, Yandex AI Studio"
+      ]
+    },
+    "307": {
+      "title": "How to strengthen a marketing department with AI agents in practice",
+      "short": "How agents run Yandex.Direct, generate content and design, build analytical dashboards and perform marketing tasks on schedule.",
+      "description": "The introduction of AI into marketing often comes down to point-by-point generation of images and texts, but the real breakthrough happens when agents take control of the full 360° contour of tasks. In this reality, strong marketers transform into operators of agents, multiplying efficiency many times over, and routine processes are automated. The master class examines the real experience of IT-Agency in a deep restructuring of marketing production with the help of AI agents.\n\nThe speaker will show the inner kitchen of the project: from organizing the Shared Workspace and designing the knowledge base (KPI, target audience, budgets) to integrating AI tools (Codex, Claude, Cursor) via API with advertising systems. We'll break down the architecture of end-to-end management: how agents run Yandex.Direct, launch SMM, generate content and design, build analytical dashboards and perform tasks on schedule. This is an honest engineering breakdown: in addition to the architecture and justification for the stack choice, you will learn about operational limitations, costs, the team's own mistakes and situations in which this approach absolutely must not be applied.\n\nAs a result you will get a step-by-step algorithm for moving marketing onto AI rails. The master class will give a clear understanding of how to set up the environment, connect channel APIs and restructure processes so that a small team manages the workload of a full-fledged department",
+      "lectorRoles": [
+        "Head of marketing production, IT-Agency"
+      ]
+    },
+    "309": {
+      "title": "AI for market intelligence: how to automate demand, market, and competitor research",
+      "short": "We turn a chain of analytical steps into an automated process: forming queries, analyzing dynamics, and using the results to test product and marketing hypotheses. How a multi-step search agent works — one that forms queries, studies results, returns to search, and collects information from many sources — and how to turn typical competitive research from a manual process into repeatable agentic research.",
+      "description": "Market research, demand analysis, and competitive analysis still require a lot of manual work: formulate dozens of search queries, collect data from different sources, study competitors' websites, compare products and prices, and then pull it all together into a single conclusion. AI agents make it possible to change the very approach to this work. Instead of individual LLM queries, you can assemble a research workflow in which the agent independently formulates search tasks, calls external tools and data sources, analyzes the results, refines the search, and forms final conclusions. In the talk, practical cases will show how this works: from an agent with Wordstat MCP for demand analysis to a Deep Research agent for multi-step internet research and automated competitive analysis. We will also look at which tasks are already worth delegating to AI and where an analyst is still essential.\n\nListeners will get answers to the questions: how AI agents turn a chain of analytical steps into an automated process; how an agent can independently work with search demand data — forming queries, analyzing dynamics, and using the results to test product and marketing hypotheses; how a multi-step agent works that forms search queries itself, studies results, returns to search, and collects information from many sources; and how to turn typical competitive research from a manual process into a repeatable AI workflow.",
+      "lectorRoles": [
+        "Product manager, Yandex AI Studio"
+      ]
+    },
+    "310": {
+      "title": "Marketing AI-native analytics: from on-site behavior to money in the till",
+      "short": "I will show how to build marketing AI analytics on top of what you already have running, without breaking integrations. We will assemble calls, deals and web analytics from telephony, Битрикс24, Roistat, PostHog and Метрика into a single loop. We will build a customer path graph in Neo4j: from the first click to the deal. An AI agent will process thousands of touchpoint chains and answer the key business question: «On which segments are you losing money, and where do you actually earn it?».",
+      "description": "The task that was solved: put data about the customer's path and behavior into one database, describe it with entities, build on top a graph «key query → visit → session → conversation with a salesperson → deal» and place an AI agent above it so that a manager could ask questions about the customer path themselves, without a queue to an analyst.\n\nStack: telephony with speech analytics, Битрикс24, Roistat. PostHog session replay, Метрика Logs API, BigQuery, Neo4j Graph. The listener will get a working method for building marketing AI analytics from scratch: collecting user data, consolidating it into one platform and providing the AI agent with an environment where the full picture is visible. During the lecture a working environment and live queries will be demonstrated, including the places where the data link broke and what had to be redone.",
+      "lectorRoles": [
+        "AI project manager, za-ai.ru"
+      ]
+    },
+    "311": {
+      "title": "Custom analytics: how an AI agent speeds up the path from business question to result",
+      "short": "A scheme for embedding an AI agent into the request-processing pipeline, with automated quality control and important human checkpoints. We break down the solution's architecture, the logic of automated data quality tests, typical mistakes and the agent's operational limits",
+      "description": "The main bottleneck in handling ad-hoc requests is often not writing SQL code but translating a business statement into a strict analytical task. Every unrecorded agreement about filters, cuts and constraints generates new rounds of discussion and returns for recalculation. To solve this problem, the Veborama team built an AI agent. On input it receives an unstructured request in business language, and on output it produces a complete package of artifacts: a formalized statement of the task, a list of metrics, a data work plan and a draft SQL code.\n\nThe agent is integrated on top of the company's existing data landscape, including available marts, ELT modules and a library of automated validation rules. It does not replace the analyst but acts as a preprocessor: it surfaces ambiguities in requirements at an early stage and prepares a set of checks relevant to the specific request. Using a real case, the talk breaks down the architecture of this solution, the logic of automatic selection of data quality tests (integrity, event sequence, anomalies), as well as typical mistakes and the agent's operational limits.\n\nAttendees will get a scheme for embedding an AI agent into the request-processing pipeline, including automated quality control and human checkpoints. The talk will show the measurable effect of formalizing tasks through AI: a lower share of returns for rework, time saved on data preprocessing and a multiple increase in analyst throughput.",
+      "lectorRoles": [
+        "Head of data analysis, Veborama",
+        "Product director, Veborama"
+      ]
+    },
+    "312": {
+      "title": "A seamless event analytics migration: moving product analytics from AppMetrica to our own event stream",
+      "short": "Our own event stream instead of AppMetrica — and the minimum requirements for event data so an LLM agent can start answering data questions with no human in the loop.",
+      "description": "Off-the-shelf analytics solutions like AppMetrica handle basic reporting well, but when moving to AI analytics they hit a natural barrier. For an autonomous LLM agent to answer ad-hoc business questions correctly without a data engineer involved, the company needs absolute control over the quality, naming and structure of raw logs. The talk breaks down the experience of the «Магнит Плюс» team in moving product event analytics from a third-party tracker to its own event stream.\n\nThe speaker will show the engineering underside of a large-scale event analytics migration. You will learn how to design the architecture of an in-house solution and ensure a seamless move without breaking current product dashboards. Special attention is paid to the process of automatic validation of the new data stream against the old one and to syncing the tracking logic on the fly.\n\nThe main focus of the talk is on preparing infrastructure for artificial intelligence. You will get a breakdown of the minimum requirements for event data: exactly how event structure and metadata need to be set up so that the neural network can confidently navigate the warehouse and give the business accurate answers under automated quality control instead of a human in the loop. Listeners will take away a roadmap for moving to their own pipeline and a checklist for data readiness for integration with LLM agents.",
+      "lectorRoles": [
+        "Head of Digital Services Analytics, Магнит Плюс"
+      ]
+    },
+    "323": {
+      "title": "Taking control of the dark side of AI: security, privacy and AI firewalls when working with LLMs",
+      "short": "Banning ChatGPT is easier than learning to work with it safely. Positive Technologies' chief infosec evangelist Alexey Lukatsky explains how Russian companies build secure workflows with Western LLMs. In the lecture we will look at data anonymization methods, the architecture of AI firewalls and, most importantly, how a product analyst can learn to negotiate with the cybersecurity department so that the favorite phrase \"infosec won't approve this\" becomes the start of a productive dialogue rather than a cross over AI adoption.",
+      "description": "Alexey Lukatsky has more than 35 years in cybersecurity, 18 of them at Cisco and now at Positive Technologies. He has been an encryption developer, an infosec admin and an evangelist, so he understands perfectly why product analysts and security people often speak different languages. While the business demands fast insights and widespread AI adoption, the information security department responds with its usual \"ban it\".\n\nThe talk is about moving the use of neural networks out of shadow IT and into a legitimate channel. We will talk about how Russian companies actually solve the issue of working with Western LLM models without the risk of leaking trade secrets and sensitive user data.\n\nAlexey will cover the engineering side of the question: how modern methods of anonymizing datasets before sending them to an external cloud work, what AI firewalls are and how they filter prompts and model responses. The talk will help analysts understand the logic of professionally cautious people from security, learn to discuss risks under tight deadlines and make a reasoned case for the architecture of their AI solutions before internal infosec review.",
+      "lectorRoles": [
+        "Chief Evangelist Officer, Positive Technologies"
+      ]
+    },
+    "324": {
+      "title": "Corporate AI security: the architecture of constraints and the vulnerabilities of user scenarios",
+      "short": "Deploying AI does not protect against leaks if, for the sake of speed, a user copies the whole trade secret into the prompt and grants the app access to the entire disk. The talk examines the architecture for restricting AI services' access to corporate data and two vulnerability mechanisms: providers' open logs and the transmission of hidden instructions into active sessions. The speakers will show how to build a \"green corridor\" for typical tasks, introduce AI solution passports and test security through simulation of work processes.",
+      "description": "Even after corporate AI is officially rolled out and training is conducted, data leaks continue. Facing tight deadlines, employees tend to optimize their work at the expense of security: they copy a manager's assignment in full, along with closed financial terms, and give third-party AI services excessive access to the whole work disk instead of selecting specific files. A copy of confidential information is created on the external provider's side at the moment of transfer, that is, long before any actual cyberattack. The talk is about moving from a formal ban to an architecture that limits what AI assistants can do at the hardware and process level.\n\nThe talk examines technical leak mechanisms in detail using two scenarios: access to stored copies (exposure of database logs, on the DeepSeek example) and data extraction inside an active session (the RovoBlast vulnerability). The speakers will show how to build a perimeter in which an employee's right to read a document does not mean the AI application's right to receive and process it. The process of configuring the target logic will be covered: token control, management of the actual access scope (restriction to specific files) and monitoring of request logs. Separately, the course of action for the security team when data transfer has already happened is considered.\n\nAttendees will learn how to design a \"green corridor\" for securely performing typical tasks and how to record the rules in an AI solution passport (owner, data sources, available actions). The talk will give a methodology for secure prompting: how to split a request into generating the document structure and the subsequent addition of sensitive numbers in a protected environment. You will get a framework for testing employee skills through simulation of work processes with dummy data, which makes it possible to assess how secure the work really is, and not just whether blocks fired.",
+      "lectorRoles": [
+        "AI consultant, VkusVill",
+        "Information security methodologist, TechVill"
+      ]
+    },
+    "325": {
+      "title": "Why does AI draw wrong conclusions from data?",
+      "short": "Delegating analytics to AI does not save you from fundamental errors in statistics. The creator of the VWO stats engine, Ишан Гоэл, breaks down the 5 main traps of data interpretation: from the illusion of averages to the paradoxes of A/B testing and the balance of false positive errors. You will learn which questions to ask any analytical report (generated by a human or a neural network) so as not to take a beautifully formatted but mathematically wrong hypothesis at face value.",
+      "description": "Data-driven decisions turn out to be wrong far more often than companies are willing to admit. The main reason lies not in processing tools but in a lack of statistical intuition: algorithms generate numbers, and people draw wrong conclusions from them. The talk examines the problem of blind trust in reports and algorithms through the prism of five fundamental errors of analysis.\n\nThe speaker, who developed the statistical engine of the VWO platform and taught data analytics to the editorial team of The Economist, will use live examples to break down source distortion and the null hypothesis trap, when absence of evidence is taken as evidence of absence. Special attention is paid to how the cost of false positives and false negatives should directly drive product decisions. You will learn which critical anomalies are hidden behind averaged metrics, and why the chance of randomly getting a winner in an A/B test is mathematically not equal to the probability that the winner is false.\n\nListeners will get a set of frameworks for checking any analytics (machine or manual). The talk will help data analysts, product managers and marketers develop an intuitive understanding of statistics without diving deep into formulas and will teach them to ask the right questions that break down wrong conclusions in dashboards.",
+      "lectorRoles": [
+        "Founder & Educator, Thinking Bell"
+      ]
+    },
+    "326": {
+      "title": "Adoption, Harness, Knowledge - three drivers of the apocalypse",
+      "short": "How can the whole company go from \"AI, help me write SQL\" to \"AI, take the task entirely\"? I'll tell you which technical solutions we assembled for this in our division at Yandex and how we tied them into a single system. In my story we'll break down three drivers of AI usage growth: Adoption — so that people start using AI. How to remove all barriers and make AI a familiar working tool. Harness — so that the agent uses internal tools. How to give the next-token predictor the ability to use the utilities people use and teach it the necessary skills, and then also verify the result. Knowledge — so that the agent understands the context of your business. How to give the agent information about data, code, and company documentation so that you explain less from scratch and don't fill up the entire context window. I'll show how this ecosystem is structured: from interfaces for working with agents to documentation testing. At the end we'll assemble everything on the example of a typical analyst task, and you'll be able to try this architecture on your team and understand which components you're still missing.",
+      "description": "The transition of a company from basic use of neural networks in the \"write an SQL query\" mode to delegating full-fledged analytical tasks requires systematic infrastructure. Simply providing access to a chatbot does not make a team more effective: agents lack an understanding of data specifics, access to corporate systems and seamless integration into work processes. The talk examines the experience of Yandex's BigData division in designing a unified technical ecosystem that allows AI agents to autonomously solve complex tasks.\n\nThe speaker will break down the system architecture through three key drivers. The first — Adoption: eliminating infrastructural and process barriers to turn a neural network into a basic daily utility for every employee. The second — Harness: endowing the token predictor with real capabilities through access to internal tools, teaching specific skills and automatic verification of work results. The third — Knowledge: integrating agents with the code base and corporate documentation, allowing deep business context to be conveyed without overflowing the LLM's context window.\n\nAttendees will see the entire technical process of assembling the pipeline: from designing interfaces to setting up automatic documentation testing. Using the example of a classic analyst task, it will be shown how these three components work together in a single bundle. The talk will give technical leaders a ready-made framework for auditing their own AI infrastructure and understanding which architectural details the team lacks to move to fully autonomous agents.",
+      "lectorRoles": [
+        "Head of the BigData department, Yandex"
+      ]
+    },
+    "327": {
+      "title": "The new transformation of marketing",
+      "short": "We'll talk about how to achieve a measurable result today in areas where quite recently people relied \"on faith\", how to build an AI-native marketing framework and why a revolution rather than an evolution is needed here. I'll talk in detail about what concrete examples of marketing mechanisms at Avito look like and share life hacks that bring results.",
+      "description": "Classic marketing long relied on metrics the business simply had to \"believe\", leaving a wide zone of brand and reach campaigns outside strict analytical evaluation. Today, attempts to improve old approaches point by point yield no result — the transition to fully measurable marketing requires not a smooth evolution but a radical restructuring of processes. The talk examines Avito's experience in implementing an AI-native framework that allows achieving transparent ROI where intuition and qualitative assessments used to rule.\n\nThe speaker will show the internal mechanics of Avito's new-generation marketing processes. You will learn how to build the architecture of AI-native marketing, digitize previously unmeasurable channels and connect creative initiatives with hard business indicators. Separate attention will be paid to the practical side of the transformation: the speaker will use concrete examples to break down exactly how algorithms change the team's routine tasks, and will share proven life hacks that already bring a measurable result.\n\nAttendees will get a ready-made management framework for rebuilding the marketing function. The talk will give marketing directors, product managers and analysts a clear understanding of how to abandon \"blind faith\" in numbers and build a system where every ruble invested is tracked with mathematical precision.",
+      "lectorRoles": [
+        "Central marketing & commercial director, Avito"
+      ]
+    },
+    "328": {
+      "title": "How we moved to an ai-native state in the data analytics vertical and what it cost us",
+      "short": "Transformation of the data analytics vertical into an AI-native state. Attendees will learn about the \"fast-track\" for transformation aimed at a radical reduction of the t2m of solving tasks without loss in quality. We'll break down in detail the target infrastructure architecture for an AI-native team, the competencies needed for success and how to deal with rejection of the paradigm shift by the team",
+      "description": "The development of products like GigaChat sets an extreme pace: classic approaches to analytics simply do not work here because of the speed of change in the industry. To keep up with the product, the data team needs to radically reduce the Time-to-Market (T2M) of solving tasks while maintaining a strict quality bar. Moving an entire analytical vertical into an AI-native state solves this problem, but in practice runs into serious infrastructural barriers and psychological resistance from employees. The talk examines Sber's experience in systematically restructuring data analytics into an AI-oriented format.\n\nThe speaker will present a proven transformation fast-track that allows avoiding the classic mistakes of pioneers. You will learn what the target infrastructure architecture for an AI-native team looks like and which new competencies become critically important for analysts. A separate focus will be on change management: Evgeny will honestly tell how to deal with rejection of the paradigm shift inside the team, when employees refuse to trust agents and sabotage new processes.\n\nAttendees will get a step-by-step trajectory for moving their departments onto AI-native rails. The talk will help analytics leaders and CDOs objectively assess the current maturity level of their infrastructure for entering such a transformation and understand what real economic effect and acceleration to expect at the finish.",
+      "lectorRoles": [
+        "Head of analytics GigaChat, SBER"
+      ]
+    },
+    "329": {
+      "title": "Agentic Engineering for Data Tasks Automation",
+      "short": "I'll talk about how we organize end-to-end automation of typical data tasks: how the work of departments changes with the arrival of agents, and how we managed to achieve a 73% speedup on tasks performed by agents. Separately we'll discuss how to calculate the value of AI agents and what to focus on at the organizational level in order to move forward with the agentization of typical data work processes.",
+      "description": "We all discuss a lot about implementing AI in the IT SDLC. At the same time, about 30% of the labor intensity is taken up by data transformation tasks and the creation of data products. Finding data, assembling a mart, building a dashboard, checking quality, writing documentation — while these processes are performed manually, it is too early to talk about an AI-driven organization and autonomous processes.\n\nI'll talk about how we organize end-to-end automation of typical data tasks: how the work of departments changes with the arrival of agents, and how we managed to achieve a 73% speedup on tasks performed by agents. Separately we'll discuss how to calculate the value of AI agents and what to focus on at the organizational level in order to move forward with the agentization of typical data work processes.",
+      "lectorRoles": [
+        "CDO, Raiffeisenbank Operations"
+      ]
+    },
+    "330": {
+      "title": "When an agent becomes an analyst: what will happen to the profession and the team?",
+      "short": "What the near future of analysts will look like, when report and insight factories have already earned their reputation, the analyst is no longer a \"bottleneck\", and the volume of company context is finite for building an analytical system",
+      "description": "The introduction of AI agents is changing the fundamental economics of the analytical function. It is no longer about simply speeding up SQL writing — agents take on the entire technical cycle: from data collection to building a report and writing a draft of conclusions. In practice this leads to a radical shift: if previously 80–90% of a specialist's time went to technical work and only 10–20% to communication with the customer, now this ratio is trending toward 50/50. The analyst stops being a bottleneck in report generation, but faces a new physical limit — the need to validate the many times larger volume of ready-made machine insights.\n\nThe talk, using the example of a real implementation of agent systems in two companies, examines the next inevitable stage in the evolution of data teams — the transition to an \"insight factory\", where the business can communicate with the analytical system directly. The speaker will break down the mechanics of transferring repeating corporate knowledge to the machine. You will learn how to digitize a finite volume of context (metric definitions, relationships between tables, access restrictions) so that the system autonomously gives reliable answers to typical questions.\n\nAttendees will get a management forecast and a plan for adapting the backlog for their teams. The talk will help leaders and senior specialists understand how many people will be needed to support data infrastructure in the new paradigm, and how to restructure processes in order to direct the freed-up time to checking complex product hypotheses and creating new solutions.",
+      "lectorRoles": [
+        "Head of AI & RnD, VERA Systems"
+      ]
+    },
+    "331": {
+      "title": "AI agents in analytics and Data Science: an architecture on banking cases",
+      "short": "We break down the architecture of an agent system: the task contract, agent management, data and tools, calculations and checks. I'll show how the task, calculation results and check statuses are transferred, when rework is needed and where a human makes the decision. On our cases I'll break down ambiguous metrics, the link between model quality and business KPIs and the impact of drift. The checks will cover data, the applicability of the method, the validity of conclusions and the robustness of recommendations to assumptions: rules and recalculation, the agent searching for contradictions, review by a specialist. I'll show how we plan to apply the architecture in Alfa-Bank's experimentation and Data Science platform",
+      "description": "Introducing AI agents into industrial analytics and Data Science processes requires a strict architectural base. If you hand a business task to a neural network without strict boundaries, the cost of a mistake can turn out to be critical. The talk examines the engineering scheme of an agent system based on Alfa-Bank's experience: from drawing up the task contract to managing agents, routing data and choosing tools. Special emphasis is placed on synchronization points — exactly how calculation results are transferred, in which cases the process is sent for automatic rework, and where the decision is made by a human with no alternative (human-in-the-loop).\n\nThe speaker will use real banking cases to show the mechanics of working with ambiguous metrics, the link between ML model quality and business KPIs and the impact of data drift. You will learn how to build a multi-level system of checks: from the validity of the source data and the applicability of the chosen method to the robustness of the final recommendations to the initial assumptions. Ivan will break down in detail the process in which the agent itself looks for logical contradictions in its conclusions before passing the result to a specialist for review.\n\nAttendees will see how this architecture is embedded in Alfa-Bank's experimentation and Data Science platform. The talk will give data team leaders and DS engineers a ready-made framework for launching their own pilots, allowing them to accurately estimate the expected financial effect of introducing agents taking into account the costs of tokens, infrastructure and specialists' time.",
+      "lectorRoles": [
+        "Product Owner, Alfa-Bank"
+      ]
+    },
+    "332": {
+      "title": "How much a proprietary LLM costs: how to choose an approach and calculate the full cost of the product",
+      "short": "A breakdown of industry practice in creating and using LLMs. The speaker shares a \"ladder of options\" and a transparent estimate for each scenario: using models via API, running an open model on your own infrastructure, adapting to a specific task or domain, a company's central model, proprietary pretrain and developing a frontier model. We break down which needs each scenario covers and which requirements really justify moving to a more complex solution. What each estimate consists of and the phasing method that allows buying step-by-step hypothesis checks with decision points.",
+      "description": "A breakdown of industry practice in creating and using LLMs. The speaker shares a \"ladder of options\" and a transparent estimate for each scenario: using models via API, running an open model on your own infrastructure, adapting to a specific task or domain, a company's central model, proprietary pretrain and developing a frontier model. We break down which needs each scenario covers and which requirements really justify moving to a more complex solution. What each estimate consists of and the phasing method that allows buying step-by-step hypothesis checks with decision points",
+      "lectorRoles": []
+    },
+    "333": {
+      "title": "How we identify future customers: next best action at a state bank",
+      "short": "We describe a working process inside the closed perimeter of a state bank. We assembled a unified knowledge base about customers from all available sources. On its basis a customer portrait is automatically formed, and from the portrait an offer relevant specifically to them is prepared. The entire path from data collection to a ready offer for the manager is automated. The value of the case is that this is a working process inside the closed perimeter of a state bank, not an experiment. How to build a portrait of a customer the bank does not yet have: which sources proved useful and which turned out to be noise.",
+      "description": "We describe a working process inside the closed perimeter of a state bank. We assembled a unified knowledge base about customers from all available sources. On its basis a customer portrait is automatically formed, and from the portrait an offer relevant specifically to them is prepared. The entire path from data collection to a ready offer for the manager is automated. The value of the case is that this is a working process inside the closed perimeter of a state bank, not an experiment. How to build a portrait of a customer the bank does not yet have: which sources proved useful and which turned out to be noise",
+      "lectorRoles": [
+        "Team lead of the analyst team, RSHB"
+      ]
+    },
+    "334": {
+      "title": "The mathematics of survival: how ecosystem LTV protects future revenue",
+      "short": "Experience of making complex decisions for arbitrating internal traffic and decisions to maximize ecosystem ROI.",
+      "description": "Experience of making complex decisions for arbitrating internal traffic and decisions to maximize ecosystem ROI",
+      "lectorRoles": [
+        "T-Bank"
+      ]
+    },
+    "335": {
+      "title": "The architecture of modern analytical realtime systems",
+      "short": "A breakdown of a working realtime attribution system that we designed, brought to production load and measured ourselves, with numbers at every step: from 11 rows/s in staging to ~26 thousand events/s in production, with benchmarks of four databases and cost in rubles per million events. Attendees will take away not a list of technologies, but verifiable selection rules. We'll show not only the results but also our own mistakes in measurement methodology",
+      "description": "Building a mobile tracker capable of competing on equal terms with the global leaders of the attribution market requires an uncompromising architecture. The system must process tens of thousands of events per second, guarantee data consistency, and at the same time remain economically viable. The talk examines the engineering underside of the production realtime attribution system TraceHub, which was designed from scratch and brought to a load of 26,000 events per second. This is not a theoretical overview of technologies, but an honest breakdown of one production pipeline with concrete cost figures per million events at every stage.\n\nThe speaker will present the results of a direct benchmark of databases for the hot state on the same code (Cassandra vs ScyllaDB vs YugabyteDB vs YDB), clearly showing why transactionality can make a database 20 times slower for a specific task. You will learn how the three-tier storage architecture is built (Scylla for the hot state, ClickHouse exclusively for aggregates and Iceberg for eternal storage of raw logs), and what real price the business pays for quorum when reading from neighboring availability zones.\n\nSeparate attention will be paid to non-obvious optimization lessons. Kirill will break down why rewriting in Rust does not help if the business logic runs into waiting for the network, how the default 5 ms pause in Kafka ate up 28% of processing time, and how to properly build a ladder of retries and a DLQ (Dead Letter Queue) so as not to lose money on critical paths. Attendees will get a verifiable set of rules for designing high-load systems and metrics that allow finding real bottlenecks in the infrastructure.",
+      "lectorRoles": [
+        "CEO, TraceHub"
+      ]
+    },
+    "336": {
+      "title": "When a bot becomes a human: how modern fraud systems fool marketing analytics",
+      "short": "Cases of detecting automated traffic and approaches to assessing filtering quality. multi-level analysis of the browser environment, about abandoning IP blocking in favor of targeted filtering at the L7 level.",
+      "description": "Cases of detecting automated traffic and approaches to assessing filtering quality. multi-level analysis of the browser environment, about abandoning IP blocking in favor of targeted filtering at the L7 level",
+      "lectorRoles": [
+        "Founder of KillBot"
+      ]
+    },
+    "337": {
+      "title": "Changes in product analyst skills through the lens of global research agenda analysis",
+      "short": "Assessing trends in product analyst skills based on an analysis of the global and Russian research agenda. Semantic maps, trends, development drivers and barriers are presented. Attendees will get acquainted with changes in the product analyst profession (how demand for skills and competencies is changing and how and what the refocusing is).",
+      "description": "Assessing trends in product analyst skills based on an analysis of the global and Russian research agenda. Semantic maps, trends, development drivers and barriers are presented. Attendees will get acquainted with changes in the product analyst profession (how demand for skills and competencies is changing and how and what the refocusing is)",
+      "lectorRoles": [
+        "Chief researcher, professor at HSE University"
+      ]
+    },
+    "338": {
+      "title": "We grew a junior. What next? How not to lose an analyst after the first successes",
+      "short": "How to grow novice analysts so that they become independent faster, bring value to the product and do not lose interest in the work after the probation period. I'll share how we work with mistakes, questions, feedback and gradually transfer responsibility. And we'll talk about why even a well-trained junior may want to leave",
+      "description": "Hiring and onboarding junior analysts require huge investments of the mentor's and the team's time. However, a situation often arises when a technically trained specialist who has successfully passed the probation period suddenly loses motivation or leaves the company without having had time to recoup the resources invested in them. In the era of AI copilots, the value of basic SQL writing is trending toward zero, so the main challenge is to transform a newcomer from an operator of tools into an independent specialist who understands business context as quickly as possible. The talk examines the practical experience of Liga Stavok in building an analyst development path.\n\nThe speaker will break down real behavior patterns of novice specialists: from an avalanche of questions about every step to completely silencing problems. You will learn how mentors themselves unconsciously block the growth of juniors (when \"it's easier to do the task yourself\") and at what exact moment the motivation breaks. Separate attention will be paid to the mechanics of considerate feedback: how to discuss mistakes so that they accelerate the transfer of the area of responsibility, and how to build a step-by-step development plan for the first 90 days and the subsequent period.\n\nAttendees will get a transparent framework for working with junior specialists. The talk will help leads and senior analysts reduce time spent on constant checks and micromanagement, correctly assess the effectiveness of onboarding (not only by the fact of closing the probation period, but also by the speed of transition to autonomous research) and retain grown talent within the team.",
+      "lectorRoles": [
+        "Product analyst, Liga Stavok"
+      ]
+    },
+    "339": {
+      "title": "“LLM plumbing” – how to build working AI pipelines without leaks",
+      "short": "Methods for working with sensitive data: what kinds of data exist, which methods suit each case, how to pick the right method, and where it can all break. We look at how (and what) not to let providers do with your data. A detailed discussion of how to use LLM in situations where a lot of sensitive data may be involved, and how to avoid leaks, reassure the security team, release the service, and not go broke on hardware. Listeners will get answers to the questions: how to use LLM effectively without training the provider, without breaking the law, without attracting regulators, and while staying friends with the security team; what to do if we want to run neural networks on our own (on-premise)? How to “manipulate” data to remove sensitivity while preserving the essence? How to stitch pipelines for the task, balancing privacy and power? How to create “blinders” for LLM so control is not handed to users?",
+      "description": "Methods for working with sensitive data: what kinds of data exist, which methods suit each case, how to pick the right method, and where it can all break. We look at how (and what) not to let providers do with your data.\n\nA detailed discussion of how to use LLM in situations where a lot of sensitive data may be involved, and how to avoid leaks, reassure the security team, release the service, and not go broke on hardware.\n\nListeners will get answers to the questions: how to use LLM effectively without training the provider, without breaking the law, without attracting regulators, and while staying friends with the security team; what to do if we want to run neural networks on our own (on-premise)? How to “manipulate” data to remove sensitivity while preserving the essence? How to stitch pipelines for the task, balancing privacy and power? How to create “blinders” for LLM so control is not handed to users?",
+      "lectorRoles": [
+        "Co-founder and chief AI officer, Plevako.Ai"
+      ]
+    },
+    "340": {
+      "title": "Obfuscation of personal data — not a savior but a trap",
+      "short": "The risks of modern personal data protection laws (GDPR, 152 FZ, CCPA, PDPA, PDPL, DPDPA) in the context of using external AI models. How legal is it to send personal data to external AI service APIs? How realistic is it to protect against risks through obfuscation of the data sent? We break down the risks, the opportunities, and the reliability of such protection",
+      "description": "Integrating external AI services into business processes inevitably runs into the harsh reality of data protection legislation (GDPR, 152-FZ, CCPA, and similar). Trying to legitimately use cloud LLMs, many data teams resort to obfuscation or pseudonymization of datasets before sending them via API. It is commonly assumed that replacing names with hashes and hiding explicit identifiers reliably protects the business from regulators. The talk breaks down why this approach is a dangerous illusion that often does not withstand either technical or legal scrutiny.",
+      "lectorRoles": [
+        "Product director at Tengri Data, ex-Avito"
+      ]
+    },
+    "341": {
+      "title": "Can this be sent to an LLM? Legal requirements of 152-FZ when working with foreign models",
+      "short": "Where do personal data appear in an LLM product? How an external API, a Russian intermediary and self-hosting an open model differ. How to establish the actual recipients of data and the countries of processing. Legal grounds for processing, localization, notifications under Articles 12 and 22, contracts and the allocation of liability. What information you need to obtain from the vendor and what to do if it does not disclose the necessary terms. What happens to the legal status of data after full names and phone numbers are removed. How to account for indirect identification, a retained mapping table and the possibility of restoring information from context. Storage of requests and responses, use of data for training, employee access, engagement of other processors, deletion of information and actions in case of incidents. Walkthroughs of typical product scenarios and edge cases (for example, the model is hosted inside the company, but individual components — speech recognition, embedding generation or logging — use external services. How to assess the system as a whole in this case)",
+      "description": "Where do personal data appear in an LLM product? How an external API, a Russian intermediary and self-hosting an open model differ. How to establish the actual recipients of data and the countries of processing. Legal grounds for processing, localization, notifications under Articles 12 and 22, contracts and the allocation of liability. What information you need to obtain from the vendor and what to do if it does not disclose the necessary terms. What happens to the legal status of data after full names and phone numbers are removed. How to account for indirect identification, a retained mapping table and the possibility of restoring information from context. Storage of requests and responses, use of data for training, employee access, engagement of other processors, deletion of information and actions in case of incidents.\n\nWalkthroughs of typical product scenarios and edge cases (for example, the model is hosted inside the company, but individual components — speech recognition, embedding generation or logging — use external services. How to assess the system as a whole in this case)",
+      "lectorRoles": []
+    },
+    "342": {
+      "title": "Identifiability of causal relationships when building media mix models",
+      "short": "We discuss identifiability, bias and decision-making under uncertainty. Bayesian non-linear econometrics makes it possible to estimate causal relationships, and how to build such a model will be the subject of our conversation: how to construct a model so that it is not only interpretable but also identifiable, how to parameterize it so that it doesn't fall apart during estimation and the bias is overcome, how to make decisions under uncertainty, and how stochastic optimization theory can help us.",
+      "description": "We discuss identifiability, bias and decision-making under uncertainty. Bayesian non-linear econometrics makes it possible to estimate causal relationships, and how to build such a model will be the subject of our conversation:\n\nhow to construct a model so that it is not only interpretable but also identifiable, how to parameterize it so that it doesn't fall apart during estimation and the bias is overcome, how to make decisions under uncertainty, and how stochastic optimization theory can help us.",
+      "lectorRoles": [
+        "Director, Veroyatnostnye Resheniya"
+      ]
+    },
+    "343": {
+      "title": "Growing Yggdrasil: how to build a working metric graph",
+      "short": "The metric the business wants to influence and the metric the business can influence with an arbitrary action are usually different metrics. We look at how to build healthy iteration on product hypotheses using a metric graph. Listeners will learn how to extract more information from a set of experiments — what else can be learned about users by looking at the whole set of experiments — and how to measure and decompose the effect of a package of marketing changes on a business metric when no single experiment gives an answer on its own.",
+      "description": "The global metric the business wants to grow and the local metric the product team can actually influence with a direct action are almost always two different entities. The gap between high-level KPIs and the results of specific releases means that local experiments consistently show growth while the overall economics don't add up. The talk covers the methodology for building a metric graph that connects proxy indicators to the main business goal and sets up a healthy process of iterating on hypotheses.\n\nThe speaker will show how to move from evaluating isolated A/B tests to analyzing an entire ecosystem of experiments. You will learn how the architecture of nested metrics helps extract hidden insights about user behavior that are unavailable from a point look at raw data. Special attention will be paid to the math of the cumulative effect: Max will walk through the algorithm for measuring and decomposing the impact of a large set of marketing changes on the final business indicator.\n\nListeners will get a rigorous analytical framework for evaluating complex product initiatives. The talk will provide a clear toolkit for situations where no single test can give a mathematically reliable answer at the macro level, but the business needs to estimate the real effect of the entire set of launched changes.",
+      "lectorRoles": [
+        "Head of the analytics group, Yandex"
+      ]
+    },
+    "344": {
+      "title": "Mutation testing for AI agents in A/B tests",
+      "short": "A system of AI agents around the A/B platform and measuring its reliability via a benchmark based on mutation testing: we inject controlled defects into cases with a known answer and calculate mutation score, false positive rate, and the detection threshold. On this proving ground we compare models and architectures and determine the tolerance limits where agents can already be trusted",
+      "description": "Trust in AI agents working within the A/B experimentation platform cannot be built on blind faith. When LLMs help design tests or interpret their results, the price of an unnoticed hallucination is wrongly rolled-out functionality and lost money. The talk covers Cian's experience in building a system for objectively measuring the reliability of analytical AI agents using the mutation testing methodology.\n\nThe speaker will show the internal mechanics of the AI proving ground: how controlled defects and distortions (mutations) are deliberately introduced into historical A/B test cases with a known reference answer. You will learn how to mathematically assess the agent's ability to find these errors using rigorous metrics: mutation score, false positive rate (FPR), and the anomaly detection threshold.\n\nListeners will see how, on the basis of such a benchmark, various generative models and agentic pipeline architectures can be compared directly. The talk will give data scientists and platform engineers a verifiable framework for determining tolerance limits — an algorithm that makes it possible to mathematically prove exactly which tasks an AI agent can already be fully trusted with, and where mandatory human oversight is still required.",
+      "lectorRoles": [
+        "PhD in physics and mathematics, lead analyst of the A/B platform, Cian"
+      ]
+    },
+    "345": {
+      "title": "How we implemented an AI-first framework for integration with the data platform instead of xls",
+      "short": "Moving work from manual handovers and repetitive development into configuration, generators and platform tooling. This shortens the path from describing a source to data appearing in the platform and lets us scale the onboarding of typical sources without a proportional growth in manual work.",
+      "description": "The talk is about the transition from manual task specifications to a self-service architecture. The speaker will show how an analyst can independently develop a typical loading flow and ship it to production without the platform team being involved at every stage. The solution is based on YAML configurations, automated release pipelines and AI-based generators. Special attention will be paid to the mechanics of working with the neural network: what data, rules and documentation from the catalog are fed into the model's context so that the algorithm helps write valid integration configurations rather than just answering empty prompts.\n\nListeners will see the real picture of working with generative AI in data engineering. The talk will show how to scale the onboarding of systems without a proportional growth in manual labor. You will get a transparent scheme of how responsibilities are split: which technical handovers disappear thanks to platform automation, and which decisions on understanding a source, describing objects and controlling data quality will always require an analyst's expertise.",
+      "lectorRoles": [
+        "Technical product manager, MAGNIT TECH"
+      ]
+    },
+    "346": {
+      "title": "From data chaos and holes in reports to an AI-powered team built on a corporate knowledge graph",
+      "short": "Solving the task of eliminating chaos in company data and creating a corporate knowledge graph. The sequence of moving from fixing a specific analytical problem to a shared context for AI tools. The talk will help assess which knowledge needs to be formalized in your company, how to check its quality and which workflow to start implementation with.",
+      "description": "Solving the task of eliminating chaos in company data and creating a corporate knowledge graph\n\nThe sequence of moving from fixing a specific analytical problem to a shared context for AI tools. The talk will help assess which knowledge needs to be formalized in your company, how to check its quality and which workflow to start implementation with",
+      "lectorRoles": [
+        "Datawarrior"
+      ]
+    },
+    "347": {
+      "title": "A/B test interference: from myths to measurable results and understanding the scale of the problem",
+      "short": "A complete interference model (distortion of a result due to overlapping experiments), an original criterion for assessing the influence of one experiment on another, and an internal tool for on-the-fly checking, from the ASL team that builds T-Bank's in-house A/B platform.",
+      "description": "More than 10 thousand experiments run at T-Bank every year, and many of them overlap. The question arises: can the results of such experiments be trusted, or does the overlap distort the effect (interference) and a retest is required? The question is especially acute, for example, in tests of marketing communication campaigns, where various pushes and SMS compete for the user's limited attention.\n\nThe topic has been hyped for a long time, and an experiment isolation system is an essential foundation of mature A/B platforms. Yet no one can articulate how to estimate the scale of the influence. Because of this, interference remains a semi-mythical problem: some ignore it entirely, others isolate part of the experiments based on expert judgment, and still others prefer to isolate almost everything, sacrificing the speed of running experiments.\n\nAt the same time, we built a complete mathematical model, derived an original criterion for assessing the influence of one experiment on another and developed an internal tool for on-the-fly checking.\n\nAttendees will be introduced to the interference model, learn how to estimate it and what the size of the distortion depends on. We will share research results from T-Bank: we will answer the question of interference scale, show interesting cases and also share internal insights.",
+      "lectorRoles": [
+        "T-Bank",
+        "T-Bank"
+      ]
+    },
+    "348": {
+      "title": "From labeling to launching an A/B test in 60 minutes",
+      "short": "Participants will go through the cycle from labeling user actions to forming product hypotheses and launching an A/B test on a real ecom client of the uxrocket.ru platform. Participants will also perform post-analysis and learn to form hypotheses that lead to growth 3 times more often.",
+      "description": "Participants will go through the cycle from labeling user actions to forming product hypotheses and launching an A/B test on a real ecom client of the uxrocket.ru platform. Participants will also perform post-analysis and learn to form hypotheses that lead to growth 3 times more often",
+      "lectorRoles": [
+        "CEO, Excite Kit",
+        "Professor, dr. of economics and founder of the “Center for Statistical Analysis”."
+      ]
+    },
+    "349": {
+      "title": "Т-Банк 100к1: analytics versus intuition",
+      "short": "We are used to testing hypotheses and trusting data. But what if today you need to guess not the exact answer, but the one the majority chose? We guess the most popular answers, dig into the industry's pain points and check how well our ideas about users match reality. Only logic, intuition and collective intelligence.",
+      "description": "We are used to testing hypotheses and trusting data. But what if today you need to guess not the exact answer, but the one the majority chose? We guess the most popular answers, dig into the industry's pain points and check how well our ideas about users match reality. Only logic, intuition and collective intelligence",
+      "lectorRoles": []
+    },
+    "350": {
+      "title": "Vibe coding and cybersecurity risks: how not to make most of the mistakes that can lead to an easy compromise of the service or product you built",
+      "short": "Master class participants will learn about a comprehensive approach to ensuring the basic principles of information security for their own products. The session will cover, among other things, automatic scanning against public vulnerability databases, in-house \"mirrors\" with already verified packages and other tools. Attendees will get a checklist of critically important points to watch during product development by agents. The master class is accompanied by a large set of cases and examples.",
+      "description": "Master class participants will learn about a comprehensive approach to ensuring the basic principles of information security for their own products. The session will cover, among other things, automatic scanning against public vulnerability databases, in-house \"mirrors\" with already verified packages and other tools. Attendees will get a checklist of critically important points to watch during product development by agents. The master class is accompanied by a large set of cases and examples",
+      "lectorRoles": [
+        "Lead AI developer, T1 IT holding"
+      ]
+    },
+    "351": {
+      "title": "How we grow the quality of AI generation, using a city walks app as an example",
+      "short": "Analyzing agent-loop transcripts is a key skill for working on the quality of AI products. In-house evals are often more important than public leaderboards: a 10% quality gain on a state-of-the-art model can lead to a degradation of user experience. Listeners will learn how to apply LLM to highly non-deterministic tasks (in our case it is a city walk, but the general approaches — your own eval, working with transcripts, fine-tuning tools — can be applied anywhere) and will learn to balance the agentic and deterministic parts of a product.",
+      "description": "Analyzing agent-loop transcripts is a key skill for working on the quality of AI products. In-house evals are often more important than public leaderboards: a 10% quality gain on a state-of-the-art model can lead to a degradation of user experience. Listeners will learn how to apply LLM to highly non-deterministic tasks (in our case it is a city walk, but the general approaches — your own eval, working with transcripts, fine-tuning tools — can be applied anywhere) and will learn to balance the agentic and deterministic parts of a product",
+      "lectorRoles": [
+        "Team lead of the generation quality team, По Пути"
+      ]
+    },
+    "352": {
+      "title": "Whydra: a Causal Discovery library for identifying and analyzing causal dependencies in data",
+      "short": "The talk is devoted to the development of the Whydra library for identifying causal dependencies, optimizing Causal Discovery algorithms and evaluating their accuracy and performance. Practical cases of applying the library in banking are considered: analyzing the impact of credit decisions and marketing campaigns on customer metrics, as well as studying the relationship between the launch of new businesses and their subsequent revenue",
+      "description": "The talk is devoted to the development of the Whydra library for identifying causal dependencies, optimizing Causal Discovery algorithms and evaluating their accuracy and performance. Practical cases of applying the library in banking are considered: analyzing the impact of credit decisions and marketing campaigns on customer metrics, as well as studying the relationship between the launch of new businesses and their subsequent revenue",
+      "lectorRoles": [
+        "Data scientist, Causal AI, Сбер"
+      ]
+    },
+    "353": {
+      "title": "A unified system for evaluating advertising effectiveness",
+      "short": "A talk about building a system for evaluating advertising effectiveness based on Marketing Mix Modeling. Using the X5 Digital approach as an example, we look at how to combine advertising and business data, choose a model, evaluate a future campaign and compare budget allocation options in a single service. Data preparation, the model and the user process work together. This approach helps consistently evaluate and compare media plans while preserving the model's constraints and human responsibility for the final decision.",
+      "description": "A talk about building a system for evaluating advertising effectiveness based on Marketing Mix Modeling. Using the X5 Digital approach as an example, we look at how to combine advertising\n\nand business data, choose a model, evaluate a future campaign and compare budget allocation options in a single service. Data preparation, the model and\n\nthe user process work together. This approach helps consistently evaluate and compare media plans while preserving the model's constraints and human responsibility for the final decision",
+      "lectorRoles": [
+        "Senior Product Analyst, X5 Tech"
+      ]
+    },
+    "355": {
+      "title": "How to build an A/B platform the ecosystem trusts from scratch",
+      "short": "Т-Банк's A/B platform (Hippo) combines expertise in mathematics and work with internal data into a single fault-tolerant pipeline. Hippo includes Multi-CUPED (x2.2 speedup), experiment validity checks and sequential methods for early detection of broken experiments (x3.5 speedup at the cost of 1% power). We will discuss how to find the balance between adoption and quality in practice.",
+      "description": "Т-Банк's A/B platform (Hippo) combines expertise in mathematics and work with internal data into a single fault-tolerant pipeline. Hippo includes Multi-CUPED (x2.2 speedup), experiment validity checks and sequential methods for early detection of broken experiments (x3.5 speedup at the cost of 1% power). We will discuss how to find the balance between adoption and quality in practice",
+      "lectorRoles": [
+        "PhD in Physics and Mathematics, head of the applied statistics lab",
+        "Т-Банк"
+      ]
+    },
+    "356": {
+      "title": "Fighting organic cannibalization and wrong optimization",
+      "short": "We will reveal the technical side of building an end-to-end ROAS reporting system that tied ad network spend, clicks and revenue into a single loop, which allowed optimizing the performance budget by 30%. The report became a Single Source of Truth both for manual optimization by buyers and for automated agents that partially manage campaigns via API, which ultimately cut reaction time to drops from days to a couple of hours",
+      "description": "Blind traffic buying due to delayed conversions is the main pain of performance marketing. The situation is aggravated by the fact that unconditional trust in mobile tracker (MMP) reports regularly leads to wrong optimization: ad networks hide fraud, take credit for others' achievements and openly cannibalize organic traffic. As a result, the budget quietly drains into channels that deliver cheap registrations but show zero payback over distance. The talk breaks down the experience of the dating service Mamba in building end-to-end ROAS reporting infrastructure, which made it possible to cut the performance budget by 30% while maintaining target profit.\n\nThe speaker will reveal the technical underside of the analytical loop that tightly tied network spend, clicks and real user payments into a single Single Source of Truth. You will learn how to build cross-validation of tracker data and introduce hybrid purchase management: routine protection against waste is handed to external API agents that automatically switch off unprofitable creatives based on early payback predictions. This cut reaction time to traffic drops from several days to a couple of hours.\n\nListeners will get a framework proven at Highload scale for cleaning the funnel of inefficient traffic. The talk will help marketing leaders and analysts restructure buying processes so as to completely free the team from manual budget micromanagement, focusing buyers exclusively on scaling profitable bundles.",
+      "lectorRoles": [
+        "Head of Digital, Mamba Group"
+      ]
+    },
+    "357": {
+      "title": "Whom and what to teach in the age of AI: the future of professions and education",
+      "short": "- Which boundaries between professions are losing their meaning, and which are becoming especially important? - Where to get experience and how to learn throughout a career? - What to check without AI, and what — necessarily with AI? Where is independent mastery of the method important, and where is the ability to obtain and verify a result with tools? - Which assessment formats should change? What can an exam, homework, a test assignment, a portfolio and a technical interview now show? - How to verify understanding and transfer of a skill? Is it enough to ask someone to explain a solution, find an error, or adapt an approach to new conditions? - How to evaluate work with AI? Which signs distinguish a strong user from a person who accepts a convincing answer without checking? - How to verify the qualifications of current employees? What should confirm readiness for greater responsibility or a move to an adjacent role? - What should a specialist invest their time in right now?",
+      "description": "- Which boundaries between professions are losing their meaning, and which are becoming especially important?\n\n- Where to get experience and how to learn throughout a career?\n\n- What to check without AI, and what — necessarily with AI? Where is independent mastery of the method important, and where is the ability to obtain and verify a result with tools?\n\n- Which assessment formats should change? What can an exam, homework, a test assignment, a portfolio and a technical interview now show?\n\n- How to verify understanding and transfer of a skill? Is it enough to ask someone to explain a solution, find an error, or adapt an approach to new conditions?\n\n- How to evaluate work with AI? Which signs distinguish a strong user from a person who accepts a convincing answer without checking?\n\n- How to verify the qualifications of current employees? What should confirm readiness for greater responsibility or a move to an adjacent role?\n\n- What should a specialist invest their time in right now?",
+      "lectorRoles": []
+    },
+    "358": {
+      "title": "People management and project context: how a leader can keep the balance",
+      "short": "As a team grows, people management takes up ever more of a leader's time and attention. Hiring, employee development and organizational issues push out project context — it becomes harder for the leader to discuss tasks substantively and offer meaningful solutions. We'll talk about how to distribute a limited context window between people and projects, what level of immersion is really necessary, and which practices help maintain an understanding of what is actually happening in the team. Key thesis: a leader's resource is limited not only by time, but by the volume of context they are able to hold. The balance between people management and projects is achieved largely through managing one's own attention.",
+      "description": "As a team grows, people management takes up ever more of a leader's time and attention. Hiring, employee development and organizational issues push out project context — it becomes harder for the leader to discuss tasks substantively and offer meaningful solutions.\n\nWe'll talk about how to distribute a limited context window between people and projects, what level of immersion is really necessary, and which practices help maintain an understanding of what is actually happening in the team.\n\nKey thesis: a leader's resource is limited not only by time, but by the volume of context they are able to hold. The balance between people management and projects is achieved largely through managing one's own attention.",
+      "lectorRoles": []
+    },
+    "359": {
+      "title": "DataLens Platform: from data source to product insight",
+      "short": "How to go from raw data to an answer about a product — in a single platform and with the help of AI? In the master class we'll walk through this cycle on a practical example: load data into Lakehouse, prepare SQL queries with an AI agent and set up orchestration, organize a data catalog and access rights, and then assemble a dashboard with Neuroanalyst.",
+      "description": "How to go from raw data to an answer about a product — in a single platform and with the help of AI? In the master class we'll walk through this cycle on a practical example: load data into Lakehouse, prepare SQL queries with an AI agent and set up orchestration, organize a data catalog and access rights, and then assemble a dashboard with Neuroanalyst.",
+      "lectorRoles": []
+    },
+    "360": {
+      "title": "HTML versus a dashboard: what we lose when an AI agent can visualize everything",
+      "short": "AI agents allow analysts and managers to create interactive HTML reports in minutes — flexible, but not always reliable. Using examples from different business units of Yandex, we'll compare HTML and classic dashboards, and also show how the SDK helps combine flexibility with the controllability of BI.",
+      "description": "AI agents allow analysts and managers to create interactive HTML reports in minutes — flexible, but not always reliable. Using examples from different business units of Yandex, we'll compare HTML and classic dashboards, and also show how the SDK helps combine flexibility with the controllability of BI.",
+      "lectorRoles": [
+        "BI architect, Yandex Cloud"
+      ]
+    },
+    "361": {
+      "title": "Automating product development with AI agents",
+      "short": "Can the path from an idea to launching a ready feature in production be combined into a single process managed by AI agents? We'll tell how we created a product for end-to-end development automation: from the arrival of a feature request and elaboration of requirements to implementation, testing and publication of a ready solution. We'll clearly show exactly how AI agents interact with each other, take on tasks at different stages of development and help manage the entire process in a single system. Using our solution as an example, we'll break down how the familiar development process changes, what role a human plays in it and how to move from individual AI tools to full-fledged agent automation",
+      "description": "",
+      "lectorRoles": [
+        "AI Engineering Lead, Yandex",
+        "Head of the Gena product"
+      ]
+    },
+    "362": {
+      "title": "Another topic will be here",
+      "short": "",
+      "description": "",
+      "lectorRoles": []
+    },
+    "364": {
+      "title": "A/B test calculations for unusual metrics: MAU, WAU, Retention, NSAT, Contact Rate and CTR",
+      "short": "Standard statistical tests do not work for complex product metrics (MAU, Retention, NPS, CTR) because of their ratio structure and autocorrelation, and bootstrap takes too much time. In the workshop we'll break down the creation of a fully autonomous pipeline for evaluating A/B experiments in pure SQL (Presto/Trino) without third-party platforms. Participants will get a ready algorithm and code: from setting up SRM control and linearizing metrics to calculating MDE with the Bonferroni correction and obtaining final p-values from raw logs.",
+      "description": "We'll show how to build a fully autonomous calculation of a split experiment for key product metrics — WAU, MAU, NSAT/NPS, Retention and Sticky Factor, Contact Rate and CTR — without involving third-party analytical platforms. Traditional z-test and t-test formulas work only for simple click-through conversions, applying bootstrap requires computation time, and linearization and the delta method need to be applied correctly. A product's key metrics (active users, satisfaction scores, contact coefficients) have internal connectivity, dependence, autocorrelation, low frequency or ratio structure, so without bringing them to a certain form they give false conclusions. Source audiences in the groups may differ when testing different entry points into conversion funnels, which leads to a bias in group volumes.\n\nWe'll show how to calculate MDE and sample size for different types of metrics — calculation taking into account the metric type (observation dependence, internal connectivity, bias) and the multi-group Bonferroni correction (α-adjust). SRM control — a fast χ² test in SQL that reveals a skew in the distribution of users between experimental groups. We'll write, in plain SQL, the linearization of ratio metrics (CTR, Contact Rate) and calculate a t-test on the transformed metrics. We'll show how to carry out a correct calculation for ordinal data (NSAT/NPS) and special conversion metrics like Retention and Sticky Factor. We'll show a pipeline in Presto/Trino — from the raw hits table to a ready VIEW with confidence intervals and p-values. We'll tell examples where we encountered metrics unusual in structure and small data volumes, and how we handled experiments with different group volumes when testing different entry points into the funnels of user paths.",
+      "lectorRoles": [
+        "Product analyst, MTS PJSC"
+      ]
+    },
+    "365": {
+      "title": "Conversational AI on top of corporate BI: access rights, verified numbers and the new role of the analyst. The path to AI-native analytics",
+      "short": "We have built a conversational AI assistant into everyday work: an employee asks about sales in plain words, by text or voice, and gets a chart or a numeric answer. Access rights are inherited from BI, the answer is verified by code, and next to each number sits its \"passport\" (period, filters, source). Using a mistake the model made, I will show how verification works, what we measure in the pilot and where the bot went wrong. And then — the move to AI-native analytics: executives work with data themselves, their questions accumulate in a knowledge base, the business maintains the metrics dictionary, and the analyst becomes the architect of a system that brings hypotheses",
+      "description": "In the classic paradigm, data specialists often turn into a \"live interface\" to BI system filters, serving executives' urgent requests before planning meetings. Attempts to replace them with language models directly carry the risks of hallucinations and leaks of trade secrets. The talk examines the experience of fashion retailer Artenecy in deploying a conversational AI assistant that works on top of the corporate warehouse on a principle of strict separation of responsibilities: the neural network only translates a business question into a query, while the calculations themselves happen exclusively on the side of verified marts.\n\nThe speaker will lay out the architecture of a secure AI layer. You will learn how to implement seamless inheritance of access rights from BI so that each employee receives only the slice of data they are allowed, without taking information outside the corporate perimeter. Separate attention will go to the mechanics of building trust: every answer comes with a \"number passport\" (period, filters, source), and programmatic verification by code blocks incorrect outputs. Using a real mistake by the model, it will be shown how the hallucination protection system works and how to properly set pilot quality metrics, moving away from abstract \"accuracy\".\n\nAttendees will get a blueprint for moving to AI-native analytics, where the log of user questions becomes an automatic sensor of demand for new marts and the basis for a metrics dictionary. The talk will help data team leaders restructure processes so that the analyst stops being a courier delivering numbers and becomes the architect of a system that generates business hypotheses.",
+      "lectorRoles": [
+        "Head of corporate data warehouse development, Artenecy"
+      ]
+    },
+    "366": {
+      "title": "An experiment on trading service quality for money",
+      "short": "Customer service quality is a manageable economic parameter, not just a set of operational SLAs. At T-Bank, a large-scale A/B test was run that abandoned a single support standard: different segments got austerity modes (ECO, −30% costs) and premium support (CX+, +70% costs). The experiment proved that investment in quality pays off far beyond the contact center: CX+ mode statistically significantly grows NPV, increases product utilization, and even reduces the share of loan delinquencies. We will break down the evaluation mechanics via LTV proxy metrics and show how to differentiate service so you can safely cut costs and maximize total profit",
+      "description": "Customer service is traditionally optimized by operational metrics: cost per contact, response speed (SLA), and the automation percentage. However, this approach ignores the real long-term economic value of service to the business. At T-Bank, they decided to test the hypothesis that support quality is not an abstract good but a manageable economic parameter that can and should be deliberately changed depending on the segment. The talk covers a large-scale experiment on abandoning a single service standard and moving to distributing quality based on expected return on investment (LTV).\n\nThe speaker will reveal the mechanics of differentiating service into three modes: strict ECO with a 30% cost reduction (more persistent bots, increased SLAs, and a focus on speed for unprofitable customers and “troublemakers”), standard BASE, and expensive CX+, where the cost of service grows by 70% due to priority, dedicated experts, and motivation for full problem resolution for newcomers and the upper mass segment. You will learn how to build a system of proxy metrics to assess the impact of such modes on long-term LTV, transactional activity, and retention.\n\nThe test results proved that investment in CX+ goes far beyond service indicators: segment-weighted NPV grew by 2.2%, activations of new products jumped (for example, MVNO issuances by 3.3% and credit cards by 2.2%), and even the probability of default decreased — customers with quality service statistically significantly less often go delinquent (the Roll Rate 0 share grew by 0.24 pp). Listeners will get an analytical framework for moving to the incremental value of service: how to safely save where it does not destroy LTV, and pour budgets into support where it brings multiple returns.",
+      "lectorRoles": [
+        "Analytics director, T-Bank"
+      ]
+    },
+    "367": {
+      "title": "How will the role of analytics in business change by 2029?",
+      "short": "A discussion among analytics leaders at major technology companies about the future of the function: which tasks will go away, which areas of responsibility will emerge and how to prepare teams for these changes.",
+      "description": "A discussion among analytics leaders at major technology companies about the future of the function: which tasks will go away, which areas of responsibility will emerge and how to prepare teams for these changes.\n\n- Should analytics take on more responsibility for the business result, and what authority is needed for that?\n\n- How will the boundaries between analytics, product, marketing and operations management change? What new specializations may appear?\n\n- Which models of organizing analytics teams will be in demand over the next three years?\n\n- How will the requirements for analytics leaders change, and what should already be changed in developing the function now?",
+      "lectorRoles": []
+    },
+    "368": {
+      "title": "How large companies choose, deploy and secure AI",
+      "short": "AI/ML team leads share practical experience, engineering trade-offs and the approaches they use in their work",
+      "description": "AI/ML team leads share practical experience, engineering trade-offs and the approaches they use in their work\n\n- An external model or your own?\n\n- How do you evaluate quality, cost and latency?\n\n- What stops an AI solution from going from pilot to production?\n\n- How does the approach to security change when a model starts working with corporate data and performing real actions?",
+      "lectorRoles": [
+        "Head of AI translation and AI adoption in production processes, RWB",
+        "Director of the AI Development and Data Research Center, Strategy and Development block, Сбер",
+        "Director of the Personalization and Feedback vertical department, X5",
+        "Head of DS team, Авито Авто"
+      ]
+    },
+    "369": {
+      "title": "Big official conference closing",
+      "short": "Summing up, conference analytics, discussion of news and future plans, new product announcements, thank-yous and other important pleasant moments. During the closing there will be a draw of all prizes from Partners, exhibitors and friends of the conference (only those present in the hall can take part)\"",
+      "description": "Summing up, conference analytics, discussion of news and future plans, new product announcements, thank-yous and other important pleasant moments.\n\nDuring the closing there will be a draw of all prizes from Partners, exhibitors and friends of the conference (only those present in the hall can take part)\"",
+      "lectorRoles": []
+    },
+    "370": {
+      "title": "How to measure AI visibility so the numbers can be trusted?",
+      "short": "In a year, measurements of brand visibility in neural-network answers have gone from an experiment to a line in the media plan. But there is still no single methodology: agencies, vendors and in-house teams define a mention differently, build the prompt sample differently, choose the number of runs differently and assess the stability of results differently.",
+      "description": "In a year, measurements of brand visibility in neural-network answers have gone from an experiment to a line in the media plan. But there is still no single methodology: agencies, vendors and in-house teams define a mention differently, build the prompt sample differently, choose the number of runs differently and assess the stability of results differently.\n\nOn the panel we will compare the approaches of those who make, sell and buy these measurements.\n\nWe will look at which parameters can already be unified (and whether they can be at all), where methodological differences are fundamental, and what research on the stability of LLM answers can give practitioners.\n\nThe result is a draft methodological minimum for the market: a set of criteria for checking how well-founded the numbers in an AI visibility report are. We will put it together on the panel and publish it after the conference.",
+      "lectorRoles": []
+    },
+    "371": {
+      "title": "From source to insight: what an AI agent needs for its answers to be trusted",
+      "short": "Connecting an LLM to a database is not analytics yet: the agent does not know where the data came from, who has access to it and how the metric was calculated. We tell how AI was embedded into every step of the analytical cycle (loading, SQL, orchestration, catalog, dashboards) and what context it needed for that: automatically collected metadata, lineage, permissions at the platform level. We will break down where the agent already replaces manual work, where it makes mistakes and how to verify its answer all the way down to the source table. The experience of DataLens Platform, the largest update to DataLens: an AI-first platform where lakehouse, orchestration and a data catalog were added to the familiar dashboards in a single interface",
+      "description": "Connecting an LLM to a database is not analytics yet: the agent does not know where the data came from, who has access to it and how the metric was calculated. We tell how AI was embedded into every step of the analytical cycle (loading, SQL, orchestration, catalog, dashboards) and what context it needed for that: automatically collected metadata, lineage, permissions at the platform level. We will break down where the agent already replaces manual work, where it makes mistakes and how to verify its answer all the way down to the source table. The experience of DataLens Platform, the largest update to DataLens: an AI-first platform where lakehouse, orchestration and a data catalog were added to the familiar dashboards in a single interface",
+      "lectorRoles": [
+        "Head of product development, Yandex DataLens"
+      ]
+    },
+    "372": {
+      "title": "Know Your Data: how to extract business value from your own data with AI",
+      "short": "Representatives of large digital products share real cases of data classification and enrichment with ML/LLM. We discuss how AI helps automate business processes in Trust & Safety, cut costs and achieve a measurable economic effect.",
+      "description": "Representatives of large digital products share real cases of data classification and enrichment with ML/LLM. We discuss how AI helps automate business processes in Trust & Safety, cut costs and achieve a measurable economic effect.\n\n- What new knowledge can be extracted from data already accumulated, and how do you turn it into a business result?\n\n- Which Trust & Safety processes should be automated with AI, and which should not?\n\n- How do you assess the economic effect of data classification and the return on AI investment?\n\n- What difficulties do companies face when embedding AI into real business processes?",
+      "lectorRoles": [
+        "ML team lead, Trust and Safety, Циан",
+        "Head of Trust & Safety, Мамба",
+        "Analytics lead, Trust & Safety, hh.ru"
+      ]
+    }
+  }
+}
