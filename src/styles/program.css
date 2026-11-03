@@ -821,15 +821,56 @@ h2.talk-modal__title {
   gap: var(--space-3) var(--space-5);
 }
 
+/* Единственная длинная проза проекта: описания докладов — до 11 абзацев и 2,3 тыс.
+   знаков (`fillText` режет их по пустой строке). Модель — `.prose` портфолио:
+   мера 66ch, красная строка вместо межабзацного отступа, выключка с переносами.
+   Мера ограничена здесь, а не унаследована от диалога: 830 px при 1.05rem — это
+   ~100 знаков в строке, и выключка на такой ширине даёт рваные пробелы. */
 .talk-modal__text {
+  max-inline-size: var(--prose-measure);
   color: var(--text-normal);
   font-size: var(--text-body);
-  line-height: 1.6;
-  overflow-wrap: anywhere;
+  line-height: var(--prose-lh);
 }
 
+/* `break-word`, а не `anywhere`: разрыв у них одинаковый, но `anywhere`
+   учитывает точки разрыва при расчёте min-content, то есть позволяет колонке
+   сжаться уже длинного слова. Здесь нужна только страховка от длинного токена —
+   так же в `.prose` портфолио (`break-word` на абзаце). */
+.talk-modal__text p {
+  margin-block: 0;
+  overflow-wrap: break-word;
+  /* `pretty` из tokens.css перебрасывает слово вниз ради последних строк, а
+     выключка растягивает то, что осталось: замер дал строку с промежутками
+     4.1× нормы. Для выключенного текста нужен обычный перенос. */
+  text-wrap: wrap;
+  text-align: justify;
+  text-indent: var(--prose-indent);
+  hyphens: auto;
+  -webkit-hyphens: auto;
+}
+
+/* Отступ даёт разрыв строки, поэтому межабзацная маржа — только волосок:
+   её хватает отделить абзац от следующего блока, и она не спорит с красной
+   строкой. */
 .talk-modal__text p + p {
-  margin-block-start: var(--space-3);
+  margin-block-start: 0.25em;
+}
+
+.talk-modal__text > p:first-child {
+  text-indent: 0;
+}
+
+/* Выключка требует широкой колонки: на телефоне промежутки между словами
+   перевешивают ровный правый край. */
+@media (max-width: 640px) {
+  .talk-modal__text {
+    --prose-indent: 0;
+  }
+
+  .talk-modal__text p {
+    text-align: left;
+  }
 }
 
 .talk-modal__actions {
