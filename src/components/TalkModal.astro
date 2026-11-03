@@ -1,0 +1,106 @@
+---
+/**
+ * Оболочка модалки доклада. Контейнеры пустые: содержимое подставляет
+ * `src/scripts/program-client.ts` из `/program.json` — разметка на билде,
+ * данные по запросу. Пока модалка закрыта, она `hidden` и не в a11y-дереве.
+ */
+---
+
+<div class="talk-modal" data-modal hidden>
+  <div class="talk-modal__backdrop" data-modal-backdrop></div>
+  <div
+    class="talk-modal__dialog"
+    role="dialog"
+    aria-modal="true"
+    aria-labelledby="talk-modal-title"
+    data-modal-dialog
+    tabindex="-1"
+  >
+    <button class="talk-modal__close" type="button" data-modal-close aria-label="Закрыть">
+      <svg
+        viewBox="0 0 24 24"
+        width="20"
+        height="20"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="2"
+        stroke-linecap="round"
+        aria-hidden="true"
+        focusable="false"
+      >
+        <path d="M6 6l12 12M18 6L6 18"></path>
+      </svg>
+    </button>
+
+    <div class="talk-modal__media" data-modal-media></div>
+
+    <div class="talk-modal__body">
+      <div class="talk-modal__meta" data-modal-meta></div>
+      <h2 class="talk-modal__title" id="talk-modal-title" data-modal-title></h2>
+      <div class="talk-modal__speakers" data-modal-speakers></div>
+      <div class="talk-modal__text" data-modal-text></div>
+      <div class="talk-modal__actions">
+        <a
+          class="talk-modal__buy"
+          href="https://matemarketing.ru/tickets/"
+          target="_blank"
+          rel="noopener"
+        >
+          Купить билет
+        </a>
+        <button class="talk-modal__fav" type="button" data-modal-fav aria-pressed="false">
+          В избранное
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<style>
+  /* Спикеров в модалку вставляет `program-client.ts` уже после загрузки
+     `/program.json`, поэтому узлы не получают scope-атрибут Astro — правила
+     идут через `:global`. `program.css` эти классы пока не описывает; набор
+     ниже — минимальный фолбэк (круглое фото 36px, как в карточке). */
+  :global(.talk-modal__speaker) {
+    display: flex;
+    align-items: center;
+    gap: var(--space-3);
+    min-inline-size: 0;
+  }
+
+  :global(.talk-modal__speaker-photo),
+  :global(.talk-modal__speaker-avatar-fallback) {
+    display: inline-flex;
+    flex: none;
+    align-items: center;
+    justify-content: center;
+    inline-size: 36px;
+    block-size: 36px;
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-full);
+    background: var(--surface-secondary);
+    color: var(--text-normal);
+    font-size: 0.8rem;
+    font-weight: 600;
+    object-fit: cover;
+  }
+
+  :global(.talk-modal__speaker-info) {
+    display: flex;
+    flex-direction: column;
+    min-inline-size: 0;
+  }
+
+  :global(.talk-modal__speaker-name) {
+    color: var(--text-normal);
+    font-size: 0.9rem;
+    font-weight: 600;
+    line-height: 1.35;
+  }
+
+  :global(.talk-modal__speaker-desc) {
+    color: var(--text-muted);
+    font-size: 0.8rem;
+    line-height: 1.4;
+  }
+</style>

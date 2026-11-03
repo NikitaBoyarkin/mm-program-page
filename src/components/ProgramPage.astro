@@ -1,0 +1,211 @@
+---
+/**
+ * Программа одного дня. Вся сетка, карточки, табы, чипы и счётчик рендерятся
+ * на билде: страница читается и печатается без JS. Клиентский скрипт только
+ * фильтрует, открывает модалку, помнит избранное и собирает `.ics`.
+ */
+import {
+  PROGRAM,
+  dayHref,
+  dayLabel,
+  dayLongLabel,
+  days,
+  hallsOfDay,
+  isPlaceable,
+  occupiedCells,
+  placeTalks,
+  pluralTalks,
+  startsOf,
+  talksOfDay,
+  tracksOfProgram,
+  type Day,
+  type PlacedTalk,
+} from "../lib/program";
+import TalkCard from "./TalkCard.astro";
+import TalkModal from "./TalkModal.astro";
+import "../styles/program.css";
+
+interface Props {
+  day: Day;
+  ordinal: number;
+}
+
+const { day, ordinal } = Astro.props;
+
+const allDays = days();
+const dayTalks = talksOfDay(day);
+const halls = hallsOfDay(day, dayTalks);
+const placeable = dayTalks.filter((talk) => isPlaceable(talk, halls));
+const rows = startsOf(placeable);
+const { slots } = placeTalks(placeable, halls, rows);
+const taken = occupiedCells(slots);
+const slotMap = new Map(
+  slots.map((slot) => [`${slot.row - 1}:${slot.column - 2}`, slot] as const),
+);
+
+type Cell =
+  | { kind: "time"; row: number; time: string }
+  | { kind: "talk"; slot: PlacedTalk }
+  | { kind: "empty"; row: number; column: number };
+
+/** Плоский список ячеек: строки, время и пустышки в одном проходе. */
+const cells: Cell[] = [];
+for (let row = 0; row < rows.length; row += 1) {
+  cells.push({ kind: "time", row: row + 1, time: rows[row] as string });
+  for (let column = 0; column < halls.length; column += 1) {
+    const slot = slotMap.get(`${row}:${column}`);
+    if (slot) {
+      cells.push({ kind: "talk", slot });
+      continue;
+    }
+    // Ячейка внутри чужого `span` уже занята карточкой — пустышку не рисуем,
+    // иначе она наложится на неё и съест клик.
+    if (taken.has(`${row}:${column}`)) continue;
+    cells.push({ kind: "empty", row: row + 1, column: column + 2 });
+  }
+}
+
+const total = slots.length;
+const trackChips = tracksOfProgram().map((track) => ({
+  track,
+  count: placeable.filter((talk) => talk.track === track).length,
+}));
+---
+
+<header class="page-head">
+  <p class="eyebrow">Матемаркетинг 2026 · {dayLongLabel(day.date)}</p>
+  <h1 class="page-title">Программа конференции</h1>
+  <p class="page-intro">
+    {day.name} программы: {total}
+    {pluralTalks(total)} в {halls.length} залах. Время указано по Москве; сетка
+    повторяет страницу первоисточника, но собрана на билде.
+  </p>
+  <dl class="facts">
+    <div class="facts__item">
+      <dt>Длительность</dt>
+      <dd>{allDays.length} дня</dd>
+    </div>
+    <div class="facts__item">
+      <dt>Доклады</dt>
+      <dd>{PROGRAM.talks.length} {pluralTalks(PROGRAM.talks.length)}</dd>
+    </div>
+    <div class="facts__item">
+      <dt>Треки</dt>
+      <dd>{tracksOfProgram().length} треков</dd>
+    </div>
+    <div class="facts__item">
+      <dt>Залы</dt>
+      <dd>{PROGRAM.halls.length} залов</dd>
+    </div>
+  </dl>
+</header>
+
+<nav class="day-tabs" data-day-tabs aria-label="Дни программы">
+  {
+    allDays.map((item, index) => {
+      const value = index + 1;
+      const current = value === ordinal;
+      return (
+        <a
+          class:list={["day-tab", current ? "day-tab--active" : null]}
+          href={dayHref(value)}
+          aria-current={current ? "page" : undefined}
+        >
+          <span class="day-tab__num">{item.name}</span>
+          <span class="day-tab__date">{dayLabel(item.date)}</span>
+        </a>
+      );
+    })
+  }
+</nav>
+
+<div class="program-toolbar">
+  <div class="track-chips" data-track-chips role="group" aria-label="Фильтр по трекам">
+    {
+      trackChips.map((chip) => (
+        <button class="track-chip" type="button" data-track={chip.track} aria-pressed="false">
+          <span class="track-chip__name">{chip.track}</span>
+          <span class="track-chip__count">{chip.count}</span>
+        </button>
+      ))
+    }
+  </div>
+
+  <p class="talk-count">
+    <span data-talk-count>{total}</span>
+    <span data-talk-count-label>{pluralTalks(total)}</span>
+  </p>
+
+  <button class="button button--ghost" type="button" data-export-ics>
+    Загрузить .ics
+  </button>
+</div>
+
+<section class="program-grid" data-grid aria-labelledby="schedule-title" style={`--mm-hall-count:${halls.length}`}>
+  {/* Уровень h2 обязателен: без него заголовки карточек (h3) идут сразу после
+      h1, и скринридер видит пропуск уровня на всех трёх страницах. Заголовок
+      скрыт визуально: заголовок страницы и табы уже задают контекст. */}
+  <h2 class="visually-hidden" id="schedule-title">Расписание докладов</h2>
+  <div class="program-grid__halls-header">
+    <div class="program-grid__time-label">Время</div>
+    {halls.map((hall) => <div class="program-grid__hall-name">{hall}</div>)}
+  </div>
+
+  <div class="program-grid__content">
+    {
+      cells.map((cell) => {
+        if (cell.kind === "time") {
+          return (
+            <div class="program-grid__time-cell" style={`grid-area:${cell.row} / 1`}>
+              {cell.time}
+            </div>
+          );
+        }
+        if (cell.kind === "empty") {
+          return (
+            <div
+              class="program-grid__talk-cell"
+              style={`grid-area:${cell.row} / ${cell.column} / span 1`}
+            />
+          );
+        }
+        return (
+          <div
+            class="program-grid__talk-cell"
+            data-track={cell.slot.talk.track}
+            data-span={cell.slot.span > 1 ? cell.slot.span : undefined}
+            style={`grid-area:${cell.slot.row} / ${cell.slot.column} / span ${cell.slot.span}`}
+          >
+            <TalkCard talk={cell.slot.talk} />
+          </div>
+        );
+      })
+    }
+  </div>
+</section>
+
+<p class="program-empty" data-empty hidden>
+  По этому треку в выбранный день докладов нет.
+</p>
+
+<TalkModal />
+
+<script>
+  import "../scripts/program-client.ts";
+</script>
+
+<style>
+  /* Счётчик в чипе — вторичная информация: имя трека читается первым.
+     Разделитель рисуем псевдоэлементом, чтобы не плодить текстовые узлы. */
+  .track-chip__count {
+    margin-inline-start: 0.15em;
+    font-variant-numeric: tabular-nums;
+    opacity: 0.7;
+  }
+
+  .track-chip__count::before {
+    content: "·";
+    margin-inline: 0.3em 0.15em;
+    opacity: 0.7;
+  }
+</style>

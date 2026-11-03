@@ -1,0 +1,1024 @@
+/* ==========================================================================
+   program.css — программа: табы дней, фильтр треков, сетка «время × залы»,
+   карточка доклада, модалка, тост, пустое состояние.
+
+   Метрики воспроизведения заморожены (эталон 1440px): колонка времени 100px,
+   колонка зала minmax(340px, 420px) при карточке 391px, радиус карточки 16px,
+   баннер 4:3, строка сетки не ниже 520px. Все они живут в --mm-* переменных
+   на .program-grid, поэтому адаптив — это переопределение переменных, а не
+   вторая сетка.
+   ========================================================================== */
+
+/* Модалка, отфильтрованные ячейки и пустое состояние скрываются атрибутом. */
+[hidden] {
+  display: none !important;
+}
+
+/* ── Табы дней ──────────────────────────────────────────────────────────── */
+nav.day-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  margin-block: var(--space-6) 0;
+}
+
+.day-tab {
+  display: inline-flex;
+  align-items: baseline;
+  gap: var(--space-2);
+  min-block-size: 44px;
+  padding: var(--space-2) var(--space-4);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-full);
+  color: var(--text-normal);
+  text-decoration: none;
+  transition:
+    color 0.2s ease,
+    background-color 0.2s ease,
+    border-color 0.2s ease;
+}
+
+.day-tab:hover {
+  border-color: var(--border-active);
+  color: var(--text-accent);
+}
+
+.day-tab__num {
+  font-size: 0.95rem;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.day-tab__date {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  white-space: nowrap;
+}
+
+/* Активный день — единственный таб с акцентной заливкой. */
+.day-tab[aria-current="page"] {
+  border-color: var(--border-active);
+  background: color-mix(in srgb, var(--text-accent) 14%, transparent);
+  color: var(--text-accent);
+}
+
+.day-tab[aria-current="page"] .day-tab__date {
+  color: inherit;
+  opacity: 0.85;
+}
+
+/* ── Тулбар: чипы треков, счётчик, экспорт ──────────────────────────────── */
+.program-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-3) var(--space-4);
+  margin-block: var(--space-5) var(--space-4);
+}
+
+.track-chips {
+  display: flex;
+  flex: 1 1 auto;
+  flex-wrap: nowrap;
+  gap: var(--space-2);
+  min-inline-size: 0;
+  padding-block-end: var(--space-1);
+  overflow-x: auto;
+  overscroll-behavior-inline: contain;
+  scrollbar-width: thin;
+}
+
+.track-chip {
+  flex: none;
+  min-block-size: 36px;
+  padding: var(--space-2) var(--space-4);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-full);
+  background: transparent;
+  color: var(--text-muted);
+  font-family: inherit;
+  font-size: 0.8125rem;
+  line-height: 1.2;
+  white-space: nowrap;
+  cursor: pointer;
+  transition:
+    color 0.2s ease,
+    background-color 0.2s ease,
+    border-color 0.2s ease;
+}
+
+.track-chip:hover {
+  border-color: var(--border-active);
+  color: var(--text-normal);
+}
+
+.track-chip[aria-pressed="true"] {
+  border-color: var(--text-accent);
+  background: var(--text-accent);
+  color: var(--accent-ink);
+}
+
+.talk-count {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 0.35em;
+  margin: 0 0 0 auto;
+  color: var(--text-muted);
+  font-size: 0.875rem;
+  white-space: nowrap;
+}
+
+.talk-count [data-talk-count] {
+  color: var(--text-normal);
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+/* ── Сетка: переменные и каркас ─────────────────────────────────────────── */
+.program-grid {
+  /* Время, зал, отступ ячейки, строка — четыре метрики, снятые с эталона.
+     14.5px = (420 − 391) / 2: карточка 391px внутри колонки 420px. */
+  --mm-time-col: 100px;
+  --mm-hall-min: 340px;
+  --mm-hall-max: 420px;
+  --mm-cell-pad: 14.5px;
+  --mm-row-min: 520px;
+  --mm-hall-count: 5;
+  --mm-grid-cols: var(--mm-time-col) repeat(var(--mm-hall-count), minmax(var(--mm-hall-min), var(--mm-hall-max)));
+
+  /* Горизонтальный скролл живёт здесь и только здесь: документ на 390px
+     не должен скроллиться вбок.
+
+     overflow-y: clip, а не auto/visible — и это не косметика. С `overflow-y:
+     auto` сетка становится скроллпортом и по вертикали, тогда `top` у шапки
+     залов отсчитывается от её собственного верха: sticky-шапка съезжает на
+     65px вниз и накрывает первую строку карточек. `clip` не создаёт
+     вертикального скроллпорта, поэтому шапка липнет к viewport (проверено:
+     при scrollY=700 её top = 65px ровно под верхней панелью), а по горизонтали
+     скролл остаётся внутри сетки. */
+  overflow-x: auto;
+  overflow-y: clip;
+  overscroll-behavior-inline: contain;
+  scrollbar-width: thin;
+  padding-block-end: var(--space-2);
+}
+
+/* Шапка залов делит с контентом один grid-template-columns, поэтому колонки
+   совпадают без ручной синхронизации.
+
+   min-inline-size — та самая метрика эталона: колонки minmax(340px, 420px)
+   разрешаются в свой максимум только тогда, когда сетке есть где развернуться.
+   Внутри скроллера шириной 1140px свободного места отрицательно, и без этого
+   минимума каждая колонка схлопнулась бы в 340px (карточка 311px вместо 391px).
+   Сетка шире колонки — это и есть горизонтальный скролл, как в оригинале. */
+.program-grid__halls-header {
+  position: sticky;
+  inset-block-start: var(--nav-mobile-h);
+  z-index: 3;
+  display: grid;
+  grid-template-columns: var(--mm-grid-cols);
+  min-inline-size: calc(var(--mm-time-col) + var(--mm-hall-count) * var(--mm-hall-max));
+  padding-block: var(--space-3);
+  border-block-end: 1px solid var(--border-color);
+  background: var(--background-primary);
+}
+
+/* Браузер без overflow-y: clip не умеет держать липкость шапки относительно
+   viewport внутри горизонтального скроллера — там шапка липнет к самой сетке,
+   и top обязан быть нулевым, иначе она съезжает на высоту панели. */
+@supports not (overflow-y: clip) {
+  .program-grid__halls-header {
+    inset-block-start: 0;
+  }
+}
+
+.program-grid__time-label {
+  position: sticky;
+  inset-inline-start: 0;
+  z-index: 1;
+  padding-inline: var(--space-3) var(--space-2);
+  background: var(--background-primary);
+  color: var(--text-muted);
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+}
+
+.program-grid__hall-name {
+  padding-inline: var(--mm-cell-pad);
+  color: var(--text-normal);
+  font-family: var(--font-display);
+  font-size: 1.15rem;
+  font-weight: 600;
+  line-height: 1.2;
+  letter-spacing: -0.01em;
+  overflow-wrap: anywhere;
+}
+
+.program-grid__content {
+  display: grid;
+  grid-template-columns: var(--mm-grid-cols);
+  min-inline-size: calc(var(--mm-time-col) + var(--mm-hall-count) * var(--mm-hall-max));
+  grid-auto-rows: minmax(var(--mm-row-min), auto);
+}
+
+/* Колонка времени липнет к левому краю скролла: карточки уезжают под неё. */
+.program-grid__time-cell {
+  position: sticky;
+  inset-inline-start: 0;
+  z-index: 2;
+  padding: var(--space-3) var(--space-3) var(--space-3) 0;
+  border-block-start: 1px solid color-mix(in srgb, var(--border-color) 45%, transparent);
+  background: var(--background-primary);
+  color: var(--text-muted);
+  font-family: var(--font-mono);
+  font-size: 0.8125rem;
+  font-variant-numeric: tabular-nums;
+}
+
+/* Ячейка доклада: только паддинг и flex — позицию задаёт inline grid-area. */
+.program-grid__talk-cell {
+  display: flex;
+  min-inline-size: 0;
+  padding: var(--space-2) var(--mm-cell-pad);
+}
+
+.program-grid__talk-cell[data-track] {
+  align-items: stretch;
+}
+
+/* ── Карточка доклада ───────────────────────────────────────────────────── */
+.talk-card {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  min-inline-size: 0;
+  block-size: 100%;
+  overflow: hidden;
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-xl);
+  background-color: var(--card-background);
+  background-image: var(--gradient-surface);
+  color: var(--text-normal);
+  cursor: pointer;
+  transition:
+    transform 0.2s ease,
+    border-color 0.2s ease,
+    box-shadow 0.2s ease;
+}
+
+.talk-card:hover {
+  transform: translateY(-2px);
+  border-color: var(--border-active);
+  box-shadow: 0 10px 30px var(--shadow-color);
+}
+
+/* Верх карточки — кремовая поверхность: картинка не наследует тему,
+   поэтому у неё своя пара «крем + тёмные чернила» из tokens.css. */
+.talk-card__top {
+  position: relative;
+  display: flex;
+  flex: none;
+  flex-direction: column;
+  background: var(--cream-surface);
+  color: var(--banner-ink);
+}
+
+/* Пара-страховка к `.talk-card__media:empty` ниже: если медиа когда-нибудь
+   окажется пустым (баннер убрали, `img` не отрендерился), шапка не схлопнется
+   в ноль — заголовок карточки абсолютный и высоты не даёт. В текущей разметке
+   медиа всегда непустое, поэтому правило спит. */
+.talk-card__top:not(:has(.talk-card__media:not(:empty))) {
+  min-block-size: 58px;
+  padding: var(--space-3);
+}
+
+.talk-card__header {
+  position: absolute;
+  inset-block-start: 0;
+  inset-inline: 0;
+  z-index: 2;
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--space-2);
+  padding: var(--space-3);
+  pointer-events: none;
+}
+
+.talk-card__header > * {
+  pointer-events: auto;
+}
+
+.talk-card__time {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.2rem 0.6rem;
+  border-radius: var(--radius-full);
+  background: var(--banner-ink);
+  color: var(--cream-surface);
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  font-variant-numeric: tabular-nums;
+  line-height: 1.5;
+  white-space: nowrap;
+}
+
+/* Звезда избранного: на кремовой поверхности живёт пара «чернила баннера +
+   крем», акцент сюда не ставим — это картинка, а не тема интерфейса. */
+.talk-card__favorite {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  justify-content: center;
+  inline-size: 34px;
+  block-size: 34px;
+  padding: 0;
+  border: 1px solid color-mix(in srgb, var(--banner-ink) 22%, transparent);
+  border-radius: var(--radius-full);
+  background: color-mix(in srgb, var(--cream-surface) 82%, transparent);
+  color: var(--banner-muted);
+  font-size: 1rem;
+  line-height: 1;
+  cursor: pointer;
+  transition:
+    transform 0.2s ease,
+    color 0.2s ease,
+    background-color 0.2s ease,
+    border-color 0.2s ease;
+}
+
+/* Глиф рисуем только если разметка оставила кнопку пустой. */
+.talk-card__favorite:empty::before {
+  content: "☆";
+}
+
+.talk-card__favorite:empty[aria-pressed="true"]::before {
+  content: "★";
+}
+
+.talk-card__favorite:hover {
+  border-color: var(--banner-ink);
+  color: var(--banner-ink);
+}
+
+.talk-card__favorite:active {
+  transform: scale(0.94);
+}
+
+.talk-card__favorite[aria-pressed="true"],
+.talk-card__favorite.is-active {
+  border-color: var(--banner-ink);
+  background: color-mix(in srgb, var(--banner-ink) 12%, transparent);
+  color: var(--banner-ink);
+}
+
+/* Баннер 4:3 — замороженная метрика; object-fit: cover, потому что исходники
+   приходят разного кадра. */
+.talk-card__media {
+  position: relative;
+  flex: none;
+  aspect-ratio: 4 / 3;
+  overflow: hidden;
+  background: var(--cream-surface);
+}
+
+.talk-card__banner-img {
+  inline-size: 100%;
+  block-size: 100%;
+  object-fit: cover;
+}
+
+/* Пустой media не оставляет кремовую дыру на пол-карточки. */
+.talk-card__media:empty {
+  display: none;
+}
+
+/* Текстовая карточка: тот же кремовый прямоугольник, но с заголовком внизу.
+   Верхний паддинг оставляет место бейджу времени и звезде. */
+.talk-card__media-text {
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  gap: var(--space-2);
+  block-size: 100%;
+  padding: calc(var(--space-8) + var(--space-4)) var(--space-4) var(--space-4);
+  color: var(--banner-ink);
+}
+
+.talk-card__topic-title {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: 1.4rem;
+  font-weight: 600;
+  line-height: 1.15;
+  letter-spacing: -0.01em;
+  text-wrap: balance;
+  overflow-wrap: anywhere;
+  color: var(--banner-ink);
+}
+
+.talk-card__media-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-1) var(--space-3);
+  color: var(--banner-muted);
+  font-family: var(--font-mono);
+  font-size: 0.68rem;
+  line-height: 1.4;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  overflow-wrap: anywhere;
+}
+
+/* Низ карточки: спикеры, затем тезисы и «Подробнее» — сверху вниз, как в
+   эталоне; пустое место остаётся внизу карточки, а не между блоками. */
+.talk-card__bottom {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  gap: var(--space-3);
+  min-block-size: 0;
+  padding: var(--space-4) var(--space-5) var(--space-5);
+}
+
+.talk-card__speakers {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  min-inline-size: 0;
+}
+
+.talk-card__speaker {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  min-inline-size: 0;
+}
+
+.talk-card__speaker-photo {
+  flex: none;
+  inline-size: 36px;
+  block-size: 36px;
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-full);
+  background: var(--surface-secondary);
+  object-fit: cover;
+}
+
+.talk-card__speaker-info {
+  display: flex;
+  flex-direction: column;
+  min-inline-size: 0;
+}
+
+.talk-card__speaker-name {
+  font-size: 0.875rem;
+  font-weight: 600;
+  line-height: 1.35;
+  color: var(--text-normal);
+  overflow-wrap: anywhere;
+}
+
+.talk-card__speaker-desc {
+  color: var(--text-muted);
+  font-size: 0.78rem;
+  line-height: 1.4;
+  overflow-wrap: anywhere;
+}
+
+.talk-card__content {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--space-2);
+  min-block-size: 0;
+}
+
+.talk-card__theses {
+  min-inline-size: 0;
+  max-inline-size: 100%;
+}
+
+.talk-card__theses p {
+  display: -webkit-box;
+  overflow: hidden;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 5;
+  color: var(--text-normal);
+  font-size: 0.9375rem;
+  line-height: 1.5;
+  overflow-wrap: anywhere;
+}
+
+.talk-card__theses p + p {
+  margin-block-start: var(--space-2);
+}
+
+/* Развёрнутое состояние снимает clamp. Карточка перестаёт быть фиксированной
+   по высоте: строка сетки minmax(520px, auto) вырастет, а не обрежет текст. */
+.talk-card--expanded {
+  block-size: auto;
+}
+
+.talk-card--expanded .talk-card__theses p {
+  display: block;
+  overflow: visible;
+  -webkit-line-clamp: unset;
+}
+
+.talk-card--expanded .talk-card__theses {
+  overflow-y: auto;
+}
+
+.talk-card__toggle-btn {
+  display: inline-flex;
+  align-items: center;
+  min-block-size: 32px;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--text-accent);
+  font-family: inherit;
+  font-size: 0.875rem;
+  font-weight: 500;
+  line-height: 1.3;
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 3px;
+  cursor: pointer;
+}
+
+.talk-card__toggle-btn:hover {
+  color: var(--text-accent-hover);
+}
+
+/* Компактная карточка — без баннера: кремовая панель ниже, карточка читается
+   как текстовая, но пропорции остаются карточными. */
+.talk-card--compact .talk-card__media {
+  aspect-ratio: 3 / 2;
+}
+
+/* ── Пустое состояние ───────────────────────────────────────────────────── */
+.program-empty {
+  display: grid;
+  place-items: center;
+  margin-block: var(--space-6);
+  padding: var(--space-10) var(--space-5);
+  border: 1px dashed var(--border-color);
+  border-radius: var(--radius-xl);
+  color: var(--text-muted);
+  font-size: var(--text-body);
+  text-align: center;
+  text-wrap: balance;
+}
+
+/* ── Модалка доклада ────────────────────────────────────────────────────── */
+.talk-modal {
+  position: fixed;
+  inset: 0;
+  z-index: var(--z-dialog);
+  display: grid;
+  place-items: center;
+  padding: var(--space-4);
+}
+
+.talk-modal__backdrop {
+  position: absolute;
+  inset: 0;
+  background: color-mix(in srgb, var(--background-primary) 78%, transparent);
+  backdrop-filter: blur(4px);
+}
+
+.talk-modal__dialog {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  inline-size: min(880px, 100%);
+  max-block-size: min(88dvh, 940px);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding: var(--space-5);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-xl);
+  background-color: var(--card-background);
+  background-image: var(--gradient-surface);
+  box-shadow: 0 32px 80px var(--shadow-color);
+}
+
+.talk-modal__dialog:focus {
+  outline: none;
+}
+
+.talk-modal__close {
+  position: absolute;
+  inset-block-start: var(--space-3);
+  inset-inline-end: var(--space-3);
+  z-index: 2;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  inline-size: 40px;
+  block-size: 40px;
+  padding: 0;
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-full);
+  background: var(--background-secondary);
+  color: var(--text-muted);
+  font-size: 1rem;
+  line-height: 1;
+  cursor: pointer;
+  transition:
+    color 0.2s ease,
+    border-color 0.2s ease,
+    transform 0.2s ease;
+}
+
+.talk-modal__close:empty::before {
+  content: "✕";
+}
+
+.talk-modal__close:hover {
+  border-color: var(--border-active);
+  color: var(--text-accent);
+}
+
+.talk-modal__close:active {
+  transform: scale(0.94);
+}
+
+.talk-modal__media {
+  margin-block-end: var(--space-4);
+}
+
+.talk-modal__media img {
+  inline-size: 100%;
+  max-block-size: 40dvh;
+  border-radius: var(--radius-lg);
+  background: var(--cream-surface);
+  object-fit: cover;
+}
+
+.talk-modal__body {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  min-inline-size: 0;
+}
+
+.talk-modal__meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  color: var(--text-muted);
+  font-family: var(--font-mono);
+  font-size: 0.7rem;
+  line-height: 1.4;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+}
+
+.talk-modal__meta > * {
+  padding: 0.15rem 0.5rem;
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-full);
+}
+
+h2.talk-modal__title {
+  margin: 0;
+  padding-inline-end: var(--space-10);
+  font-family: var(--font-display);
+  font-size: clamp(1.5rem, 1.1rem + 1.2vw, 2rem);
+  font-weight: 600;
+  line-height: 1.1;
+  letter-spacing: -0.015em;
+  text-wrap: balance;
+  overflow-wrap: anywhere;
+}
+
+.talk-modal__speakers {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-3) var(--space-5);
+}
+
+.talk-modal__text {
+  color: var(--text-normal);
+  font-size: var(--text-body);
+  line-height: 1.6;
+  overflow-wrap: anywhere;
+}
+
+.talk-modal__text p + p {
+  margin-block-start: var(--space-3);
+}
+
+.talk-modal__actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-3);
+  margin-block-start: var(--space-2);
+  padding-block-start: var(--space-4);
+  border-block-start: 1px solid var(--border-color);
+}
+
+/* Кнопка «Купить» повторяет primary-рецепт .button из site.css: файлы
+   независимы, поэтому рецепт продублирован целиком, а не одной строкой. */
+.talk-modal__buy {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-block-size: 44px;
+  padding: var(--space-3) var(--space-5);
+  border: 1px solid transparent;
+  border-radius: var(--radius-md);
+  background: var(--gradient-button);
+  color: var(--button-ink);
+  font-size: 0.9rem;
+  font-weight: 500;
+  line-height: 1.2;
+  text-decoration: none;
+  white-space: nowrap;
+  transition:
+    transform 0.2s ease,
+    background-color 0.2s ease,
+    box-shadow 0.2s ease;
+}
+
+.talk-modal__buy:hover {
+  background: var(--button-bg-hover);
+  color: var(--button-ink);
+  transform: translateY(-2px);
+  box-shadow: 0 8px 20px color-mix(in srgb, var(--text-accent) 25%, transparent);
+}
+
+.talk-modal__buy:active {
+  transform: none;
+  box-shadow: none;
+}
+
+.talk-modal__fav {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  min-block-size: 44px;
+  padding: var(--space-3) var(--space-4);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  background: transparent;
+  color: var(--text-normal);
+  font-family: inherit;
+  font-size: 0.875rem;
+  cursor: pointer;
+  transition:
+    color 0.2s ease,
+    background-color 0.2s ease,
+    border-color 0.2s ease;
+}
+
+.talk-modal__fav:empty::before {
+  content: "☆";
+}
+
+.talk-modal__fav:empty[aria-pressed="true"]::before {
+  content: "★";
+}
+
+.talk-modal__fav:hover {
+  border-color: var(--border-active);
+  color: var(--text-accent);
+}
+
+.talk-modal__fav[aria-pressed="true"],
+.talk-modal__fav.is-active {
+  border-color: var(--border-active);
+  background: color-mix(in srgb, var(--text-accent) 12%, transparent);
+  color: var(--text-accent);
+}
+
+body.is-modal-open {
+  overflow: hidden;
+}
+
+/* ── Тост ───────────────────────────────────────────────────────────────── */
+.mm-toast {
+  position: fixed;
+  inset-block-end: calc(var(--space-6) + env(safe-area-inset-bottom));
+  inset-inline: 0;
+  /* Тост подтверждает действие, поэтому он выше модалки, а не за её
+     backdrop'ом: иначе сообщение об избранном читается сквозь блюр. */
+  z-index: calc(var(--z-dialog) + 1);
+  inline-size: max-content;
+  max-inline-size: min(90vw, 420px);
+  margin-inline: auto;
+  padding: var(--space-3) var(--space-5);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-lg);
+  background: var(--card-background);
+  color: var(--text-normal);
+  font-size: 0.875rem;
+  line-height: 1.4;
+  text-align: center;
+  box-shadow: 0 12px 32px var(--shadow-color);
+}
+
+/* Пустой тост не рисуем: разметка держит его в DOM всё время. */
+.mm-toast:empty {
+  display: none;
+}
+
+/* ── Адаптив ────────────────────────────────────────────────────────────── */
+/* Уже 1280px: колонка времени сжимается, зал — до 390px, скролл остаётся
+   внутри сетки. Это переопределение переменных, а не новая раскладка. */
+@media (max-width: 1279.98px) {
+  .program-grid {
+    --mm-time-col: 70px;
+    --mm-hall-min: 310px;
+    --mm-hall-max: 390px;
+    --mm-cell-pad: 12px;
+  }
+}
+
+@media (max-width: 767.98px) {
+  .program-grid {
+    --mm-row-min: 480px;
+  }
+
+  .track-chips {
+    flex-basis: 100%;
+  }
+
+  .talk-count {
+    margin-inline-start: 0;
+  }
+
+  .program-grid__hall-name {
+    font-size: 1rem;
+  }
+
+  .talk-card__bottom {
+    padding: var(--space-3) var(--space-4) var(--space-4);
+  }
+
+  .talk-card__topic-title {
+    font-size: 1.2rem;
+  }
+
+  .talk-modal {
+    padding: var(--space-2);
+  }
+
+  .talk-modal__dialog {
+    max-block-size: 92dvh;
+    padding: var(--space-4);
+  }
+
+  h2.talk-modal__title {
+    padding-inline-end: var(--space-8);
+  }
+}
+
+/* На 390px карточка уже 340px, и держать строку 480px незачем. */
+@media (max-width: 479.98px) {
+  .program-grid {
+    --mm-row-min: 460px;
+  }
+
+  .day-tab {
+    flex: 1 1 auto;
+    justify-content: center;
+  }
+
+  .talk-card__time {
+    font-size: 0.7rem;
+  }
+
+  .talk-card__media-text {
+    padding: calc(var(--space-8) + var(--space-2)) var(--space-3) var(--space-3);
+  }
+}
+
+/* ── Печать: карточки не рвутся, баннеры скрыты, всё на белом ───────────── */
+@media print {
+  nav.day-tabs,
+  .program-toolbar,
+  .mm-toast,
+  .talk-modal,
+  img.talk-card__banner-img,
+  .talk-card__favorite,
+  .talk-card__toggle-btn {
+    display: none !important;
+  }
+
+  .program-grid {
+    overflow: visible;
+    padding-block-end: 0;
+  }
+
+  /* На бумаге сетка не скроллится: колонки сжимаются до ширины листа,
+     иначе «2200px внутри 1140px» превращается в обрезанные залы справа. */
+  .program-grid__halls-header,
+  .program-grid__content {
+    min-inline-size: 0;
+    grid-template-columns: var(--mm-time-col) repeat(var(--mm-hall-count), minmax(0, 1fr));
+  }
+
+  .program-grid__halls-header {
+    position: static;
+    background: white;
+    border-block-end: 1px solid black;
+    color: black;
+  }
+
+  .program-grid__time-label,
+  .program-grid__time-cell {
+    position: static;
+    background: white;
+    border-block-start: none;
+    color: black;
+  }
+
+  .program-grid__hall-name {
+    color: black;
+  }
+
+  .program-grid__content {
+    grid-auto-rows: auto;
+  }
+
+  .program-grid__talk-cell {
+    padding: var(--space-2) 0;
+  }
+
+  .talk-card {
+    break-inside: avoid;
+    border: 1px solid black;
+    border-radius: 0;
+    background: white;
+    background-image: none;
+    box-shadow: none;
+    transform: none;
+    color: black;
+  }
+
+  .talk-card__top {
+    padding: 0 0 var(--space-2);
+    background: white;
+    color: black;
+  }
+
+  .talk-card__header {
+    position: static;
+    padding: 0 0 var(--space-1);
+  }
+
+  .talk-card__time {
+    background: white;
+    color: black;
+    border: 1px solid black;
+    border-radius: 0;
+  }
+
+  .talk-card__topic-title,
+  .talk-card__speaker-name,
+  .talk-card__theses p,
+  .talk-card__speaker-desc,
+  .talk-card__media-meta {
+    color: black;
+  }
+
+  .talk-card__theses p {
+    display: block;
+    overflow: visible;
+    -webkit-line-clamp: unset;
+  }
+
+  .talk-card__bottom {
+    padding: 0;
+  }
+
+  .talk-card__speaker-photo {
+    border: 1px solid black;
+  }
+}
+
+/* ── Уменьшенная анимация ───────────────────────────────────────────────── */
+@media (prefers-reduced-motion: reduce) {
+  .talk-card:hover {
+    transform: none;
+    box-shadow: none;
+  }
+
+  .talk-card__favorite:active,
+  .talk-modal__close:active,
+  .talk-modal__buy:hover {
+    transform: none;
+  }
+
+  #site-nav,
+  .nav-scrim {
+    transition: none;
+  }
+}

@@ -1,0 +1,5 @@
+# `bun test` без аргументов не должен подхватывать Playwright-спеки из
+# `tests/built` — у них свой раннер. Корень юнит-тестов зафиксирован здесь,
+# поэтому `bun test` = `bun test tests/lib`.
+[test]
+root = "tests/lib"

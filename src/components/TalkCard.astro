@@ -1,0 +1,223 @@
+---
+/**
+ * Карточка доклада. Рендерится на билде целиком: время, звёздочка, спикеры,
+ * тезисы и «Подробнее». JS только переключает состояния — разметку не создаёт.
+ */
+import { firstParagraph, formatRange, type Talk } from "../lib/program";
+
+interface Props {
+  talk: Talk;
+}
+
+const { talk } = Astro.props;
+
+/** Только `https:`: поля приходят из чужого API и не должны стать beacon'ом. */
+const safeUrl = (value: string | null): string | null => {
+  if (typeof value !== "string") return null;
+  return value.startsWith("https://") ? value : null;
+};
+
+const image = safeUrl(talk.image);
+const lectors = talk.lectors.filter((lector) => lector.name.trim() !== "");
+const theses = (talk.short || firstParagraph(talk.description)).trim();
+/** Кнопка нужна только там, где текст реально не влезает в 5 строк клампа. */
+const canExpand = theses.length > 240;
+const trackLabel = talk.track.trim() ? talk.track : "Без трека";
+
+const initials = (name: string): string =>
+  name
+    .trim()
+    .split(/\s+/)
+    .slice(0, 2)
+    .map((word) => Array.from(word)[0] ?? "")
+    .join("")
+    .toUpperCase() || "•";
+
+const STAR =
+  "M12 3.1l2.72 5.51 6.08.88-4.4 4.29 1.04 6.06L12 16.98l-5.44 2.86 1.04-6.06-4.4-4.29 6.08-.88z";
+---
+
+<article
+  class:list={["talk-card", image ? null : "talk-card--compact"]}
+  data-talk-id={talk.id}
+  data-track={talk.track}
+>
+  <div class="talk-card__top">
+    <div class="talk-card__header">
+      <span class="talk-card__time">{formatRange(talk)}</span>
+      <button
+        class="talk-card__favorite"
+        type="button"
+        data-fav
+        data-talk-id={talk.id}
+        aria-pressed="false"
+        aria-label={`В избранное: ${talk.title}`}
+        title="В избранное"
+      >
+        <svg
+          viewBox="0 0 24 24"
+          width="20"
+          height="20"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="1.6"
+          stroke-linejoin="round"
+          aria-hidden="true"
+          focusable="false"
+        >
+          <path d={STAR}></path>
+        </svg>
+      </button>
+    </div>
+
+    <div class="talk-card__media">
+      {
+        image ? (
+          <img
+            class="talk-card__banner-img"
+            src={image}
+            alt=""
+            loading="lazy"
+            decoding="async"
+            referrerpolicy="no-referrer"
+          />
+        ) : (
+          <div class="talk-card__media-text">
+            <h3 class="talk-card__topic-title">
+              <button
+                class="talk-card__title-btn"
+                type="button"
+                data-talk-id={talk.id}
+                data-talk-open
+                aria-haspopup="dialog"
+              >
+                {talk.title}
+              </button>
+            </h3>
+            <div class="talk-card__media-meta">
+              <span class="talk-card__meta-item">{trackLabel}</span>
+              <span class="talk-card__meta-item">{talk.hall}</span>
+            </div>
+          </div>
+        )
+      }
+    </div>
+  </div>
+
+  <div class="talk-card__bottom">
+    {
+      lectors.length > 0 && (
+        <div class="talk-card__speakers">
+          {lectors.map((lector) => (
+            <div class="talk-card__speaker">
+              {safeUrl(lector.photo) ? (
+                <img
+                  class="talk-card__speaker-photo"
+                  src={safeUrl(lector.photo) as string}
+                  alt=""
+                  loading="lazy"
+                  decoding="async"
+                  referrerpolicy="no-referrer"
+                />
+              ) : (
+                <span class="talk-card__speaker-initials" aria-hidden="true">
+                  {initials(lector.name)}
+                </span>
+              )}
+              <div class="talk-card__speaker-info">
+                <span class="talk-card__speaker-name">{lector.name}</span>
+                {lector.role.trim() !== "" && (
+                  <span class="talk-card__speaker-desc">{lector.role}</span>
+                )}
+              </div>
+            </div>
+          ))}
+        </div>
+      )
+    }
+
+    <div class="talk-card__content">
+      {
+        image && (
+          <h3 class="talk-card__content-title">
+            <button
+              class="talk-card__title-btn"
+              type="button"
+              data-talk-id={talk.id}
+              data-talk-open
+              aria-haspopup="dialog"
+            >
+              {talk.title}
+            </button>
+          </h3>
+        )
+      }
+      {
+        theses !== "" && (
+          <div class="talk-card__theses">
+            <p>{theses}</p>
+          </div>
+        )
+      }
+      {
+        canExpand && (
+          <button class="talk-card__toggle-btn" type="button" data-more aria-expanded="false">
+            Подробнее
+          </button>
+        )
+      }
+    </div>
+  </div>
+</article>
+
+<style>
+  /* Заголовок карточки — кнопка: так `h3` остаётся заголовком для скринридера,
+     а модалку открывает настоящий `button`, не tabindex на статье. Рамку и фон
+     браузерной кнопки снимаем, типографику наследуем от заголовка. */
+  .talk-card__title-btn {
+    display: block;
+    inline-size: 100%;
+    margin: 0;
+    padding: 0;
+    border: 0;
+    background: none;
+    color: inherit;
+    font: inherit;
+    letter-spacing: inherit;
+    text-align: start;
+    cursor: pointer;
+  }
+
+  /* Карточка с баннером держит заголовок на тёмном низе, а не на кремовой
+     поверхности `.talk-card__topic-title`, поэтому ink берётся из темы. */
+  .talk-card__content-title {
+    inline-size: 100%;
+    margin: 0;
+    color: var(--text-normal);
+    font-family: var(--font-display);
+    font-size: 1.15rem;
+    font-weight: 600;
+    line-height: 1.2;
+    letter-spacing: -0.01em;
+    text-wrap: balance;
+    overflow-wrap: anywhere;
+  }
+
+  /* Заглушка вместо фото спикера (15 лекторов приходят без изображения).
+     `program.css` её пока не описывает, поэтому круг держим здесь. */
+  .talk-card__speaker-initials {
+    display: inline-flex;
+    flex: none;
+    align-items: center;
+    justify-content: center;
+    inline-size: 36px;
+    block-size: 36px;
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-full);
+    background: var(--surface-secondary);
+    color: var(--text-normal);
+    font-size: 0.8rem;
+    font-weight: 600;
+    letter-spacing: 0.02em;
+  }
+</style>

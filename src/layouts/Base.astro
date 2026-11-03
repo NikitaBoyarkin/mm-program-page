@@ -1,0 +1,179 @@
+---
+/**
+ * Каркас страницы: `<head>`, тема до первой отрисовки, шапка с drawer'ом,
+ * `main` и подвал. Модалку и клиентский скрипт подключает страница программы,
+ * а не этот layout: `404` не должна тянуть 90 КБ данных.
+ */
+import Nav from "../components/Nav.astro";
+import { BASE_URL } from "../lib/program";
+import "../styles/tokens.css";
+import "../styles/site.css";
+
+interface Props {
+  title: string;
+  description?: string;
+  /** День программы — уходит на `<html>`, чтобы клиент не искал его заново. */
+  dayId?: number | string;
+  /** Дата дня, `YYYY-MM-DD`. */
+  dayDate?: string;
+  /** 1-based номер дня: подсвечивает строку в drawer'е. */
+  dayOrdinal?: number;
+}
+
+const {
+  title,
+  description = "Программа конференции Матемаркетинг 2026: расписание докладов по дням, залам и трекам. Учебная копия страницы lms.matemarketing.ru.",
+  dayId,
+  dayDate,
+  dayOrdinal,
+} = Astro.props;
+---
+
+<!doctype html>
+<html lang="ru" data-theme="dark" data-day-id={dayId} data-day-date={dayDate}>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <title>{title}</title>
+    <meta name="description" content={description} />
+    <link rel="icon" type="image/svg+xml" href={`${BASE_URL}favicon.svg`} />
+    <meta id="theme-color" name="theme-color" content="#1400c3" />
+
+    <meta property="og:site_name" content="Никита Бояркин" />
+    <meta property="og:title" content={title} />
+    <meta property="og:description" content={description} />
+    <meta property="og:type" content="website" />
+    <meta property="og:locale" content="ru_RU" />
+    <meta name="twitter:card" content="summary" />
+    <meta name="twitter:title" content={title} />
+    <meta name="twitter:description" content={description} />
+
+    <script is:inline>
+      // Тема до первой отрисовки: тёмная по умолчанию, сохранённая важнее
+      // системной. Скрипт инлайновый и обязан быть в <head> — иначе страница
+      // успевает мигнуть кремовым.
+      (function () {
+        var root = document.documentElement;
+        var meta = document.querySelector('meta[name="theme-color"]');
+        var COLORS = { dark: "#1400c3", light: "#f4efca", cyberpunk: "#171717" };
+        var theme = "dark";
+        try {
+          if (window.matchMedia("(prefers-color-scheme: light)").matches) theme = "light";
+          var saved = localStorage.getItem("theme");
+          if (saved === "dark" || saved === "light" || saved === "cyberpunk") theme = saved;
+        } catch (error) {
+          /* приватный режим — живём на дефолте */
+        }
+        root.setAttribute("data-theme", theme);
+        if (meta) meta.setAttribute("content", COLORS[theme] || COLORS.dark);
+      })();
+    </script>
+  </head>
+
+  <body>
+    <a class="skip-link" href="#main">Перейти к содержимому</a>
+
+    <Nav ordinal={dayOrdinal} />
+
+    <main id="main" class="page" tabindex="-1">
+      <slot />
+    </main>
+
+    <footer class="site-footer">
+      <p>
+        Учебная копия страницы
+        <a href="https://lms.matemarketing.ru/events/all/6/program" target="_blank" rel="noopener"
+          >первоисточника</a
+        >. Данные и медиа не перепубликуются, а подтягиваются с CDN Матемаркетинга.
+      </p>
+      <p>
+        <a href="https://matemarketing.ru/tickets/" target="_blank" rel="noopener">Билеты</a>
+        на конференцию — на сайте организатора.
+      </p>
+      <p>
+        Права на дизайн, тексты программы, названия докладов и изображения принадлежат
+        Матемаркетингу и спикерам. Это неофициальная учебная копия, не связанная с
+        организаторами.
+      </p>
+      <p class="site-footer__note">Собрано как разбор интерфейса: вёрстка и логика — учебные.</p>
+    </footer>
+
+    <script is:inline>
+      // Фолбэк для страниц без клиентского скрипта (404): тема и drawer.
+      // На странице программы `data-day-id` есть, и тем же занимается
+      // `src/scripts/program-client.ts` — два слушателя на одну кнопку
+      // проматывали бы тему через шаг.
+      if (!document.documentElement.dataset.dayId) {
+        // Тема: dark → light → cyberpunk → dark.
+        (function () {
+          var root = document.documentElement;
+          var meta = document.querySelector('meta[name="theme-color"]');
+          var COLORS = { dark: "#1400c3", light: "#f4efca", cyberpunk: "#171717" };
+          var ORDER = ["dark", "light", "cyberpunk"];
+          document.querySelectorAll("[data-theme-toggle]").forEach(function (button) {
+            button.addEventListener("click", function () {
+              var current = root.getAttribute("data-theme") || "dark";
+              var next = ORDER[(ORDER.indexOf(current) + 1) % ORDER.length];
+              root.setAttribute("data-theme", next);
+              if (meta) meta.setAttribute("content", COLORS[next] || COLORS.dark);
+              try {
+                localStorage.setItem("theme", next);
+              } catch (error) {
+                /* приватный режим — тема живёт до перезагрузки */
+              }
+            });
+          });
+        })();
+
+        // Drawer. Один делегированный слушатель: кнопка в шапке, крестик в
+        // панели и подложка — три элемента с одним контрактом `data-nav-*`.
+        (function () {
+          var nav = document.getElementById("site-nav");
+          var toggle = document.querySelector("[data-nav-open]");
+          if (!nav || !toggle) return;
+
+          var isOpen = function () {
+            return document.body.classList.contains("nav-open");
+          };
+
+          var setOpen = function (open) {
+            var hadFocus = nav.contains(document.activeElement);
+            document.body.classList.toggle("nav-open", open);
+            toggle.setAttribute("aria-expanded", String(open));
+            toggle.setAttribute("aria-label", open ? "Закрыть меню" : "Открыть меню");
+            // `visibility: hidden` уже убирает панель из таб-порядка, `inert`
+            // добавляет то же самое для скринридеров и старых движков.
+            if (open) nav.removeAttribute("inert");
+            else nav.setAttribute("inert", "");
+            if (open) {
+              var first = nav.querySelector("a, button");
+              if (first) first.focus();
+            } else if (hadFocus) {
+              toggle.focus();
+            }
+          };
+
+          document.addEventListener("click", function (event) {
+            var target = event.target;
+            if (!(target instanceof Element)) return;
+            if (target.closest("[data-nav-open]")) {
+              setOpen(true);
+              return;
+            }
+            if (target.closest("[data-nav-close]")) {
+              setOpen(false);
+              return;
+            }
+            if (isOpen() && target.closest(".drawer-link")) setOpen(false);
+          });
+
+          document.addEventListener("keydown", function (event) {
+            if (event.key === "Escape" && isOpen()) setOpen(false);
+          });
+
+          nav.setAttribute("inert", "");
+        })();
+      }
+    </script>
+  </body>
+</html>

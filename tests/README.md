@@ -1,15 +1,70 @@
 # tests/
 
-`python3 tests/test_page.py` — браузерные проверки страницы (headless Chrome, только стандартная библиотека).
+Два набора, оба на bun. Первый — без браузера и без сборки, второй — на собранной странице.
 
-- `test_day1_default_render` — 39 карточек, 5 залов, 11 чипов, 3 таба, их подписи и `aria-selected`: дефолтный день не деградировал.
-- `test_day2_and_online_day` — `?day=11` / `?day=12`: 37/15 карточек, 5/3 зала и `[data-viewers-count]` = числу карточек (счётчик не врёт).
-- `test_no_placeholder_text` — в `[data-grid]`, `[data-tabs]`, `[data-tracks]` нет `undefined`, `NaN`, `null`, `[object Object]`.
-- `test_every_card_has_visible_title` — ни одной карточки без заголовка или баннера с непустым `alt`, и у каждой есть доступное имя.
-- `test_grid_geometry_is_sound` — у каждой ячейки есть `grid-area`, нет двух ячеек в одном слоте, колонок = залы+1, строки подряд с 1.
-- `test_screenshots_desktop_and_narrow` — PNG 1440x1200 (>1000 px, >50 КБ) и 390x900 в iframe; плотность пикселей доказывает, что страница нарисована.
-- `test_graceful_degradation_without_data` — пустые данные дают сообщение, а не пустой экран и не падение JS.
+```bash
+bun test                # tests/lib — 56 юнит-тестов ядра
+bun run test:built      # tests/built — 15 браузерных тестов (Playwright + astro preview)
+```
 
-Время: ~8–10 с (6 запусков браузера), потолок ~120 с. Сеть не нужна: DNS внутри Chrome погашен, битые CDN-картинки на результат не влияют.
-Chrome ищется в `/Applications/Google Chrome.app/Contents/MacOS/Google Chrome`, затем Chromium и `google-chrome`/`chromium` в `PATH`; если браузера нет — тесты помечаются `skipped`, а не падают.
-`MM_PAGE_ROOT=/tmp/broken python3 tests/test_page.py` — прогнать те же проверки против копии страницы (mutation control).
+## `tests/lib` — ядро без DOM
+
+`bun test` гоняет чистые функции `src/lib/program.ts` и `src/lib/ics.ts` против реального
+слепка `src/data/program.json`.
+
+`program.test.ts` (33 теста):
+
+- инварианты данных: 3 дня в порядке `order`, 91 доклад, 11 треков, 9 залов, форма `HH:MM`,
+  `image`/`photo` — либо `https://…`, либо `null`, в текстах нет HTML-тегов и сущностей,
+  `day.halls ⊆ halls`, уникальность id;
+- `minutes` / `isTime` (валидные и мусорные значения, включая `25:00`), `startsOf`, `spanOf`
+  на 2–3 строки, `placeTalks` (коллизия в одном зале и времени → `collisions`, укорачивание
+  предыдущего слота при пересечении), `occupiedCells`, `pluralTalks(1|2|5|11|21|22|25)`,
+  `dayLabel`, `dayLongLabel`, `resolveDay` (id / дата / номер / мусор), `dayHref`,
+  `hallsOfDay`, `tracksOfProgram`, `isPlaceable`.
+
+`theme.test.ts` (4 теста): три hex для `meta[name=theme-color]` совпадают с
+`--background-primary` каждой темы в `tokens.css`; `Base.astro` повторяет те же три значения
+в инлайновых скриптах; `nextTheme` крутит цикл и переживает мусор в `localStorage`.
+
+`ics.test.ts` (19 тестов): экранирование `\ ; ,` и переводов строк, перенос строки по
+75 **октетам** UTF-8 (кириллица не рвётся посередине символа), `icsDate`/`icsStamp`,
+`buildCalendar` со стабильным `now` (VTIMEZONE, `DTSTART;TZID=Europe/Moscow`, `DTEND`,
+`SUMMARY`, `LOCATION`, `DESCRIPTION`, CRLF, число `VEVENT` = числу докладов), `calendarFilename`,
+уникальность `UID`.
+
+## `tests/built` — сборка в Chromium
+
+`playwright.config.ts` поднимает `astro preview` на `127.0.0.1:4321` и проверяет `dist/`,
+то есть именно то, что уедет на хостинг. Перед прогоном нужен `bun run build`.
+
+Что проверяется: 39 / 37 / 15 карточек на трёх страницах и 91 уникальный `data-talk-id`;
+активный таб; чистая консоль; фильтр с `?track=`, счётчиком и снятием; избранное с
+перезагрузкой; модалка с фокус-трапом и возвратом фокуса; скачанный `.ics` с 39 `VEVENT`;
+отсутствие горизонтального overflow на 390 px при скроллящейся сетке; drawer; три темы;
+`/program.json`; drawer и тумблер темы на 1440 px; печать (`@media print` не скрывает
+заголовок карточки без баннера); и прогон с `javaScriptEnabled: false` (HTML-first).
+
+Две настройки конфига выглядят странно и обе вынуждены:
+
+- `webServer.env.ASTRO_PREVIEW_BACKGROUND = "1"` — Astro 7 при детекте агентского окружения
+  уводит `preview` в фон и выходит с кодом 0, Playwright падает с «exited early».
+- `use.colorScheme: "dark"` — иначе предрисуночный скрипт темы ставит светлую тему и тест
+  цикла темы проверяет не тот старт.
+
+Если `preview` остался висеть после ручного запуска, следующий прогон упрётся в «preview
+already running» — снимите лок: `bunx astro preview stop`.
+
+Третья особенность — не конфиг, а `test.beforeEach` в спеке: внешние запросы (баннеры и фото
+спикеров с CDN первоисточника) получают 1×1 PNG, остальные гасятся. Без этого `load` ждал все
+чужие картинки, и прогон флакал на таймауте (20.7 с на одном тесте); с этим — 15 тестов за
+8–10 с. Именно PNG, а не `abort`: прерванный запрос Chromium пишет в консоль как ошибку
+ресурса, а тест `04` требует чистую консоль.
+
+## Мутационный контроль
+
+Наборы падают от реальных дефектов, а не только от «правильного» входа:
+
+- порча слепка (удалён доклад, HTML в заголовке, переставлены залы) валит 4 юнит-теста;
+- переименование `data-talk-id` или удаление `[data-favorites-count]` валит браузерные
+  счётчики и тест избранного (именно так был найден отсутствовавший счётчик в v2).

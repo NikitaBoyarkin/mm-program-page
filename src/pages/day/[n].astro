@@ -1,0 +1,28 @@
+---
+import Base from "../../layouts/Base.astro";
+import ProgramPage from "../../components/ProgramPage.astro";
+import { dayLongLabel, days, type Day } from "../../lib/program";
+
+export function getStaticPaths() {
+  return days()
+    .map((day, index) => ({ day, ordinal: index + 1 }))
+    .filter((entry) => entry.ordinal > 1)
+    .map((entry) => ({
+      params: { n: String(entry.ordinal) },
+      props: { day: entry.day, ordinal: entry.ordinal },
+    }));
+}
+
+interface Props {
+  day: Day;
+  ordinal: number;
+}
+
+const { day, ordinal } = Astro.props;
+const title = `Программа Матемаркетинг 2026 — ${day.name}`;
+const description = `Программа конференции Матемаркетинг 2026, ${dayLongLabel(day.date)}: доклады по залам, трекам и времени. Учебная копия страницы lms.matemarketing.ru.`;
+---
+
+<Base title={title} description={description} dayId={day.id} dayDate={day.date} dayOrdinal={ordinal}>
+  <ProgramPage day={day} ordinal={ordinal} />
+</Base>

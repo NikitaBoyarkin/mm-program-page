@@ -1,0 +1,13 @@
+---
+import Base from "../layouts/Base.astro";
+import ProgramPage from "../components/ProgramPage.astro";
+import { dayByOrdinal, dayLongLabel } from "../lib/program";
+
+const day = dayByOrdinal(1);
+const title = `Программа Матемаркетинг 2026 — ${day.name}`;
+const description = `Программа конференции Матемаркетинг 2026, ${dayLongLabel(day.date)}: доклады по залам, трекам и времени. Учебная копия страницы lms.matemarketing.ru.`;
+---
+
+<Base title={title} description={description} dayId={day.id} dayDate={day.date} dayOrdinal={1}>
+  <ProgramPage day={day} ordinal={1} />
+</Base>

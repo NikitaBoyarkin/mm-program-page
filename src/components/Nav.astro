@@ -1,0 +1,173 @@
+---
+/**
+ * Шапка и off-canvas меню. Живёт в layout'е, а не в странице программы:
+ * навигация одинаково нужна сетке, дням и 404.
+ */
+import { days, dayHref, dayLabel } from "../lib/program";
+
+interface Props {
+  /** 1-based номер текущего дня — подсвечивает соответствующую строку. */
+  ordinal?: number;
+}
+
+const { ordinal } = Astro.props;
+const portfolio = "https://nikitaboyarkin.github.io";
+
+const dayLinks = days().map((day, index) => ({
+  ordinal: index + 1,
+  href: dayHref(index + 1),
+  label: `${day.name} ${dayLabel(day.date)}`.trim(),
+}));
+
+const siteLinks = [
+  { href: `${portfolio}/`, label: "Главная" },
+  { href: `${portfolio}/projects/`, label: "Проекты" },
+  { href: `${portfolio}/contact/`, label: "Контакты" },
+];
+---
+
+<header class="nav-mobile">
+  <a class="nav-brand" href={`${portfolio}/`}>
+    <svg
+      class="nav-brand-icon"
+      viewBox="0 0 24 24"
+      width="18"
+      height="18"
+      fill="none"
+      stroke="currentColor"
+      stroke-width="2"
+      stroke-linecap="round"
+      aria-hidden="true"
+      focusable="false"
+    >
+      <path d="M12 3v18M4.2 7.5l15.6 9M19.8 7.5l-15.6 9"></path>
+    </svg>
+    <span class="nav-brand-text">
+      <b>Никита Бояркин</b>
+      <span class="nav-brand-role">Продуктовый аналитик</span>
+    </span>
+  </a>
+
+  <ul class="nav-inline">
+    {
+      siteLinks.map((link) => (
+        <li>
+          <a href={link.href} rel="noopener">{link.label}</a>
+        </li>
+      ))
+    }
+  </ul>
+
+  <button
+    class="nav-toggle"
+    type="button"
+    data-nav-open
+    aria-expanded="false"
+    aria-controls="site-nav"
+    aria-label="Открыть меню"
+  >
+    <svg
+      viewBox="0 0 24 24"
+      width="20"
+      height="20"
+      fill="none"
+      stroke="currentColor"
+      stroke-width="2"
+      stroke-linecap="round"
+      aria-hidden="true"
+      focusable="false"
+    >
+      <path d="M3 6h18M3 12h18M3 18h18"></path>
+    </svg>
+  </button>
+</header>
+
+<div class="nav-scrim" data-nav-close></div>
+
+<nav id="site-nav" aria-label="Меню">
+  <div class="drawer-head">
+    <a class="nav-brand" href={`${portfolio}/`}>
+      <svg
+        class="nav-brand-icon"
+        viewBox="0 0 24 24"
+        width="18"
+        height="18"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="2"
+        stroke-linecap="round"
+        aria-hidden="true"
+        focusable="false"
+      >
+        <path d="M12 3v18M4.2 7.5l15.6 9M19.8 7.5l-15.6 9"></path>
+      </svg>
+      <span class="nav-brand-text">
+        <b>Никита Бояркин</b>
+        <span class="nav-brand-role">Продуктовый аналитик</span>
+      </span>
+    </a>
+    <button class="drawer-close" type="button" data-nav-close aria-label="Закрыть меню">
+      <svg
+        viewBox="0 0 24 24"
+        width="20"
+        height="20"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="2"
+        stroke-linecap="round"
+        aria-hidden="true"
+        focusable="false"
+      >
+        <path d="M6 6l12 12M18 6L6 18"></path>
+      </svg>
+    </button>
+  </div>
+
+  <ul class="drawer-links">
+    {
+      dayLinks.map((link) => (
+        <li>
+          <a
+            class:list={["drawer-link", link.ordinal === ordinal ? "is-current" : null]}
+            href={link.href}
+            aria-current={link.ordinal === ordinal ? "page" : undefined}
+          >
+            {link.label}
+          </a>
+        </li>
+      ))
+    }
+    {
+      siteLinks.map((link) => (
+        <li>
+          <a class="drawer-link" href={link.href} rel="noopener">{link.label}</a>
+        </li>
+      ))
+    }
+  </ul>
+
+  <div class="drawer-foot">
+    <p class="drawer-favs">
+      <span>Избранное</span>
+      <span class="drawer-favs__count" data-favorites-count>0</span>
+    </p>
+    <button class="theme-toggle" type="button" data-theme-toggle aria-label="Сменить тему">
+      <svg
+        viewBox="0 0 24 24"
+        width="18"
+        height="18"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="2"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+        aria-hidden="true"
+        focusable="false"
+      >
+        <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+      </svg>
+      <span>Сменить тему</span>
+    </button>
+    <p>Три темы: тёмная, светлая, киберпанк. Выбор запоминается в браузере.</p>
+  </div>
+</nav>

@@ -22,11 +22,11 @@ SOFTWARE.
 
 ---
 
-This licence covers the code written for this replica (index.html,
-assets/app.js, assets/styles.css, tools/, tests/).
+This licence covers the code written for this replica (`src/`, `scripts/`,
+`tests/`, the Astro config and build files).
 
 It does NOT cover the design of the original page, the conference programme
 texts, talk titles and abstracts, speaker photos or banner artwork. Those stay
 with Matemarketing and the speakers. Media is not redistributed here: the page
-references it from the original CDN, and assets/vendor/*.css is a read-only
-extract used as a reference (see README, "Права").
+references it from the original CDN. The bundled Inter and Cormorant webfonts
+are covered by the SIL Open Font License, not by this one.
