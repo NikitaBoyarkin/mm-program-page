@@ -12,7 +12,8 @@
     "test:built": "playwright test",
     "data:fetch": "bun run scripts/fetch-program.ts --fetch",
     "data:check": "bun run scripts/fetch-program.ts --check",
-    "data:dry": "bun run scripts/fetch-program.ts --dry-run"
+    "data:dry": "bun run scripts/fetch-program.ts --dry-run",
+    "og": "bun run scripts/generate-og.mjs"
   },
   "dependencies": {
     "astro": "^7.2.9",
