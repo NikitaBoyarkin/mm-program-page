@@ -10,11 +10,16 @@
  * (`bun run data:fetch` пересобирает его из `data/program.raw.json`).
  */
 import raw from "../data/program.json";
+import socialsOverlay from "../data/socials.json";
+import { SOCIAL_NETWORKS, type SocialLink, type SocialNetwork } from "./socials";
 
 export interface Lector {
   name: string;
   role: string;
   photo: string | null;
+  /** Подтверждённые публичные ссылки; пусто у большинства спикеров. В слепке
+   *  поля нет — его добавляет мердж `PROGRAM` из `src/data/socials.json`. */
+  socials?: SocialLink[];
 }
 
 export interface Talk {
@@ -70,8 +75,45 @@ export interface Program {
   talks: Talk[];
 }
 
+type SocialOverlay = Record<string, Partial<Record<SocialNetwork, string>>>;
+
+const SOCIALS = socialsOverlay as SocialOverlay;
+
+/**
+ * Ссылки лектора из overlay-файла `src/data/socials.json`. Файл отдельный, потому
+ * что `bun run data:fetch` пересобирает `program.json` побайтово и стёр бы поле;
+ * `--check` сравнивает слепок строкой. Только `https:` — поля извне, ссылка не
+ * должна стать beacon'ом.
+ */
+export function socialsOf(
+  name: string,
+  overlay: Record<string, Partial<Record<SocialNetwork, string>>> = SOCIALS,
+): SocialLink[] {
+  const entry = overlay[name];
+  if (!entry) return [];
+  return SOCIAL_NETWORKS.flatMap((network) => {
+    const raw = entry[network]?.trim() ?? "";
+    if (!raw.startsWith("https://")) return [];
+    try {
+      // Та же нормализация, что делает клиент: карточка и модалка обязаны
+      // получить один href (иначе `https://x.ru` ≠ `https://x.ru/`).
+      return [{ network, url: new URL(raw).href }];
+    } catch {
+      return [];
+    }
+  });
+}
+
+const snapshot = raw as unknown as Program;
+
 /** Разобранный слепок. Единственный источник данных на весь проект. */
-export const PROGRAM = raw as unknown as Program;
+export const PROGRAM: Program = {
+  ...snapshot,
+  talks: snapshot.talks.map((talk) => ({
+    ...talk,
+    lectors: talk.lectors.map((lector) => ({ ...lector, socials: socialsOf(lector.name) })),
+  })),
+};
 
 export const TIME_RE = /^\d{2}:\d{2}$/;
 export const DATE_RE = /^\d{4}-\d{2}-\d{2}$/;

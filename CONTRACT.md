@@ -18,6 +18,8 @@
 | Путь | Владелец | Назначение |
 | --- | --- | --- |
 | `src/data/program.json` | data | нормализованный слепок API — единственный источник данных |
+| `src/data/socials.json` | data | overlay соцсетей лекторов: имя → `telegram/linkedin/youtube/site`. Отдельный файл: `data:fetch` пересобирает `program.json` побайтово и стёр бы поле. Ключ — полное имя из слепка (все 94 уникальны), значение — только подтверждённые `https`-ссылки |
+| `src/lib/socials.ts` | core | сети и подписи — один источник для Astro-разметки и клиента. Геометрии иконок здесь нет: SVG-пути живут только в `src/styles/program.css` как CSS-маски `.social-link--<network>` |
 | `data/program.raw.json` | data | сырой ответ API (вход пересборки) |
 | `scripts/fetch-program.ts` | data | `--fetch` / `--check` / `--dry-run`, нормализация |
 | `src/lib/program.ts` | core | типы + чистые функции домена (заморожено) |
@@ -37,7 +39,7 @@
 | `src/styles/site.css` | design | каркас страницы |
 | `src/styles/program.css` | design | сетка, карточка, модалка, печать |
 | `tests/lib/*.test.ts` | verify | юнит-тесты ядра (`bun test`) |
-| `tests/built/program.spec.ts` | verify | 27 браузерных тестов сборки (Playwright) в трёх проектах — 81 прогон |
+| `tests/built/program.spec.ts` | verify | 28 браузерных тестов сборки (Playwright) в трёх проектах — 84 прогона |
 | `package.json`, `bun.lock` | deps | версии сборки; `morphicons` запинен на `1.7.0` — иконки тем |
 
 Иконка темы живёт в двух видах: луна в разметке (`.astro` не знает о `localStorage`) и
@@ -74,12 +76,19 @@
 `lectors[].name` = имя + фамилия (+ отчество); `days[].halls` — залы с докладами в порядке
 `hall.order`; тексты — плоский plain text (без тегов, сущностей и `null`-строк).
 
+Соцсети в слепок не входят: `lectors[]` остаётся трёхпольным, overlay-файл
+`src/data/socials.json` мерджится в `PROGRAM` (`socialsOf`), поэтому `/program.json` отдаёт
+лекторов уже с полем `socials: [{ network, url }]` в порядке `telegram → linkedin → youtube →
+site`. Ссылка принимается только при подтверждённой личности (ФИО + компания/роль), иначе
+спикер остаётся без иконок — покрытие намеренно частичное.
+
 ## Типы и функции ядра (`src/lib/program.ts`, `src/lib/ics.ts`)
 
 `Program, Day, Talk, Hall, Track, Lector`; `PROGRAM`; `minutes, isTime, formatRange, days,
 talksOfDay, hallsOfDay, tracksOfProgram, isPlaceable, startsOf, spanOf, placeTalks,
 occupiedCells, pluralTalks, dayLabel, dayLongLabel, firstParagraph, resolveDay, dayByOrdinal,
-resolveTrack, talkById, dayHref`. Календарь: `icsEscape, foldLine, icsDate, icsStamp,
+resolveTrack, talkById, dayHref, socialsOf`. Соцсети: `SOCIAL_NETWORKS, SOCIAL_LABELS,
+SocialNetwork, SocialLink` из `src/lib/socials.ts`. Календарь: `icsEscape, foldLine, icsDate, icsStamp,
 buildCalendar, calendarFilename, downloadIcs`.
 
 Правила, которые эти функции держат:
@@ -128,7 +137,7 @@ section.program-grid[data-grid][style=--mm-hall-count:N]
           div.talk-card__header > span.talk-card__time + span.talk-card__hall + button.talk-card__favorite[data-fav][data-talk-id][aria-pressed]
           div.talk-card__media > img.talk-card__banner-img | div.talk-card__media-text > h3 > button.talk-card__title-btn[data-talk-open]
         div.talk-card__bottom
-          div.talk-card__speakers > div.talk-card__speaker > img.talk-card__speaker-photo | span.talk-card__speaker-initials + div.talk-card__speaker-info > span.talk-card__speaker-name + span.talk-card__speaker-desc
+          div.talk-card__speakers > div.talk-card__speaker > img.talk-card__speaker-photo | span.talk-card__speaker-initials + div.talk-card__speaker-info > span.talk-card__speaker-name + span.talk-card__speaker-desc + span.social-links > a.social-link.social-link--<network>[href^=https][target=_blank][rel="noopener noreferrer nofollow"][aria-label]
           div.talk-card__content > h3.talk-card__content-title > button.talk-card__title-btn + div.talk-card__theses > p + button.talk-card__toggle-btn[data-more][aria-expanded]
 p.program-empty[data-empty][hidden]
 div.talk-modal[data-modal][hidden]
@@ -139,6 +148,10 @@ div.talk-modal[data-modal][hidden]
     div.talk-modal__body > [data-modal-meta] + h2#talk-modal-title[data-modal-title] + [data-modal-speakers] + [data-modal-text] + a.talk-modal__buy + button[data-modal-fav]
 div.mm-toast[role=status]
 ```
+
+`[data-modal-speakers]` клиент заполняет строками `div.talk-modal__speaker` (фото/инициалы + имя +
+роль + тот же `span.social-links > a.social-link`, что и в карточке). Пустой `socials` не рендерит
+обёртку — разметка спикера без ссылок не меняется.
 
 Колонки: `--mm-grid-cols: var(--mm-time-col) repeat(var(--mm-hall-count), minmax(var(--mm-hall-min), var(--mm-hall-max)))`.
 Значения при 1440 px: время 100 px, зал 420 px → карточка 391 px. Уже 1280 px: 70 px / 310–390 px,

@@ -12,6 +12,7 @@ export function makeLector(overrides: Partial<Lector> = {}): Lector {
     name: "Валерий Бабушкин",
     role: "Старший главный начальник, BP",
     photo: null,
+    socials: [],
     ...overrides,
   };
 }

@@ -1,7 +1,7 @@
 /**
  * Проверка СОБРАННОЙ страницы программы (dist/) в реальном браузере:
  * тесты читают фактический DOM после `astro preview`, ничего не мокают и
- * не подменяют данные. 27 тестов = 27 фактов контракта; набор идёт в трёх
+ * не подменяют данные. 28 тестов = 28 фактов контракта; набор идёт в трёх
  * проектах (`playwright.config.ts`): chromium 1280×900, chromium 320×700
  * и WebKit iPhone 13 390×844.
  */
@@ -988,4 +988,66 @@ test("15 · печать: у карточки без баннера заголо
   await expect(compact).toHaveCount(1);
   await expect(compact.locator(".talk-card__topic-title")).toBeVisible();
   await expect(page.locator("img.talk-card__banner-img").first()).toBeHidden();
+});
+
+// Соцсети: overlay мерджится в `PROGRAM` и уезжает в `/program.json`, поэтому
+// тест берёт настоящую пару «спикер + ссылка» из данных, а не хардкодит имя —
+// иначе удаление одной ссылки ломало бы тест без регрессии.
+test("28 · соцсети спикера: иконка в карточке и в модалке, внешние атрибуты", async ({
+  page,
+  request,
+}) => {
+  const response = await request.get(BASE + "/program.json");
+  const body = (await response.json()) as {
+    days: { id: number; order: number }[];
+    talks: {
+      id: number;
+      dayId: number;
+      lectors: { name: string; socials?: { network: string; url: string }[] }[];
+    }[];
+  };
+
+  const withLinks = (talk: (typeof body.talks)[number]) =>
+    talk.lectors.filter((lector) => (lector.socials ?? []).length > 0);
+  const talk = body.talks.find((item) => withLinks(item).length > 0);
+  expect(talk).toBeTruthy();
+  if (!talk) return;
+
+  const lector = withLinks(talk)[0]!;
+  const first = lector.socials![0]!;
+  const day = body.days.find((item) => item.id === talk.dayId)!;
+  await open(page, day.order === 0 ? "/" : `/day/${day.order + 1}/`);
+
+  const card = page.locator(`article.talk-card[data-talk-id="${talk.id}"]`);
+  const link = card.locator(`a.social-link[aria-label$="${lector.name}"]`).first();
+  await expect(link).toHaveAttribute("href", first.url);
+  await expect(link).toHaveAttribute("target", "_blank");
+  await expect(link).toHaveAttribute("rel", /noopener noreferrer nofollow/);
+  await expect(link).toHaveAttribute(
+    "aria-label",
+    new RegExp(lector.name.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")),
+  );
+
+  const mask = await link.evaluate((element) => {
+    const style = getComputedStyle(element);
+    return style.maskImage !== "none"
+      ? style.maskImage
+      : style.getPropertyValue("-webkit-mask-image");
+  });
+  expect(mask).toContain("data:image/svg+xml");
+
+  const emptyTalk = body.talks.find(
+    (item) => item.dayId === talk.dayId && item.lectors.length > 0 && withLinks(item).length === 0,
+  );
+  if (emptyTalk) {
+    await expect(
+      page.locator(`article.talk-card[data-talk-id="${emptyTalk.id}"] .social-links`),
+    ).toHaveCount(0);
+  }
+
+  await card.locator("[data-talk-open]").first().click();
+  await expect(page.locator("[data-modal-speakers] a.social-link").first()).toHaveAttribute(
+    "href",
+    first.url,
+  );
 });

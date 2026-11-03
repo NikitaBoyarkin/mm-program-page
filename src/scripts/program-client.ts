@@ -21,6 +21,7 @@ import {
   type Talk,
 } from "../lib/program";
 import { THEMES, THEME_COLORS, nextTheme, type Theme } from "../lib/theme";
+import { SOCIAL_LABELS } from "../lib/socials";
 import { createMorph } from "morphicons/dom";
 
 /* ── Константы контракта ───────────────────────────────────────────── */
@@ -740,6 +741,28 @@ function buildSpeaker(lector: Talk["lectors"][number]): HTMLElement {
     role.className = "talk-modal__speaker-desc";
     role.textContent = lector.role;
     info.appendChild(role);
+  }
+
+  const socials = (lector.socials ?? [])
+    .map((link) => ({ network: link.network, url: safeUrl(link.url) }))
+    .filter((link) => link.url !== "");
+  if (socials.length > 0) {
+    const list = document.createElement("span");
+    list.className = "social-links";
+    for (const link of socials) {
+      const anchor = document.createElement("a");
+      // Иконка — CSS-маска по классу сети (`program.css`): узла SVG нет,
+      // как и в Astro-разметке карточки.
+      anchor.className = `social-link social-link--${link.network}`;
+      anchor.href = link.url;
+      anchor.target = "_blank";
+      anchor.rel = "noopener noreferrer nofollow";
+      anchor.title = SOCIAL_LABELS[link.network];
+      anchor.setAttribute("aria-label", `${SOCIAL_LABELS[link.network]}: ${lector.name}`);
+
+      list.appendChild(anchor);
+    }
+    info.appendChild(list);
   }
 
   row.appendChild(info);

@@ -4,6 +4,7 @@
  * тезисы и «Подробнее». JS только переключает состояния — разметку не создаёт.
  */
 import { firstParagraph, formatRange, type Talk } from "../lib/program";
+import { SOCIAL_LABELS } from "../lib/socials";
 
 interface Props {
   talk: Talk;
@@ -18,7 +19,9 @@ const safeUrl = (value: string | null): string | null => {
 };
 
 const image = safeUrl(talk.image);
-const lectors = talk.lectors.filter((lector) => lector.name.trim() !== "");
+const lectors = talk.lectors
+  .filter((lector) => lector.name.trim() !== "")
+  .map((lector) => ({ ...lector, socials: lector.socials ?? [] }));
 const theses = (talk.short || firstParagraph(talk.description)).trim();
 /** Кнопка нужна только там, где текст реально не влезает в 5 строк клампа. */
 const canExpand = theses.length > 240;
@@ -110,6 +113,9 @@ const STAR =
   </div>
 
   <div class="talk-card__bottom">
+    {/* Ссылка соцсети — пустой `<a>` с классом сети: иконка приходит CSS-маской
+        из `program.css`, а не inline-SVG, поэтому страница не везёт копию пути
+        на каждую ссылку. Подпись для скринридера — `aria-label`. */}
     {
       lectors.length > 0 && (
         <div class="talk-card__speakers">
@@ -135,6 +141,20 @@ const STAR =
                 <span class="talk-card__speaker-name">{lector.name}</span>
                 {lector.role.trim() !== "" && (
                   <span class="talk-card__speaker-desc">{lector.role}</span>
+                )}
+                {lector.socials.length > 0 && (
+                  <span class="social-links">
+                    {lector.socials.map((link) => (
+                      <a
+                        class={`social-link social-link--${link.network}`}
+                        href={link.url}
+                        target="_blank"
+                        rel="noopener noreferrer nofollow"
+                        aria-label={`${SOCIAL_LABELS[link.network]}: ${lector.name}`}
+                        title={SOCIAL_LABELS[link.network]}
+                      ></a>
+                    ))}
+                  </span>
                 )}
               </div>
             </div>

@@ -22,11 +22,14 @@ import {
   placeTalks,
   pluralTalks,
   resolveDay,
+  socialsOf,
   spanOf,
   startsOf,
   talksOfDay,
   tracksOfProgram,
 } from "../../src/lib/program";
+import socialsOverlay from "../../src/data/socials.json";
+import { SOCIAL_NETWORKS } from "../../src/lib/socials";
 import { makeDay, makeTalk } from "./fixtures";
 
 const SOURCE = "https://lms.matemarketing.ru/api/event-program/event/6/";
@@ -41,6 +44,8 @@ const HALL_KEYS = ["id", "name", "order"];
 const TRACK_KEYS = ["id", "name", "description"];
 const DAY_KEYS = ["id", "date", "name", "order", "halls"];
 const LECTOR_KEYS = ["name", "role", "photo"];
+/** В памяти к слепку добавляется overlay соцсетей (файл не меняется). */
+const LECTOR_MERGED_KEYS = [...LECTOR_KEYS, "socials"];
 const TALK_KEYS = [
   "id",
   "dayId",
@@ -217,7 +222,7 @@ describe("program.json — контракт нормализованного с�
     for (const day of PROGRAM.days) expect(Object.keys(day)).toEqual(DAY_KEYS);
     for (const talk of PROGRAM.talks) {
       expect(Object.keys(talk)).toEqual(TALK_KEYS);
-      for (const lector of talk.lectors) expect(Object.keys(lector)).toEqual(LECTOR_KEYS);
+      for (const lector of talk.lectors) expect(Object.keys(lector)).toEqual(LECTOR_MERGED_KEYS);
     }
   });
 
@@ -230,6 +235,56 @@ describe("program.json — контракт нормализованного с�
     expect(
       PROGRAM.talks.filter((talk) => talk.description.trim() === "").length,
     ).toBeGreaterThanOrEqual(3);
+  });
+});
+
+describe("соцсети лекторов — overlay src/data/socials.json", () => {
+  const overlay = socialsOverlay as Record<string, Record<string, string>>;
+
+  test("ключи — имена лекторов слепка, набор не пуст", () => {
+    // Пустой overlay — регрессия сбора: иконки просто исчезнут со страницы.
+    expect(Object.keys(overlay).length).toBeGreaterThan(0);
+    const names = new Set(PROGRAM.talks.flatMap((talk) => talk.lectors.map((lector) => lector.name)));
+    for (const name of Object.keys(overlay)) expect(names.has(name)).toBe(true);
+  });
+
+  test("только известные сети, только https, без пустых значений", () => {
+    for (const [name, entry] of Object.entries(overlay)) {
+      expect(name).toBe(name.trim());
+      expect(Object.keys(entry).length).toBeGreaterThan(0);
+      for (const [network, url] of Object.entries(entry)) {
+        expect(SOCIAL_NETWORKS as readonly string[]).toContain(network);
+        expect(url).toMatch(HTTPS);
+        expect(url).toBe(url.trim());
+      }
+    }
+  });
+
+  test("socialsOf отбрасывает не-https и нормализует URL", () => {
+    const links = socialsOf("Тестовый Лектор", {
+      "Тестовый Лектор": {
+        telegram: "javascript:alert(1)",
+        linkedin: "  http://example.com  ",
+        youtube: "https://youtu.be/x",
+        site: "https://datahints.ru",
+      },
+    });
+    expect(links).toEqual([
+      { network: "youtube", url: "https://youtu.be/x" },
+      { network: "site", url: "https://datahints.ru/" },
+    ]);
+  });
+
+  test("PROGRAM добавляет socials в порядке SOCIAL_NETWORKS", () => {
+    expect(socialsOf("Нет Такого Лектора")).toEqual([]);
+    for (const talk of PROGRAM.talks) {
+      for (const lector of talk.lectors) {
+        const links = lector.socials ?? [];
+        const order = links.map((link) => SOCIAL_NETWORKS.indexOf(link.network));
+        expect([...order].sort((a, b) => a - b)).toEqual(order);
+        for (const link of links) expect(link.url).toMatch(HTTPS);
+      }
+    }
   });
 });
 
