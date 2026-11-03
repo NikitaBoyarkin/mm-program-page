@@ -3,7 +3,7 @@
  *
  * Разметку, сетку и стили рисует Astro на билде, поэтому здесь нет ни рендера
  * карточек, ни раскладки: только поведение, которому нужен пользователь, —
- * переключатель темы, drawer, фильтр по трекам, избранное, «Подробнее»,
+ * переключатель темы, drawer, фильтры (трек и избранное), «Подробнее»,
  * модалка доклада и экспорт `.ics`.
  *
  * Данные (`Program`) приходят из prerendered-эндпоинта `/program.json`
@@ -27,6 +27,13 @@ import { THEMES, THEME_COLORS, nextTheme, type Theme } from "../lib/theme";
 const THEME_KEY = "theme";
 const FAV_KEY = "mm-program:favorites";
 const TOAST_MS = 2500;
+
+/** Порог мобильной модели (см. `CONTRACT.md`): список, а не сжатая сетка. */
+const MOBILE_QUERY = "(max-width: 767.98px)";
+
+/** Пустые состояния различаются формулировкой: причина пустоты видна текстом. */
+const EMPTY_TRACK_TEXT = "По этому треку в выбранный день докладов нет.";
+const EMPTY_FAVORITES_TEXT = "В избранном пока нет докладов этого дня";
 
 const FOCUSABLE =
   'a[href], button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])';
@@ -149,12 +156,23 @@ function initDrawer(): void {
   });
 }
 
-/* ── 3. Фильтр по трекам ───────────────────────────────────────────── */
+/* ── 3. Фильтры: трек и избранное ──────────────────────────────────── */
 
 let activeTrack: string | null = null;
+/** Второй фильтр — по избранному; независим от трека, условия складываются по «И». */
+let favoritesOnly = false;
+
+/** Режим списка переключается CSS, но видимость разделителей зависит от него же. */
+const mobileList = window.matchMedia(MOBILE_QUERY);
 
 function trackChips(): HTMLButtonElement[] {
   return $$<HTMLButtonElement>("[data-track-chips] > button.track-chip[data-track]");
+}
+
+/** id доклада из ячейки: связь «ячейка ↔ избранное» без второго источника правды. */
+function cellTalkId(cell: HTMLElement): number {
+  const card = cell.querySelector<HTMLElement>("article.talk-card[data-talk-id]");
+  return Number(card?.dataset.talkId);
 }
 
 function writeTrackToUrl(): void {
@@ -177,7 +195,9 @@ function applyFilter(): void {
 
   let visible = 0;
   for (const cell of cells) {
-    const show = activeTrack === null || cell.dataset.track === activeTrack;
+    const trackMatches = activeTrack === null || cell.dataset.track === activeTrack;
+    const favoriteMatches = !favoritesOnly || favorites.has(cellTalkId(cell));
+    const show = trackMatches && favoriteMatches;
     // `hidden` на ячейке, а не удаление карточки: сетка не пересобирается и
     // пустые ячейки без `data-track` продолжают держать геометрию.
     cell.hidden = !show;
@@ -189,7 +209,51 @@ function applyFilter(): void {
   const label = $("[data-talk-count-label]");
   if (label) label.textContent = pluralTalks(visible);
   const empty = $<HTMLElement>("[data-empty]");
-  if (empty) empty.hidden = visible !== 0;
+  if (empty) {
+    empty.hidden = visible !== 0;
+    empty.textContent = favoritesOnly ? EMPTY_FAVORITES_TEXT : EMPTY_TRACK_TEXT;
+  }
+
+  syncTimeGroups();
+}
+
+/**
+ * Разделитель времени скрывается только в режиме списка: там он заголовок
+ * группы, и группа без видимых докладов оставляет липкий ярлык без содержимого.
+ * В сетке он держит колонку времени, поэтому не скрывается никогда.
+ */
+function syncTimeGroups(): void {
+  const content = $<HTMLElement>("div.program-grid__content");
+  if (!content) return;
+
+  const listMode = mobileList.matches;
+  let current: HTMLElement | null = null;
+  let groupHasVisibleTalk = false;
+
+  const closeGroup = (): void => {
+    if (current) current.hidden = listMode && !groupHasVisibleTalk;
+  };
+
+  for (const node of Array.from(content.children)) {
+    if (!(node instanceof HTMLElement)) continue;
+    if (node.classList.contains("program-grid__time-cell")) {
+      // Ячейка идёт в DOM перед докладами своей строки — группу закрываем на
+      // следующем разделителе, а не собираем заранее.
+      closeGroup();
+      current = node;
+      groupHasVisibleTalk = false;
+      continue;
+    }
+    // Пустые ячейки без `data-track` доклада не несут — группа от них не «живая».
+    if (
+      node.classList.contains("program-grid__talk-cell") &&
+      node.dataset.track !== undefined &&
+      !node.hidden
+    ) {
+      groupHasVisibleTalk = true;
+    }
+  }
+  closeGroup();
 }
 
 function setActiveTrack(track: string | null, updateUrl = true): void {
@@ -238,6 +302,32 @@ function initFilter(): void {
   // ссылки с чипов всегда несут имя трека.
   // Неизвестный трек в URL не применяем: чип не подсветить, фильтр врал бы.
   if (chip) setActiveTrack(chip.dataset.track ?? null, false);
+}
+
+function setFavoritesOnly(next: boolean): void {
+  favoritesOnly = next;
+  const chip = $<HTMLButtonElement>("button[data-fav-filter]");
+  if (chip) {
+    chip.setAttribute("aria-pressed", String(next));
+    chip.classList.toggle("track-chip--active", next);
+  }
+  applyFilter();
+}
+
+function initFavFilter(): void {
+  const chip = $<HTMLButtonElement>("button[data-fav-filter]");
+  if (!chip) return;
+  chip.addEventListener("click", () => setFavoritesOnly(!favoritesOnly));
+  // В URL избранное не живёт, но трек из `?track=` уже мог примениться —
+  // прогон выравнивает состояние и счётчик с разметкой.
+  setFavoritesOnly(favoritesOnly);
+}
+
+function initTimeGroups(): void {
+  syncTimeGroups();
+  // Ширина меняется (ресайз, поворот): без слушателя разделители остались бы
+  // скрытыми после возврата в сетку и наоборот — до следующего клика по чипу.
+  mobileList.addEventListener("change", () => syncTimeGroups());
 }
 
 /* ── 4. Избранное ──────────────────────────────────────────────────── */
@@ -305,8 +395,15 @@ function syncFavorites(): void {
 
   const counter = $("[data-favorites-count]");
   if (counter) counter.textContent = String(favorites.size);
+  // Второй счётчик — в чипе фильтра: то же число, одна точка обновления.
+  const chipCounter = $("[data-fav-filter-count]");
+  if (chipCounter) chipCounter.textContent = String(favorites.size);
 
   syncModalFav();
+
+  // Звезда при включённом фильтре меняет состав списка: без пересборки снятая
+  // карточка осталась бы на экране до следующего клика по чипу.
+  if (favoritesOnly) applyFilter();
 }
 
 function toggleFavorite(id: number): void {
@@ -684,6 +781,8 @@ export function init(): void {
   initDrawer();
   initFilter();
   initFavorites();
+  initFavFilter();
+  initTimeGroups();
   initExpand();
   initModal();
   initExport();

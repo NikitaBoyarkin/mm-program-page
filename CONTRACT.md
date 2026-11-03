@@ -102,7 +102,9 @@ html[data-theme=dark|light|cyberpunk][data-day-id][data-day-date]
 header.page-head > p.eyebrow + h1.page-title + p.page-intro + dl.facts
 nav.day-tabs > a.day-tab[href][aria-current=page] > span.day-tab__num + span.day-tab__date
 div.program-toolbar
-  div.track-chips[data-track-chips] > button.track-chip[data-track][aria-pressed]
+  div.track-chips[data-track-chips]
+    button.track-chip[data-fav-filter][aria-pressed]        ← всегда первый чип, без data-track
+    button.track-chip[data-track][aria-pressed] × N          ← чипы треков из чипов
   p.talk-count > span[data-talk-count] + span[data-talk-count-label]
   button.button[data-export-ics]
 section.program-grid[data-grid][style=--mm-hall-count:N]
@@ -112,7 +114,7 @@ section.program-grid[data-grid][style=--mm-hall-count:N]
     div.program-grid__talk-cell[data-track][data-span][style="grid-area:R / C / span N"]
       article.talk-card[data-talk-id][data-track]
         div.talk-card__top
-          div.talk-card__header > span.talk-card__time + button.talk-card__favorite[data-fav][data-talk-id][aria-pressed]
+          div.talk-card__header > span.talk-card__time + span.talk-card__hall + button.talk-card__favorite[data-fav][data-talk-id][aria-pressed]
           div.talk-card__media > img.talk-card__banner-img | div.talk-card__media-text > h3 > button.talk-card__title-btn[data-talk-open]
         div.talk-card__bottom
           div.talk-card__speakers > div.talk-card__speaker > img.talk-card__speaker-photo | span.talk-card__speaker-initials + div.talk-card__speaker-info > span.talk-card__speaker-name + span.talk-card__speaker-desc
@@ -131,6 +133,33 @@ div.mm-toast[role=status]
 Значения при 1440 px: время 100 px, зал 420 px → карточка 391 px. Уже 1280 px: 70 px / 310–390 px,
 горизонтальный скролл внутри сетки, время и шапка залов sticky.
 
+## Мобильная модель (≤ 767.98 px)
+
+Мобильный вид — не сжатая сетка, а **хронологический список**. Модель переключается
+только CSS: разметка одна, и DOM уже идёт в порядке строк (время → доклады строки по
+залам → следующее время), поэтому `display: flex` на контенте даёт список бесплатно,
+а inline `grid-area` в не-grid контейнере игнорируется. Второго HTML, второго маршрута
+и второй копии карточек нет; без JS список читается целиком (тест `13`).
+
+| Селектор | ≤ 767.98 px |
+| --- | --- |
+| `.program-grid` | `overflow-x: visible`, без `min-inline-size` — горизонтального скролла нет вовсе |
+| `.program-grid__halls-header` | `display: none` — зал показан бейджем в карточке |
+| `.program-grid__content` | `display: flex; flex-direction: column` — строки сетки исчезают |
+| `.program-grid__time-cell` | липкий разделитель группы времени, а не колонка |
+| `.program-grid__talk-cell` | блок во всю ширину, паддинг сетки снят |
+| `article.talk-card` | `block-size: auto`: карточка по контенту, минимум строки 460 px не действует |
+| `.talk-card__media` у карточки **с** баннером | скрыт целиком |
+| `.talk-card__media` у `.talk-card--compact` | остаётся: в нём живёт `h3` с кнопкой заголовка |
+| `.talk-card__time` | скрыт — время несёт разделитель |
+| `.talk-card__hall` | виден только здесь; на десктопе `display: none` |
+| `nav.day-tabs` | липкие под шапкой, `flex-wrap: nowrap` + горизонтальный скролл |
+
+Липкая цепочка сверху вниз: `header.nav-mobile` → `nav.day-tabs` →
+`.program-grid__time-cell`. Смещение каждой ступени — сумма высот предыдущих
+(токены `--nav-mobile-h` и `--mm-day-tabs-h`); разделитель не заезжает под табы дня.
+
+
 ## Поведение (`src/scripts/program-client.ts`)
 
 1. **Тема**: `dark → light → cyberpunk → dark`, `localStorage['theme']`, обновление
@@ -140,9 +169,21 @@ div.mm-toast[role=status]
    и теме.
 3. **День**: обычная ссылка (`/`, `/day/2/`, `/day/3/`); `aria-current="page"` у активного.
    Клиент день не переключает.
-4. **Фильтр**: один активный чип (`aria-pressed`), ячейки чужого трека получают `hidden`,
-   пустые ячейки остаются, счётчик и подпись пересчитываются, состояние живёт в `?track=`
-   (`history.replaceState`), при 0 докладов показывается `[data-empty]`.
+4. **Фильтр**: один активный чип трека (`aria-pressed`), ячейки чужого трека получают
+   `hidden`, пустые ячейки остаются, счётчик и подпись пересчитываются, состояние живёт
+   в `?track=` (`history.replaceState`), при 0 докладов показывается `[data-empty]`.
+   Второй, независимый переключатель — «Избранное»: `button.track-chip[data-fav-filter]`,
+   первый в `.track-chips`, **без `data-track`**, поэтому селектор чипов трека
+   (`[data-track-chips] > button.track-chip[data-track]`) его не подхватывает.
+   Условия складываются по «И»: видима ячейка, у которой (трек не выбран или совпал)
+   И (избранное выключено или доклад в избранном); в URL попадает только `?track=`.
+   Число в чипе — размер избранного, обновляется вместе с `[data-favorites-count]`;
+   снятие звезды при включённом фильтре немедленно убирает карточку из списка.
+   В режиме списка (≤767.98 px) у группы не остаётся видимых докладов → её
+   `.program-grid__time-cell` тоже получает `hidden` (липкий заголовок без содержимого —
+   мусор). В режиме сетки разделители времени не скрываются: иначе рвётся колонка времени.
+   Текст `[data-empty]` различается: пусто из-за фильтра избранного — «В избранном пока нет
+   докладов этого дня», пусто из-за трека — прежняя формулировка.
 5. **Счётчик**: число докладов дня (с учётом фильтра), подпись через `pluralTalks`
    (`доклад / доклада / докладов`). Не имитация «онлайна».
 6. **Избранное**: `localStorage['mm-program:favorites']` (массив id), синхронизация звезды,

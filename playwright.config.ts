@@ -35,7 +35,10 @@ export default defineConfig({
   ],
   webServer: {
     command: "bunx astro preview --port 4321 --host 127.0.0.1",
-    url: "http://127.0.0.1:4321/",
+    // Проект собирается с `base: "/mm-program-page"` (`astro.config.mjs`),
+    // поэтому корень домена отдаёт 404, а `astro preview` ждёт готовности
+    // именно этой страницы — иначе 60 с таймаута до старта первого теста.
+    url: "http://127.0.0.1:4321/mm-program-page/",
     reuseExistingServer: true,
     timeout: 60_000,
     // Astro 7 (`cli/preview/index.js`) при `isRunByAgent()` сам уводит

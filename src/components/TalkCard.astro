@@ -45,6 +45,9 @@ const STAR =
   <div class="talk-card__top">
     <div class="talk-card__header">
       <span class="talk-card__time">{formatRange(talk)}</span>
+      {/* Бейдж зала видён только в мобильной модели списка: в сетке зал задан
+          колонкой, и на десктопе элемент скрыт стилем (`program.css`). */}
+      <span class="talk-card__hall">{talk.hall}</span>
       <button
         class="talk-card__favorite"
         type="button"

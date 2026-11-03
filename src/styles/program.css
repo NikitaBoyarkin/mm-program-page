@@ -324,6 +324,13 @@ nav.day-tabs {
   white-space: nowrap;
 }
 
+/* Бейдж зала существует только для мобильной модели списка: в сетке зал задан
+   колонкой, и дублировать его в карточке незачем. Показывается одним
+   переопределением внутри `@media (max-width: 767.98px)`. */
+.talk-card__hall {
+  display: none;
+}
+
 /* Звезда избранного: на кремовой поверхности живёт пара «чернила баннера +
    крем», акцент сюда не ставим — это картинка, а не тема интерфейса. */
 .talk-card__favorite {
@@ -841,9 +848,145 @@ body.is-modal-open {
   }
 }
 
+/* ── Мобильная модель: хронологический список вместо сетки ──────────────── */
+/* ≤767.98px программа читается сверху вниз: время → доклады этого времени по
+   залам → следующее время. DOM уже идёт именно в этом порядке, поэтому
+   flex-столбец даёт список бесплатно, а inline `grid-area` в не-grid
+   контейнере инертен. Разметка одна: второго HTML, второго маршрута и второй
+   копии карточек нет, без JS список читается целиком.
+
+   Липкая цепочка сверху вниз: header.nav-mobile (--z-sticky) → nav.day-tabs
+   (--z-sticky − 1) → .program-grid__time-cell (--z-sticky − 2). Смещение каждой
+   ступени — сумма высот предыдущих, поэтому разделитель времени не заезжает
+   под табы дня, а табы — под шапку. */
 @media (max-width: 767.98px) {
+  :root {
+    /* Высота полосы табов дня считается, а не оценивается на глаз:
+       .day-tab min-block-size (44px) + padding-block полосы (2 × --space-2)
+       + её нижняя линия 1px. Токен нужен третьей ступени цепочки, чтобы
+       встать ровно под табами, а не под ними. */
+    --mm-day-tab-h: 44px;
+    --mm-day-tabs-pad-block: var(--space-2);
+    --mm-day-tabs-h: calc(var(--mm-day-tab-h) + 2 * var(--mm-day-tabs-pad-block) + 1px);
+  }
+
+  /* Вторая ступень: табы дня липнут под шапкой. Верхний маржа снята, иначе
+     она сдвигала бы уже прилипшую полосу на свои 24px и ломала сумму высот. */
+  nav.day-tabs {
+    position: sticky;
+    inset-block-start: var(--nav-mobile-h);
+    z-index: calc(var(--z-sticky) - 1);
+    flex-wrap: nowrap;
+    margin-block-start: 0;
+    padding-block: var(--mm-day-tabs-pad-block);
+    overflow-x: auto;
+    overscroll-behavior-inline: contain;
+    /* Скрытая полоса прокрутки — страховка токена высоты: появившийся
+       скроллбар прибавил бы к полосе свои ~15px. */
+    scrollbar-width: none;
+    background: var(--background-primary);
+    border-block-end: 1px solid var(--border-color);
+  }
+
+  nav.day-tabs::-webkit-scrollbar {
+    display: none;
+  }
+
   .program-grid {
     --mm-row-min: 480px;
+    /* Сетка перестаёт быть скроллпортом: вбок скроллить нечего. overflow:
+       visible снимает и горизонтальный скролл, и vertical clip, который
+       на десктопе держал липкость шапки залов. */
+    overflow: visible;
+    padding-block-end: 0;
+  }
+
+  /* Шапка залов не нужна: зал приходит бейджем в самой карточке. */
+  .program-grid__halls-header {
+    display: none;
+    min-inline-size: 0;
+  }
+
+  /* Строки сетки исчезают — контент становится одним столбцом во всю ширину. */
+  .program-grid__content {
+    display: flex;
+    flex-direction: column;
+    min-inline-size: 0;
+  }
+
+  /* Третья ступень: разделитель группы времени. Смещение — сумма высот
+     предыдущих ступеней, поэтому под табами дня его не видно никогда. */
+  .program-grid__time-cell {
+    position: sticky;
+    inset-block-start: calc(var(--nav-mobile-h) + var(--mm-day-tabs-h));
+    z-index: calc(var(--z-sticky) - 2);
+    padding: var(--space-3) 0 var(--space-2);
+    font-weight: 600;
+  }
+
+  /* Ячейка доклада — блок во всю ширину, паддинг сетки снят. */
+  .program-grid__talk-cell {
+    padding: 0 0 var(--space-3);
+  }
+
+  /* Пустышка держала колонку в сетке; в списке это пустая строка. */
+  .program-grid__talk-cell:empty {
+    display: none;
+  }
+
+  /* Карточка по контенту: минимум строки сетки (460/480px) не действует. */
+  article.talk-card {
+    block-size: auto;
+  }
+
+  /* Баннер в списке не нужен — карточка без картинки читается быстрее.
+     `img` скрыт отдельным селектором: у потомка display:none-родителя
+     computed display остаётся своим, и проверка «баннер скрыт» врала бы. */
+  .talk-card:not(.talk-card--compact) .talk-card__media,
+  .talk-card:not(.talk-card--compact) img.talk-card__banner-img {
+    display: none;
+  }
+
+  /* От шапки баннерной карточки остаётся полоса в строку бейджа и звезды:
+     34px кнопка избранного + два паддинга шапки. Кремовая поверхность уходит
+     вместе с баннером — иначе на карточке остаётся светлая плашка без картинки. */
+  .talk-card:not(.talk-card--compact) .talk-card__top {
+    min-block-size: calc(34px + 2 * var(--space-3));
+    background: transparent;
+    color: var(--text-normal);
+  }
+
+  /* Компактная карточка медиа сохраняет: в нём живёт h3 с кнопкой заголовка,
+     то есть заголовок и триггер модалки. Скрыть его — оставить 13 карточек
+     без заголовка и без способа открыть доклад. */
+  .talk-card--compact .talk-card__media {
+    display: block;
+  }
+
+  /* Время несёт разделитель группы, в карточке оно лишнее. */
+  .talk-card__time {
+    display: none;
+  }
+
+  /* Зал виден только здесь. Цвет наследуется от .talk-card__top: кремовая
+     поверхность компактной карточки и прозрачная полоса баннерной дают разный
+     ink без второй пары правил. */
+  .talk-card__hall {
+    display: inline-flex;
+    align-items: center;
+    max-inline-size: 100%;
+    min-inline-size: 0;
+    overflow: hidden;
+    padding: 0.15rem 0.6rem;
+    border: 1px solid color-mix(in srgb, currentColor 30%, transparent);
+    border-radius: var(--radius-full);
+    font-family: var(--font-mono);
+    font-size: 0.68rem;
+    line-height: 1.4;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    text-overflow: ellipsis;
+    white-space: nowrap;
   }
 
   .track-chips {

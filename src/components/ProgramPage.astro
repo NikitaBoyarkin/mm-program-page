@@ -120,7 +120,15 @@ const trackChips = tracksOfProgram().map((track) => ({
 </nav>
 
 <div class="program-toolbar">
-  <div class="track-chips" data-track-chips role="group" aria-label="Фильтр по трекам">
+  <div class="track-chips" data-track-chips role="group" aria-label="Фильтры программы">
+    {/* Избранное — второй, независимый от трека фильтр. Стоит первым и намеренно
+        не несёт `data-track`: селектор чипов трека его не подхватывает, а
+        счётчик избранного обновляет клиент вместе с `[data-favorites-count]`.
+        Без JS чип читается как выключенный переключатель с нулём. */}
+    <button class="track-chip" type="button" data-fav-filter aria-pressed="false">
+      <span class="track-chip__name">Избранное</span>
+      <span class="track-chip__count" data-fav-filter-count>0</span>
+    </button>
     {
       trackChips.map((chip) => (
         <button class="track-chip" type="button" data-track={chip.track} aria-pressed="false">
