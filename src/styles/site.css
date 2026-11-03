@@ -219,17 +219,22 @@ header.nav-mobile {
   }
 }
 
+/* Логотип — маска из присланного файла: форма ровно та, что нарисована,
+   а цвет берётся из `currentColor`, поэтому кремовый фон снимка не тянется
+   в тёмные темы. Пропорции глифа (33×37) держит `aspect-ratio`. */
 .nav-brand-icon {
   flex: none;
-  inline-size: 28px;
   block-size: 28px;
-  color: var(--text-normal);
-  transition: color 0.2s ease;
+  aspect-ratio: 33 / 37;
+  background-color: currentColor;
+  -webkit-mask: var(--brand-logo) center / contain no-repeat;
+  mask: var(--brand-logo) center / contain no-repeat;
+  transition: background-color 0.2s ease;
 }
 
 @media (hover: hover) and (pointer: fine) {
   .nav-brand:hover .nav-brand-icon {
-    color: var(--text-accent);
+    background-color: var(--text-accent);
   }
 }
 
@@ -293,6 +298,31 @@ ul.nav-inline {
 .nav-inline a[aria-current="page"] {
   color: var(--text-accent);
   background: color-mix(in srgb, var(--text-accent) 10%, transparent);
+}
+
+/* Иконка — маска на `::before`: разметка ссылки не меняется, поэтому
+   скринридер читает только подпись, а `aria-hidden` не нужен. */
+.nav-inline a::before {
+  content: "";
+  flex: none;
+  inline-size: 16px;
+  block-size: 16px;
+  margin-inline-end: 0.4em;
+  background-color: currentColor;
+  -webkit-mask: var(--nav-icon) center / contain no-repeat;
+  mask: var(--nav-icon) center / contain no-repeat;
+}
+
+.nav-link--home {
+  --nav-icon: var(--nav-home);
+}
+
+.nav-link--projects {
+  --nav-icon: var(--nav-projects);
+}
+
+.nav-link--contacts {
+  --nav-icon: var(--nav-contact);
 }
 
 .nav-toggle {
@@ -402,7 +432,6 @@ body.nav-open #site-nav {
 }
 
 .drawer-head .nav-brand-icon {
-  inline-size: 26px;
   block-size: 26px;
 }
 
@@ -543,6 +572,45 @@ ul.drawer-links {
   color: var(--text-accent);
 }
 
+/* ── Иконки соцсетей ────────────────────────────────────────────────────────
+   Геометрия — здесь, потому что иконки нужны и карточкам докладов, и подвалу,
+   а подвал живёт на всех страницах, включая `404` без `program.css`. Сеть →
+   токен, токен → маска: `src/lib/socials.ts` держит только имена и подписи. */
+:root {
+  /* Иконки ссылок шапки: живут в site.css, а не в program.css, — шапка есть
+     и на 404, где стили программы не грузятся. */
+  --nav-home: url("data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%2024%2024'%20fill='none'%20stroke='%23000'%20stroke-width='2'%20stroke-linecap='round'%20stroke-linejoin='round'%3E%3Cpath%20d='M3%209l9-7%209%207v11a2%202%200%200%201-2%202H5a2%202%200%200%201-2-2zM9%2022V12h6v10'/%3E%3C/svg%3E");
+  --nav-projects: url("data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%2024%2024'%20fill='none'%20stroke='%23000'%20stroke-width='2'%20stroke-linecap='round'%20stroke-linejoin='round'%3E%3Cpath%20d='M22%2019a2%202%200%200%201-2%202H4a2%202%200%200%201-2-2V5a2%202%200%200%201%202-2h5l2%203h9a2%202%200%200%201%202%202z'/%3E%3C/svg%3E");
+  --nav-contact: url("data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%2024%2024'%20fill='none'%20stroke='%23000'%20stroke-width='2'%20stroke-linecap='round'%20stroke-linejoin='round'%3E%3Cpath%20d='M4%204h16a2%202%200%200%201%202%202v12a2%202%200%200%201-2%202H4a2%202%200%200%201-2-2V6a2%202%200%200%201%202-2zM22%206l-10%207L2%206'/%3E%3C/svg%3E");
+  /* Логотип: маска из присланного файла (60×82 → глиф 33×37). */
+  --brand-logo: url("data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACEAAAAlCAYAAADMdYB5AAACT0lEQVR42u2XYXLTMBCFP2lyjMI1aFKuEXoLBivXoHY4BinXqJNeo1CO0eUHK2ZnkWUncfjBVDMajWWv9+nt6q2EiIQz+r2I/BSRzTn/iZzeNsAKECAB16f+6BwQMnHuoiBma3ODCK9MnAsiHJl8cyVy9hsWwDugAR51sj0nvhOABGCpPg/AfqEPN8B7g7YFXtQgzMRKVF35pCDQ596G40XHBHxXMcrO5whLA3xVx5bpQwQ6Q5ONVwJ+6DjGhFTClxeV3IIE6IEuAnvgjckFCmCSoVAq+mDfLYGd2obCdy1w67foHXDlwIhZzTcN0VjCZuc7Q71tLfBWI/AbmYiEAq3JhCEYGoPbQcnYrhVAGgDXq+ODZ9GDKMUzTYh7rfXAFx3LWl8BEVw40hHJmG3vgO1owRlhwjtKFbr96m+nsjcGopQTO439kN0e+HBMCKeAyO0G+KjjWEh6TcDOhbWovlNAZJ1fTawLuG2/dUD++m4MRN7rfjWlitgbQStpw3ZIdWPlEPus1AeH/kE1oXW1pa1U4A3wpIxWQQSjdo0WNHF0rzXpemeXnXZaAj4PnCWS/rux8xnEtVa4e0Op1/krzfzagSWPW1OPhrZ5k+cXfsIZZKndD2T52EG3M4tcDajxejEgPt6531bHyHdOyMaUc2vfxIKm5xK7H9gJp54tOxeivJgDIhL1LrnUu2Gs3Buj6RsReTZ95d6P9U22WZjE86Ijc1xsKu3PiS4OqJ5c6NgfSs+xUr4vwYC8XgP/WxChoC+Hfw1C9O7aGYE7eRf9Ah7mhDqryNitAAAAAElFTkSuQmCC");
+  --social-telegram: url("data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%2024%2024'%3E%3Cpath%20d='M11.944%200A12%2012%200%200%200%200%2012a12%2012%200%200%200%2012%2012%2012%2012%200%200%200%2012-12A12%2012%200%200%200%2012%200a12%2012%200%200%200-.056%200zm4.962%207.224c.1-.002.321.023.465.14a.506.506%200%200%201%20.171.325c.016.093.036.306.02.472-.18%201.898-.962%206.502-1.36%208.627-.168.9-.499%201.201-.82%201.23-.696.065-1.225-.46-1.9-.902-1.056-.693-1.653-1.124-2.678-1.8-1.185-.78-.417-1.21.258-1.91.177-.184%203.247-2.977%203.307-3.23.007-.032.014-.15-.056-.212s-.174-.041-.249-.024c-.106.024-1.793%201.14-5.061%203.345-.48.33-.913.49-1.302.48-.428-.008-1.252-.241-1.865-.44-.752-.245-1.349-.374-1.297-.789.027-.216.325-.437.893-.663%203.498-1.524%205.83-2.529%206.998-3.014%203.332-1.386%204.025-1.627%204.476-1.635z'/%3E%3C/svg%3E");
+  --social-linkedin: url("data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%2016%2016'%3E%3Cpath%20d='M0%201.146C0%20.513.526%200%201.175%200h13.65C15.474%200%2016%20.513%2016%201.146v13.708c0%20.633-.526%201.146-1.175%201.146H1.175C.526%2016%200%2015.487%200%2014.854zm4.943%2012.248V6.169H2.542v7.225zm-1.2-8.212c.837%200%201.358-.554%201.358-1.248-.015-.709-.52-1.248-1.342-1.248S2.4%203.226%202.4%203.934c0%20.694.521%201.248%201.327%201.248zm4.908%208.212V9.359c0-.216.016-.432.08-.586.173-.431.568-.878%201.232-.878.869%200%201.216.662%201.216%201.634v3.865h2.401V9.25c0-2.22-1.184-3.252-2.764-3.252-1.274%200-1.845.7-2.165%201.193v.025h-.016l.016-.025V6.169h-2.4c.03.678%200%207.225%200%207.225z'/%3E%3C/svg%3E");
+  --social-youtube: url("data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%2024%2024'%3E%3Cpath%20d='M23.498%206.186a3.016%203.016%200%200%200-2.122-2.136C19.505%203.545%2012%203.545%2012%203.545s-7.505%200-9.377.505A3.017%203.017%200%200%200%20.502%206.186C0%208.07%200%2012%200%2012s0%203.93.502%205.814a3.016%203.016%200%200%200%202.122%202.136c1.871.505%209.376.505%209.376.505s7.505%200%209.377-.505a3.015%203.015%200%200%200%202.122-2.136C24%2015.93%2024%2012%2024%2012s0-3.93-.502-5.814zM9.545%2015.568V8.432L15.818%2012l-6.273%203.568z'/%3E%3C/svg%3E");
+  --social-github: url("data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%2016%2016'%3E%3Cpath%20d='M8%200C3.58%200%200%203.58%200%208c0%203.54%202.29%206.53%205.47%207.59.4.07.55-.17.55-.38%200-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01%201.08.58%201.23.82.72%201.21%201.87.87%202.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95%200-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12%200%200%20.67-.21%202.2.82a7.4%207.4%200%200%201%202-.27c.68%200%201.36.09%202%20.27%201.53-1.04%202.2-.82%202.2-.82.44%201.1.16%201.92.08%202.12.51.56.82%201.27.82%202.15%200%203.07-1.87%203.75-3.65%203.95.29.25.54.73.54%201.48%200%201.07-.01%201.93-.01%202.2%200%20.21.15.46.55.38A8.01%208.01%200%200%200%2016%208c0-4.42-3.58-8-8-8'/%3E%3C/svg%3E");
+  --social-site: url("data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%2016%2016'%3E%3Cpath%20d='M0%208a8%208%200%201%201%2016%200A8%208%200%200%201%200%208m7.5-6.923c-.67.204-1.335.82-1.887%201.855q-.215.403-.395.872c.705.157%201.472.257%202.282.287zM4.249%203.539q.214-.577.481-1.078a7%207%200%200%201%20.597-.933A7%207%200%200%200%203.051%203.05q.544.277%201.198.49zM3.509%207.5c.036-1.07.188-2.087.436-3.008a9%209%200%200%201-1.565-.667A6.96%206.96%200%200%200%201.018%207.5zm1.4-2.741a12.3%2012.3%200%200%200-.4%202.741H7.5V5.091c-.91-.03-1.783-.145-2.591-.332M8.5%205.09V7.5h2.99a12.3%2012.3%200%200%200-.399-2.741c-.808.187-1.681.301-2.591.332zM4.51%208.5c.035.987.176%201.914.399%202.741A13.6%2013.6%200%200%201%207.5%2010.91V8.5zm3.99%200v2.409c.91.03%201.783.145%202.591.332.223-.827.364-1.754.4-2.741zm-3.282%203.696q.18.469.395.872c.552%201.035%201.218%201.65%201.887%201.855V11.91c-.81.03-1.577.13-2.282.287zm.11%202.276a7%207%200%200%201-.598-.933%209%209%200%200%201-.481-1.079%208.4%208.4%200%200%200-1.198.49%207%207%200%200%200%202.276%201.522zm-1.383-2.964A13.4%2013.4%200%200%201%203.508%208.5h-2.49a6.96%206.96%200%200%200%201.362%203.675c.47-.258.995-.482%201.565-.667m6.728%202.964a7%207%200%200%200%202.275-1.521%208.4%208.4%200%200%200-1.197-.49%209%209%200%200%201-.481%201.078%207%207%200%200%201-.597.933M8.5%2011.909v3.014c.67-.204%201.335-.82%201.887-1.855q.216-.403.395-.872A12.6%2012.6%200%200%200%208.5%2011.91zm3.555-.401c.57.185%201.095.409%201.565.667A6.96%206.96%200%200%200%2014.982%208.5h-2.49a13.4%2013.4%200%200%201-.437%203.008M14.982%207.5a6.96%206.96%200%200%200-1.362-3.675c-.47.258-.995.482-1.565.667.248.92.4%201.938.437%203.008zM11.27%202.461q.266.502.482%201.078a8.4%208.4%200%200%200%201.196-.49%207%207%200%200%200-2.275-1.52c.218.283.418.597.597.932m-.488%201.343a8%208%200%200%200-.395-.872C9.835%201.897%209.17%201.282%208.5%201.077V4.09c.81-.03%201.577-.13%202.282-.287z'/%3E%3C/svg%3E");
+}
+
+.social-link--telegram {
+  --social-icon: var(--social-telegram);
+}
+
+.social-link--linkedin {
+  --social-icon: var(--social-linkedin);
+}
+
+.social-link--youtube {
+  --social-icon: var(--social-youtube);
+}
+
+.social-link--site {
+  --social-icon: var(--social-site);
+}
+
+.social-link--github {
+  --social-icon: var(--social-github);
+}
+
 /* ── Футер ──────────────────────────────────────────────────────────────── */
 .site-footer {
   max-inline-size: var(--content-max);
@@ -560,6 +628,38 @@ ul.drawer-links {
 
 .site-footer a {
   color: var(--text-accent);
+}
+
+.site-footer__contacts {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2) var(--space-4);
+  margin-block-end: var(--space-4);
+}
+
+/* Контакт — иконка-маска + подпись. Маска наследует `--social-icon` от
+   `.social-link--<сеть>`: те же токены, что у соцсетей в карточках. */
+.footer-contact {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45em;
+  min-block-size: 24px;
+}
+
+.footer-contact::before {
+  content: "";
+  flex: none;
+  inline-size: 16px;
+  block-size: 16px;
+  background-color: currentColor;
+  -webkit-mask: var(--social-icon) center / contain no-repeat;
+  mask: var(--social-icon) center / contain no-repeat;
+}
+
+@media print {
+  .site-footer__contacts {
+    display: none;
+  }
 }
 
 /* ── Адаптив ────────────────────────────────────────────────────────────── */

@@ -27,9 +27,9 @@ const dayLinks = days().map((day, index) => ({
 }));
 
 const siteLinks = [
-  { href: `${portfolio}/`, label: t(lang, "navHome") },
-  { href: `${portfolio}/projects/`, label: t(lang, "navProjects") },
-  { href: `${portfolio}/contact/`, label: t(lang, "navContacts") },
+  { href: `${portfolio}/`, label: t(lang, "navHome"), icon: "home" },
+  { href: `${portfolio}/projects/`, label: t(lang, "navProjects"), icon: "projects" },
+  { href: `${portfolio}/contact/`, label: t(lang, "navContacts"), icon: "contacts" },
 ];
 
 // Переключатель уводит на тот же день другой локали: подпись — код цели.
@@ -40,20 +40,7 @@ const langCode = targetLang.toUpperCase();
 
 <header class="nav-mobile">
   <a class="nav-brand" href={`${portfolio}/`}>
-    <svg
-      class="nav-brand-icon"
-      viewBox="0 0 24 24"
-      width="18"
-      height="18"
-      fill="none"
-      stroke="currentColor"
-      stroke-width="2"
-      stroke-linecap="round"
-      aria-hidden="true"
-      focusable="false"
-    >
-      <path d="M12 3v18M4.2 7.5l15.6 9M19.8 7.5l-15.6 9"></path>
-    </svg>
+    <span class="nav-brand-icon" aria-hidden="true"></span>
     <span class="nav-brand-text">
       <b>{t(lang, "brandName")}</b>
       <span class="nav-brand-role">{t(lang, "brandRole")}</span>
@@ -64,7 +51,7 @@ const langCode = targetLang.toUpperCase();
     {
       siteLinks.map((link) => (
         <li>
-          <a href={link.href} rel="noopener">{link.label}</a>
+          <a class={`nav-link--${link.icon}`} href={link.href} rel="noopener">{link.label}</a>
         </li>
       ))
     }
@@ -105,8 +92,27 @@ const langCode = targetLang.toUpperCase();
       hreflang={targetLang}
       lang={targetLang}
       aria-label={t(lang, "langSwitch")}
-      title={t(lang, "langSwitch")}>{langCode}</a
+      title={t(lang, "langSwitch")}
     >
+      <svg
+        viewBox="0 0 24 24"
+        width="16"
+        height="16"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="2"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+        aria-hidden="true"
+        focusable="false"
+      >
+        <circle cx="12" cy="12" r="10"></circle>
+        <path d="M2 12h20"></path>
+        <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"
+        ></path>
+      </svg>
+      <span>{langCode}</span>
+    </a>
 
     <button
       class="nav-icon-btn theme-toggle--header"
@@ -163,20 +169,7 @@ const langCode = targetLang.toUpperCase();
 <nav id="site-nav" aria-label={t(lang, "navMenuLabel")}>
   <div class="drawer-head">
     <a class="nav-brand" href={`${portfolio}/`}>
-      <svg
-        class="nav-brand-icon"
-        viewBox="0 0 24 24"
-        width="18"
-        height="18"
-        fill="none"
-        stroke="currentColor"
-        stroke-width="2"
-        stroke-linecap="round"
-        aria-hidden="true"
-        focusable="false"
-      >
-        <path d="M12 3v18M4.2 7.5l15.6 9M19.8 7.5l-15.6 9"></path>
-      </svg>
+      <span class="nav-brand-icon" aria-hidden="true"></span>
       <span class="nav-brand-text">
         <b>Никита Бояркин</b>
         <span class="nav-brand-role">Продуктовый аналитик</span>
@@ -251,8 +244,27 @@ const langCode = targetLang.toUpperCase();
       hreflang={targetLang}
       lang={targetLang}
       aria-label={t(lang, "langSwitch")}
-      title={t(lang, "langSwitch")}>{langCode}</a
+      title={t(lang, "langSwitch")}
     >
+      <svg
+        viewBox="0 0 24 24"
+        width="16"
+        height="16"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="2"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+        aria-hidden="true"
+        focusable="false"
+      >
+        <circle cx="12" cy="12" r="10"></circle>
+        <path d="M2 12h20"></path>
+        <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"
+        ></path>
+      </svg>
+      <span>{langCode}</span>
+    </a>
   </div>
 </nav>
 
@@ -330,12 +342,29 @@ const langCode = targetLang.toUpperCase();
     }
   }
 
-  /* Переключатель языка — текст, а не иконка: «EN»/«RU» читается сразу и не
-     требует новой иконки. Геометрия 44×44 наследуется от `.nav-icon-btn`. */
+  /* Переключатель языка — глобус + код цели: «EN»/«RU» читается сразу, а
+     глобус отделяет его от кнопок-иконок. Ширина по содержимому, иначе код
+     не влезает в круг 44 px. */
   .nav-lang {
+    inline-size: auto;
+    gap: 0.3em;
+    padding-inline: var(--space-2);
     font-size: 0.85rem;
     text-decoration: none;
     text-transform: uppercase;
     letter-spacing: 0.04em;
+  }
+
+  /* На узком экране код языка уступает место имени: глобус остаётся, подпись
+     уходит в `aria-label`. Иначе от «Никита Бояркин» остаётся «Н…». */
+  @media (max-width: 767.98px) {
+    .nav-lang {
+      inline-size: 44px;
+      padding-inline: 0;
+    }
+
+    .nav-lang span {
+      display: none;
+    }
   }
 </style>

@@ -95,19 +95,19 @@ const hallsFact = lang === "en" ? `${hallCount} halls` : `${hallCount} зало�
     }
   </p>
   <dl class="facts">
-    <div class="facts__item">
+    <div class="facts__item facts__item--duration">
       <dt>{t(lang, "factsDuration")}</dt>
       <dd>{allDays.length} {pluralDays(allDays.length, lang)}</dd>
     </div>
-    <div class="facts__item">
+    <div class="facts__item facts__item--talks">
       <dt>{t(lang, "factsTalks")}</dt>
       <dd>{PROGRAM.talks.length} {pluralTalks(PROGRAM.talks.length, lang)}</dd>
     </div>
-    <div class="facts__item">
+    <div class="facts__item facts__item--tracks">
       <dt>{t(lang, "factsTracks")}</dt>
       <dd>{tracksFact}</dd>
     </div>
-    <div class="facts__item">
+    <div class="facts__item facts__item--halls">
       <dt>{t(lang, "factsHalls")}</dt>
       <dd>{hallsFact}</dd>
     </div>

@@ -20,7 +20,7 @@
 | --- | --- | --- |
 | `src/data/program.json` | data | нормализованный слепок API — единственный источник данных |
 | `src/data/socials.json` | data | overlay соцсетей лекторов: имя → `telegram/linkedin/youtube/site`. Отдельный файл: `data:fetch` пересобирает `program.json` побайтово и стёр бы поле. Ключ — полное имя из слепка (все 94 уникальны), значение — только подтверждённые `https`-ссылки |
-| `src/lib/socials.ts` | core | сети и подписи — один источник для Astro-разметки и клиента. Геометрии иконок здесь нет: SVG-пути живут только в `src/styles/program.css` как CSS-маски `.social-link--<network>` |
+| `src/lib/socials.ts` | core | сети и подписи — один источник для Astro-разметки и клиента. Геометрии иконок здесь нет: пути соцсетей живут в `src/styles/site.css` (`--social-*`), декоративные — в `src/styles/program.css` (`--icon-*`), оба как CSS-маски |
 | `src/i18n/ui.ts` | i18n | словарь оболочки RU/EN: шапка, табы, фильтры, модалка, поиск, подвал. `UiKey` выводится из русской ветки, поэтому пропуск в `en` — ошибка типов |
 | `src/i18n/format.ts` | i18n | подписи дат и числительных по языкам; русская ветка побайтово совпадает с замороженным ядром |
 | `src/i18n/paths.ts` | i18n | адреса от `BASE_URL` с префиксом языка: `/`, `/day/N/`, `/en/`, `/en/day/N/` |
@@ -46,8 +46,8 @@
 | `src/pages/program.json.ts` | data | `/program.json` — тот же слепок для клиента |
 | `src/scripts/program-client.ts` | client | единственный JS: тема (морф иконки), drawer, фильтр, избранное, модалка, `.ics`, поиск, `?talk=<id>` |
 | `src/styles/tokens.css` | design | токены трёх тем + шрифты + типографическая шкала (заморожено) |
-| `src/styles/site.css` | design | каркас страницы |
-| `src/styles/program.css` | design | сетка, карточка, модалка, печать |
+| `src/styles/site.css` | design | каркас страницы, шапка, подвал с контактами; геометрия иконок соцсетей — маски `--social-*` (нужны и карточкам, и подвалу, в том числе на `404`); иконки ссылок шапки — маски `--nav-*`, логотип — `--brand-logo` |
+| `src/styles/program.css` | design | сетка, карточка, модалка, печать; геометрия всех декоративных иконок — маски `--icon-*` |
 | `src/styles/search.css` | design | диалог поиска; файл глобальный, потому что результаты вставляет клиент уже после отрисовки и узлы `.search-result` не получают scope-атрибут Astro |
 | `tests/lib/*.test.ts` | verify | 117 юнит-тестов ядра, i18n и поиска (`bun test tests/lib`, 6 файлов) |
 | `tests/built/program.spec.ts` | verify | 28 браузерных тестов сборки (Playwright) |
@@ -57,6 +57,25 @@
 Иконка темы живёт в двух видах: луна в разметке (`.astro` не знает о `localStorage`) и
 `d` текущей темы, который клиент ставит через `morphicons` (`THEME_ICON` в
 `program-client.ts`). Править один вид без другого — расхождение с контрактом.
+
+Остальные иконки — декоративные и живут **только в CSS**: `::before` с data-URI маской
+(`--icon-calendar`, `--icon-clock`, `--icon-mic`, `--icon-layers`, `--icon-pin`,
+`--icon-star`/`--icon-star-filled`, `--icon-download`, `--icon-ticket`, `--icon-chevron`,
+`--icon-tag`, `--icon-expand`). Разметка остаётся текстовой, поэтому селекторы Playwright и порядок узлов не
+меняются. Точки: `dt` фактов (класс `facts__item--*`), `.day-tab` (скрыт ≤ 767.98 px — иначе
+полоса табов переполняет 320 px), чипы избранного и треков, экспорт `.ics`, бейджи времени и
+зала, «Подробнее» (шеврон переворачивается по `aria-expanded`), мета-кейсы, «Купить» и
+«Избранное» в модалке. Новая иконка = `--icon-*` + селектор в общем рецепте.
+
+Кнопка-заголовок карточки (`button.talk-card__title-btn`) несёт иконку «развернуть»
+(`--icon-expand`) на обеих кнопках-заголовках — и на карточке без баннера, и на
+`.talk-card__content-title`; их десятки, поэтому иконка приглушена (`opacity: 0.65`)
+и на печати скрыта.
+
+Подвал сайта (`footer.site-footer` в `Base.astro`) открывается строкой контактов
+`.site-footer__contacts > a.footer-contact.social-link--<telegram|github|linkedin>`:
+иконка — та же маска `--social-*`, что у соцсетей лекторов, поэтому подвал не заводит
+второй набор путей. Подпись — имя сети, ссылки открываются в новой вкладке.
 
 ## Данные: `src/data/program.json`
 
@@ -168,7 +187,8 @@ a.drawer-link.is-current`. Оба тумблера темы несут `data-the
 Программа:
 
 ```
-header.page-head > p.eyebrow + h1.page-title + p.page-intro + dl.facts
+header.page-head > p.eyebrow + h1.page-title + p.page-intro
+  dl.facts > div.facts__item.facts__item--<duration|talks|tracks|halls> > dt + dd
 nav.day-tabs > a.day-tab[href][aria-current=page] > span.day-tab__num + span.day-tab__date
 div.program-toolbar
   div.track-chips[data-track-chips]
@@ -242,7 +262,7 @@ span.search-result__day + span.search-result__title + span.search-result__meta`;
 | `.talk-card__media` у `.talk-card--compact` | остаётся: в нём живёт `h3` с кнопкой заголовка |
 | `.talk-card__time` | скрыт — время несёт разделитель |
 | `.talk-card__hall` | виден только здесь; на десктопе `display: none` |
-| `.track-chip`, `.talk-card__title-btn` | `min-block-size: 44px` — сенсорная цель, а не только визуальная высота; подписи не мельче 0.75 rem |
+| `.talk-card__title-btn`, `.track-chip` | заголовок-кнопка — `min-block-size: 44px` (сенсорная цель, а не только визуальная высота), подписи не мельче 0.75 rem. Чип компактнее — `32px`: он в ряду фильтров, 44 px на каждом давали три строки тулбара; 32 ≥ 24 px (WCAG 2.5.8 AA) |
 | `.talk-card__favorite`, `.talk-card__toggle-btn`, `.talk-modal__close` | целевой размер 44 px даёт псевдоэлемент (`::after`/`::before`), глиф остаётся прежнего размера |
 | `header.nav-mobile` | `backdrop-filter: none`: блюр на каждой прокрутке дороже, чем даёт, а фон `color-mix(… 97%)` и так почти непрозрачен |
 | `nav.day-tabs` | липкие под шапкой, `flex-wrap: nowrap`; подпись вкладки без даты (`.day-tab__date` скрыт), поэтому три вкладки встают в строку даже на 320 px. Горизонтальный скролл остаётся страховкой, а не основным способом добраться до третьего дня |
@@ -314,6 +334,8 @@ span.search-result__day + span.search-result__title + span.search-result__meta`;
 ## Доступность и качество
 
 - Интерактив — только `button`/`a`; никаких `div` с обработчиком и `href="#"`.
+- Декоративные иконки — `::before` с CSS-маской: псевдоэлемент не попадает в дерево
+  доступности, поэтому `aria-hidden` не нужен — смысл несёт подпись рядом.
 - Счётчик докладов — `p.talk-count[aria-live=polite]`: фильтр переписывает число и слово,
   и скринридер слышит новое значение, не теряя фокуса.
 - Пока модалка открыта, весь фон получает `inert` (плюс `aria-hidden` как фолбэк без
