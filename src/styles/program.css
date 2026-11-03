@@ -409,6 +409,19 @@ nav.day-tabs {
   transform: scale(0.94);
 }
 
+/* Контур → заливка. `fill` не интерполируется между `none` и цветом, поэтому
+   звезда залита всегда, а переключается только непрозрачность заливки. */
+.talk-card__favorite path {
+  fill: currentColor;
+  fill-opacity: 0;
+  transition: fill-opacity 0.25s ease;
+}
+
+.talk-card__favorite[aria-pressed="true"] path,
+.talk-card__favorite.is-active path {
+  fill-opacity: 1;
+}
+
 /* Нажатая звезда инвертируется: светлый круг с тёмным глифом. Рамка остаётся —
    без неё кремовая заливка сливается с кремовым баннером карточки. */
 .talk-card__favorite[aria-pressed="true"],
@@ -1287,6 +1300,10 @@ html:has(body.is-modal-open) {
   .talk-modal__close:active,
   .talk-modal__buy:hover {
     transform: none;
+  }
+
+  .talk-card__favorite path {
+    transition: none;
   }
 
   /* Новый переход появления модалки снимается здесь же, а не только глобальным

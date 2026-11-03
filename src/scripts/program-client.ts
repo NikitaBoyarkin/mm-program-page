@@ -21,6 +21,7 @@ import {
   type Talk,
 } from "../lib/program";
 import { THEMES, THEME_COLORS, nextTheme, type Theme } from "../lib/theme";
+import { createMorph } from "morphicons/dom";
 
 /* ── Константы контракта ───────────────────────────────────────────── */
 
@@ -105,11 +106,32 @@ function applyTheme(theme: Theme, persist: boolean): void {
   if (persist) writeStorage(THEME_KEY, theme);
 }
 
+/**
+ * Иконки трёх тем — сырые `d`: `morphicons` принимает строку как `IconInput`
+ * и не требует пакета данных с иконками. Дуги нормализуются в кубические
+ * кривые на стороне драйвера.
+ */
+const THEME_ICON: Record<Theme, string> = {
+  dark: "M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z",
+  light:
+    "M12 8a4 4 0 1 0 0 8 4 4 0 0 0 0-8zM12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41",
+  cyberpunk: "M13 2 4.09 12.69a1 1 0 0 0 .77 1.64H10l-1 7.67L20.91 11.3a1 1 0 0 0-.77-1.63H14z",
+};
+
+/** Живые морфы тумблеров: их два (шапка и drawer), путь у обоих один. */
+const themeMorphs: Array<ReturnType<typeof createMorph>> = [];
+
 function initTheme(): void {
   const stored = readStorage(THEME_KEY);
   const rendered = document.documentElement.dataset.theme;
   const theme: Theme = isTheme(stored) ? stored : isTheme(rendered) ? rendered : "dark";
   applyTheme(theme, false);
+
+  // Первая иконка ставится без анимации: сохранённая тема сразу получает свою
+  // иконку, а не луну из разметки. Без JS разметка остаётся прежней.
+  for (const path of $$<SVGPathElement>("[data-theme-toggle] path")) {
+    themeMorphs.push(createMorph(path, THEME_ICON[theme], { reducedMotion: "user" }));
+  }
 
   // Тумблеров два — в шапке и в drawer'е (`Nav.astro`). Один делегированный
   // слушатель обслуживает оба: два обработчика на одну кнопку проматывали бы
@@ -118,7 +140,9 @@ function initTheme(): void {
     const target = event.target;
     if (!(target instanceof Element) || !target.closest("[data-theme-toggle]")) return;
     const current = document.documentElement.dataset.theme;
-    applyTheme(nextTheme(isTheme(current) ? current : "dark"), true);
+    const next = nextTheme(isTheme(current) ? current : "dark");
+    applyTheme(next, true);
+    for (const morph of themeMorphs) morph.morphTo(THEME_ICON[next]);
   });
 }
 
@@ -518,7 +542,6 @@ function syncFavorites(): void {
     const verb = active ? "Убрать из избранного" : "В избранное";
     button.setAttribute("aria-label", title ? `${verb}: ${title}` : verb);
     button.title = verb;
-    button.querySelector("path")?.setAttribute("fill", active ? "currentColor" : "none");
   }
 
   const counter = $("[data-favorites-count]");

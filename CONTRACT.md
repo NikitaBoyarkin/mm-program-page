@@ -26,18 +26,23 @@
 | `src/lib/analytics.ts` | core | UTM-атрибуция и единственный канал в PostHog (`track`, супер-свойства) |
 | `src/components/Analytics.astro` | view | ленивый `init` PostHog, `outbound_click` |
 | `src/layouts/Base.astro` | view | `<head>`, тема до отрисовки, шапка, подвал |
-| `src/components/Nav.astro` | view | шапка, drawer, дни, тумблер темы, счётчик избранного |
+| `src/components/Nav.astro` | view | шапка, drawer, дни, тумблер темы (луна в разметке), счётчик избранного |
 | `src/components/ProgramPage.astro` | view | день: шапка, табы, чипы, тулбар, сетка, модалка |
-| `src/components/TalkCard.astro` | view | карточка доклада |
+| `src/components/TalkCard.astro` | view | карточка доклада; звезда избранного (контур → заливка через `fill-opacity`) |
 | `src/components/TalkModal.astro` | view | оболочка диалога |
 | `src/pages/index.astro`, `src/pages/day/[n].astro` | view | три пререндеренных дня |
 | `src/pages/program.json.ts` | data | `/program.json` — тот же слепок для клиента |
-| `src/scripts/program-client.ts` | client | единственный JS: тема, drawer, фильтр, избранное, модалка, `.ics` |
+| `src/scripts/program-client.ts` | client | единственный JS: тема (морф иконки), drawer, фильтр, избранное, модалка, `.ics` |
 | `src/styles/tokens.css` | design | токены трёх тем + шрифты (заморожено) |
 | `src/styles/site.css` | design | каркас страницы |
 | `src/styles/program.css` | design | сетка, карточка, модалка, печать |
 | `tests/lib/*.test.ts` | verify | юнит-тесты ядра (`bun test`) |
 | `tests/built/program.spec.ts` | verify | 27 браузерных тестов сборки (Playwright) в трёх проектах — 81 прогон |
+| `package.json`, `bun.lock` | deps | версии сборки; `morphicons` запинен на `1.7.0` — иконки тем |
+
+Иконка темы живёт в двух видах: луна в разметке (`.astro` не знает о `localStorage`) и
+`d` текущей темы, который клиент ставит через `morphicons` (`THEME_ICON` в
+`program-client.ts`). Править один вид без другого — расхождение с контрактом.
 
 ## Данные: `src/data/program.json`
 
