@@ -436,9 +436,16 @@ function writeAtomic(path: string, body: string | Uint8Array): void {
 async function download(timeout: number = TIMEOUT_MS): Promise<string> {
   const response = await fetch(SOURCE, {
     headers: { "User-Agent": USER_AGENT, Accept: "application/json" },
+    // Редирект увёл бы запрос на чужой хост, а тело легло бы в репозиторий
+    // как `data/program.raw.json` — то есть в коммит. Прыжков быть не должно.
+    redirect: "error",
     signal: AbortSignal.timeout(timeout),
   });
   if (!response.ok) throw new Error(`HTTP ${response.status} ${response.statusText}`);
+  const type = response.headers.get("content-type") ?? "";
+  if (!type.includes("application/json")) {
+    throw new Error(`неожиданный content-type: ${type || "<пусто>"} — ожидался JSON`);
+  }
   return await response.text();
 }
 
