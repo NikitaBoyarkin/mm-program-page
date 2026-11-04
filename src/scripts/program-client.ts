@@ -16,6 +16,7 @@ import { t, type Lang } from "../i18n/ui";
 import { buildCalendar, calendarFilename, downloadIcs } from "../lib/ics";
 import {
   BASE_URL,
+  DATE_RE,
   formatRange,
   isTime,
   type Day,
@@ -1278,7 +1279,7 @@ function exportIcs(): void {
       const talks = program.talks.filter(
         (talk) => ids.has(talk.id) && isTime(talk.start) && isTime(talk.end),
       );
-      if (!day || !talks.length) {
+      if (!day || !DATE_RE.test(day.date) || !talks.length) {
         toast(t(LANG, "toastNoExport"));
         return;
       }

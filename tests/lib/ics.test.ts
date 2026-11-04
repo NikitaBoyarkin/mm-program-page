@@ -208,3 +208,18 @@ describe("calendarFilename", () => {
     expect(calendarFilename(makeDay({ date: "2026-11-17" }))).toBe("matemarketing-2026-11-17.ics");
   });
 });
+
+describe("дата дня вне контракта", () => {
+  const evil = "2026-11-26\r\nX-EVIL:1\r\nBEGIN:VALARM";
+
+  test("buildCalendar отвергает всё, кроме YYYY-MM-DD", () => {
+    expect(() => buildCalendar(makeDay({ date: evil }), [], NOW)).toThrow(/дата дня/);
+    expect(() => buildCalendar(makeDay({ date: "26.11.2026" }), [], NOW)).toThrow(/дата дня/);
+    expect(() => buildCalendar(makeDay({ date: "" }), [], NOW)).toThrow(/дата дня/);
+  });
+
+  test("calendarFilename отвергает то же самое — имя файла не ломается", () => {
+    expect(() => calendarFilename(makeDay({ date: evil }))).toThrow(/дата дня/);
+    expect(() => calendarFilename(makeDay({ date: "../../etc/passwd" }))).toThrow(/дата дня/);
+  });
+});

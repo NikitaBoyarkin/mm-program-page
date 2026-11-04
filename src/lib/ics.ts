@@ -4,7 +4,7 @@
  * Функции чистые (кроме `downloadIcs`, который трогает DOM), поэтому календарь
  * проверяется в `bun test` сравнением с фикстурой, а не «на глаз в календаре».
  */
-import { firstParagraph, type Day, type Talk } from "./program";
+import { DATE_RE, firstParagraph, type Day, type Talk } from "./program";
 
 const CRLF = "\r\n";
 const TZID = "Europe/Moscow";
@@ -60,6 +60,20 @@ export function icsDate(date: string, time: string): string {
   return `${date.replace(/-/g, "")}T${time.replace(":", "")}00`;
 }
 
+/**
+ * Дата дня пригодна и для `DTSTART`, и для имени файла: строго `YYYY-MM-DD`.
+ *
+ * `Day.date` приходит из внешнего payload, поэтому без проверки в календарь
+ * можно вписать произвольные свойства (`"\r\nX-…"`), а имя файла — сломать.
+ *
+ * @throws если формат не совпадает с `DATE_RE`.
+ */
+function assertIcsDate(date: string): void {
+  if (!DATE_RE.test(date)) {
+    throw new Error(`ics: некорректная дата дня — ${JSON.stringify(date)}`);
+  }
+}
+
 /** UTC-метка `DTSTAMP`: 20261102T182210Z. */
 export function icsStamp(date: Date): string {
   const pad = (value: number) => String(value).padStart(2, "0");
@@ -74,6 +88,7 @@ export function icsStamp(date: Date): string {
  * `now` подставляется в тестах, чтобы вывод был побайтово стабильным.
  */
 export function buildCalendar(day: Day, talks: Talk[], now: Date = new Date()): string {
+  assertIcsDate(day.date);
   const stamp = icsStamp(now);
   const lines = [
     "BEGIN:VCALENDAR",
@@ -107,6 +122,7 @@ export function buildCalendar(day: Day, talks: Talk[], now: Date = new Date()): 
 
 /** Имя файла: `matemarketing-2026-11-26.ics`. */
 export function calendarFilename(day: Day): string {
+  assertIcsDate(day.date);
   return `matemarketing-${day.date}.ics`;
 }
 
