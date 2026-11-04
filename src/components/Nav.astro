@@ -20,6 +20,12 @@ interface Props {
 const { ordinal, lang, search = false } = Astro.props;
 const portfolio = "https://nikitaboyarkin.github.io";
 
+// Переход на портфолио размечен: без UTM визит, начавшийся в новой сессии,
+// выглядит прямым заходом, и связка двух сайтов в отчёте теряется.
+const portfolioHref = (path: string, content: string) =>
+  `${portfolio}${path}?utm_source=mm-program-page&utm_medium=referral` +
+  `&utm_campaign=mm_program_to_portfolio&utm_content=${content}`;
+
 const dayLinks = days().map((day, index) => ({
   ordinal: index + 1,
   href: dayHrefFor(lang, index + 1),
@@ -27,9 +33,9 @@ const dayLinks = days().map((day, index) => ({
 }));
 
 const siteLinks = [
-  { href: `${portfolio}/`, label: t(lang, "navHome"), icon: "home" },
-  { href: `${portfolio}/projects/`, label: t(lang, "navProjects"), icon: "projects" },
-  { href: `${portfolio}/contact/`, label: t(lang, "navContacts"), icon: "contacts" },
+  { href: portfolioHref("/", "nav-home"), label: t(lang, "navHome"), icon: "home" },
+  { href: portfolioHref("/projects/", "nav-projects"), label: t(lang, "navProjects"), icon: "projects" },
+  { href: portfolioHref("/contact/", "nav-contacts"), label: t(lang, "navContacts"), icon: "contacts" },
 ];
 
 // Переключатель уводит на тот же день другой локали: подпись — код цели.
@@ -39,7 +45,7 @@ const langCode = targetLang.toUpperCase();
 ---
 
 <header class="nav-mobile">
-  <a class="nav-brand" href={`${portfolio}/`} aria-label={t(lang, "brandName")}>
+  <a class="nav-brand" href={portfolioHref("/", "brand-mobile")} aria-label={t(lang, "brandName")}>
     <span class="nav-brand-icon" aria-hidden="true"></span>
     <span class="nav-brand-text">
       <b>{t(lang, "brandName")}</b>
@@ -168,7 +174,7 @@ const langCode = targetLang.toUpperCase();
 
 <nav id="site-nav" aria-label={t(lang, "navMenuLabel")}>
   <div class="drawer-head">
-    <a class="nav-brand" href={`${portfolio}/`}>
+    <a class="nav-brand" href={portfolioHref("/", "brand-drawer")}>
       <span class="nav-brand-icon" aria-hidden="true"></span>
       <span class="nav-brand-text">
         <b>{t(lang, "brandName")}</b>
