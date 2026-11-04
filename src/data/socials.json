@@ -15,6 +15,9 @@
     "linkedin": "https://linkedin.com/in/alexanderdavydow",
     "site": "https://davydov.my/"
   },
+  "Александр Кореньков": {
+    "site": "https://habr.com/ru/users/AYUKor/"
+  },
   "Александр Сорокин": {
     "site": "https://alsorokin.ru/"
   },
@@ -36,9 +39,19 @@
   "Анна Бочканова": {
     "linkedin": "https://www.linkedin.com/in/anna-bochkanova-183493229"
   },
+  "Анна Коковина": {
+    "telegram": "https://t.me/ItsmeAnnnnnnnnny",
+    "linkedin": "https://www.linkedin.com/in/anna-kokovina"
+  },
   "Анна Ставнийчук": {
     "telegram": "https://t.me/causal_channel",
     "linkedin": "https://linkedin.com/in/annastavniychuk"
+  },
+  "Артём Новиков": {
+    "linkedin": "https://www.linkedin.com/in/artem-novikov-82732a160"
+  },
+  "Артем Прокопенко": {
+    "linkedin": "https://www.linkedin.com/in/prokopenko"
   },
   "Беслан Курашов": {
     "telegram": "https://t.me/windoozatnick",
@@ -47,6 +60,11 @@
   "Валентин Борисов": {
     "linkedin": "https://www.linkedin.com/in/vborisov03"
   },
+  "Валерий Бабушкин": {
+    "telegram": "https://t.me/cryptovalerii",
+    "linkedin": "https://www.linkedin.com/in/venheads",
+    "site": "https://venheads.io/"
+  },
   "Виктория Дочкина": {
     "telegram": "https://t.me/victoria_dochkina",
     "linkedin": "https://linkedin.com/in/victoria-d-038620128"
@@ -54,8 +72,14 @@
   "Виктория Пролетарская": {
     "linkedin": "https://www.linkedin.com/in/victoria-proletarskaya-499b01205"
   },
+  "Виктория Шумилова": {
+    "linkedin": "https://www.linkedin.com/in/vi-shum"
+  },
   "Виталий Шатилов": {
     "linkedin": "https://linkedin.com/in/vitaly-shatilov-459b0473"
+  },
+  "Галина Блонская": {
+    "linkedin": "https://ru.linkedin.com/in/%D0%B3%D0%B0%D0%BB%D0%B8%D0%BD%D0%B0-%D0%B1%D0%BB%D0%BE%D0%BD%D1%81%D0%BA%D0%B0%D1%8F-6baa121b9"
   },
   "Григорий Засько": {
     "linkedin": "https://linkedin.com/in/zasko"
@@ -92,11 +116,21 @@
     "linkedin": "https://linkedin.com/in/i-goel",
     "site": "https://www.thinkingbell.org/"
   },
+  "Кирилл Зиняков": {
+    "telegram": "https://t.me/respicefinem",
+    "linkedin": "https://www.linkedin.com/in/kirill-zinyakov"
+  },
   "Курамагомед Алиев": {
     "linkedin": "https://www.linkedin.com/in/kurah-aliev"
   },
   "Максим Коматовский": {
     "linkedin": "https://linkedin.com/in/max-komatovskiy-3a743927a"
+  },
+  "Максим Кочетков": {
+    "telegram": "https://t.me/mahhets"
+  },
+  "Максим Кочуров": {
+    "linkedin": "https://www.linkedin.com/in/ferrine"
   },
   "Максим Стаценко": {
     "linkedin": "https://www.linkedin.com/in/arhimag"
@@ -121,9 +155,15 @@
   "Никита Зеленский": {
     "linkedin": "https://linkedin.com/in/nick-zelenskiy-59b784179"
   },
+  "Николай Голов": {
+    "linkedin": "https://www.linkedin.com/in/golov-nikolay-data"
+  },
   "Ольга Чумакина": {
     "telegram": "https://t.me/OlgaChumakina",
     "site": "https://chumakinaolga.su"
+  },
+  "Павел Дубинин": {
+    "linkedin": "https://www.linkedin.com/in/pavel-dubinin-5a4b3254"
   },
   "Павел Злобин": {
     "telegram": "https://t.me/pavezlo05",
@@ -147,13 +187,22 @@
   "Сергей Кноль": {
     "linkedin": "https://www.linkedin.com/in/sergey-knoll"
   },
+  "Сергей Кукуруз": {
+    "site": "https://habr.com/ru/users/yngcook/"
+  },
   "Станислав Дробышевский": {
     "telegram": "https://t.me/fondnauk",
     "youtube": "https://www.youtube.com/@fondnauk",
     "site": "https://antropogenez.ru"
   },
+  "Степан Медведев": {
+    "linkedin": "https://www.linkedin.com/in/stepan-medvedev-24074b1ab"
+  },
   "Тимур Мерлин": {
     "linkedin": "https://linkedin.com/in/timur-merlin-2a1486191"
+  },
+  "Тимур Пыгамов": {
+    "linkedin": "https://www.linkedin.com/in/timur-pygamov-b5ab83229"
   },
   "Фёдор Холькин": {
     "telegram": "https://t.me/datawarrior",
