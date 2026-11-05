@@ -49,14 +49,16 @@
 | `src/styles/site.css` | design | каркас страницы, шапка, подвал с контактами; геометрия иконок соцсетей — маски `--social-*` (нужны и карточкам, и подвалу, в том числе на `404`); иконки ссылок шапки — маски `--nav-*`; монограмма в шапке — маска `--brand-logo`: шестиугольник фавикона с вырезанными «NB» (`fill-rule: evenodd`, глифы Inter 800 путями) |
 | `src/styles/program.css` | design | сетка, карточка, модалка, печать; геометрия всех декоративных иконок — маски `--icon-*` |
 | `src/styles/search.css` | design | диалог поиска; файл глобальный, потому что результаты вставляет клиент уже после отрисовки и узлы `.search-result` не получают scope-атрибут Astro |
-| `tests/lib/*.test.ts` | verify | 117 юнит-тестов ядра, i18n и поиска (`bun test tests/lib`, 6 файлов) |
+| `tests/lib/*.test.ts` | verify | 127 юнит-тестов ядра, i18n и поиска (`bun test tests/lib`, 6 файлов) |
 | `tests/built/program.spec.ts` | verify | 28 браузерных тестов сборки (Playwright) |
 | `tests/built/i18n-search.spec.ts` | verify | 8 тестов EN-маршрутов, переключателя языка и поиска; вместе 36 тестов × 3 проекта = 108 прогонов |
 | `package.json`, `bun.lock` | deps | версии сборки; `morphicons` запинен на `1.7.0` — иконки тем |
 
 Иконка темы живёт в двух видах: луна в разметке (`.astro` не знает о `localStorage`) и
-`d` текущей темы, который клиент ставит через `morphicons` (`THEME_ICON` в
-`program-client.ts`). Править один вид без другого — расхождение с контрактом.
+`d` текущей темы, который клиент берёт из `THEME_ICONS` (`src/lib/theme.ts`) и подставляет
+через `morphicons`. Обе стороны читают один источник — `THEME_PATHS`/`THEME_ICONS` там же;
+ту же карту разметка кладёт в `data-theme-icons` для инлайнового fallback'а. Править один
+вид без другого — расхождение с контрактом.
 
 Остальные иконки — декоративные и живут **только в CSS**: `::before` с data-URI маской
 (`--icon-calendar`, `--icon-clock`, `--icon-mic`, `--icon-layers`, `--icon-pin`,
@@ -149,12 +151,19 @@ site`. Ссылка принимается только при подтверж�
   ограничение, а не эталон: при расхождении исходный русский текст из `program.json` считается
   источником истины.
 
-## Типы и функции ядра (`src/lib/program.ts`, `src/lib/ics.ts`)
+## Типы и функции ядра (`src/lib/program-core.ts`, `src/lib/program.ts`, `src/lib/ics.ts`)
+
+Чистые типы и помощники живут в `src/lib/program-core.ts` — модуле без единого импорта
+из `src/data/`, который тянет клиентский чанк. `src/lib/program.ts` держит слепок
+`PROGRAM`, функции над ним и реэкспортирует ядро, поэтому старые импорты
+`../lib/program` работают как раньше. `dayHref` — русифицированный алиас
+`dayHrefFor("ru", n)`; в разметке используется `src/i18n/paths.ts`.
 
 `Program, Day, Talk, Hall, Track, Lector`; `PROGRAM`; `minutes, isTime, formatRange, days,
 talksOfDay, hallsOfDay, tracksOfProgram, isPlaceable, startsOf, spanOf, placeTalks,
 occupiedCells, pluralTalks, dayLabel, dayLongLabel, firstParagraph, resolveDay, dayByOrdinal,
-resolveTrack, talkById, dayHref, socialsOf`. Соцсети: `SOCIAL_NETWORKS, SOCIAL_LABELS,
+resolveTrack, talkById, dayHref, socialsOf`; медиа: `IMAGE_HOSTS, imageUrl` — белый список
+трёх CDN, единственный путь картинки из данных в разметку. Соцсети: `SOCIAL_NETWORKS, SOCIAL_LABELS,
 SocialNetwork, SocialLink` из `src/lib/socials.ts`. Календарь: `icsEscape, foldLine, icsDate, icsStamp,
 buildCalendar, calendarFilename, downloadIcs`.
 
@@ -348,7 +357,11 @@ span.search-result__day + span.search-result__title + span.search-result__meta`;
 
 ## Доступность и качество
 
-- Интерактив — только `button`/`a`; никаких `div` с обработчиком и `href="#"`.
+- Интерактив с видимой подписью или иконкой — настоящий `button`/`a`: drawer, оба тумблера
+  темы, чипы, звезда избранного, «Подробнее», экспорт `.ics`, закрытие и триггер поиска.
+  Три исключения — затемнения-подложки `div.nav-scrim`, `div.talk-modal__backdrop` и
+  `div.search-dialog__backdrop`: это закрытие по указателю, и у каждого слоя рядом работают
+  кнопка и `Esc`, так что клик по подложке не единственный путь. `href="#"` нет нигде.
 - Декоративные иконки — `::before` с CSS-маской: псевдоэлемент не попадает в дерево
   доступности, поэтому `aria-hidden` не нужен — смысл несёт подпись рядом.
 - Счётчик докладов — `p.talk-count[aria-live=polite]`: фильтр переписывает число и слово,

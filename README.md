@@ -24,6 +24,7 @@
 - [Что осталось 1:1, а что изменилось](#что-осталось-11-а-что-изменилось)
 - [Чего нет](#чего-нет)
 - [Деплой](#деплой)
+  - [Превью ссылки](#превью-ссылки)
   - [Аналитика](#аналитика)
 
 ## Что даёт переписывание
@@ -33,26 +34,33 @@
 | `index.html` и 3 файла, запуск двойным кликом по `file://` | Astro: 6 страниц дней (3 RU + 3 EN), 404 и два JSON-эндпоинта; `bun run build` |
 | Браузер рисует сетку из `window.MM_PROGRAM` | Сетка **лежит в HTML**: три страницы по 39 / 37 / 15 карточек, у каждого дня свой URL |
 | День переключается на клиенте, состояние живёт в памяти | День — это адрес: `/`, `/day/2/`, `/day/3/` (в EN — `/en/`, `/en/day/2/`, `/en/day/3/`) — ссылки, история, шаринг |
-| `app.js` — IIFE на 780 строк без типов | `src/lib/program.ts` и `src/lib/ics.ts` — типизированное ядро и 117 юнит-тестов без браузера |
-| Тесты — Python и headless Chrome | `bun test` (117 тестов) и Playwright на собранной странице, включая прогон с выключенным JS |
+| `app.js` — IIFE на 780 строк без типов | `src/lib/program.ts` и `src/lib/ics.ts` — типизированное ядро и 127 юнит-тестов без браузера |
+| Тесты — Python и headless Chrome | `bun test` (127 тестов) и Playwright на собранной странице, включая прогон с выключенным JS |
 | Только русский интерфейс, нет поиска | Словарь RU/EN + overlay перевода контента; поиск по названию, спикеру, треку и залу |
 | Свой CSS на 2381 строку с фиолетовым брендом | Токены портфельной дизайн-системы: три темы, Inter и Cormorant, кремовые баннеры |
 
-На выходе — **172.8 КБ HTML (23.9 КБ gzip) на день программы и один клиентский чанк
-323.8 КБ raw (79.6 КБ gzip)**. Вес замерен `gzip -9` на собранном
-`dist/_astro/ProgramPage.astro_astro_type_script_index_0_lang.*.js` и `dist/index.html` —
-в чанке `posthog-js`, `morphicons` (анимация иконки темы) и клиент поиска. Без JavaScript
-иконки соцсетей рисует CSS-маска, а страница показывает всю сетку, табы дней, чипы треков
-и счётчик. Это проверяет тест, а не обещает README.
+На выходе — **183.2 КБ HTML (25.6 КБ gzip) на первом дне программы и клиентский чанк
+46.6 КБ raw (17.6 КБ gzip)**. Вес замерен `gzip -9` на собранном `dist/index.html` и
+`dist/_astro/ProgramPage.astro_astro_type_script_index_0_lang.*.js`. Дни при этом весят
+по-разному, потому что в них разное число карточек: день 2 — 186.3 / 26.4 КБ, день 3 —
+93.5 / 15.8 КБ, то есть страницы отличаются почти вдвое. В клиентском чанке — тема
+(с `morphicons`, анимацией иконки) и поиск; слепок программы (298 511 байт) в него больше
+не входит, его забирают с `/program.json` по требованию. PostHog — отдельный ленивый чанк
+(341.4 КБ raw / 115.0 КБ gzip): он грузится только при первом взаимодействии и только
+когда задан `PUBLIC_POSTHOG_KEY`. Без JavaScript иконки соцсетей рисует CSS-маска, а страница
+показывает всю сетку, табы дней, чипы треков и счётчик. Прогон без JS проверяет именно этот
+набор — карточки, табы, чипы и счётчик, — а не маски соцсетей и не байтовые цифры выше.
 
 Overlay перевода `src/data/program.en.json` весит **146 379 байт raw / 43 312 байт gzip**
 (`gzip -9 -c src/data/program.en.json | wc -c`). В браузер он не уезжает: `localizeProgram`
 применяется на билде в `/en/program.json`, клиент получает уже готовые строки.
 
 Иконки соцсетей — CSS-маска с `data:`-URI: путь описан один раз в `program.css`
-(`.social-link--<network>`), разметка несёт только класс и пустой `<a>`. Inline-SVG
-стоил ~31 КБ raw (~4.8 КБ gzip) на страницу дня; после переноса `dist/index.html`
-весит 169.5 КБ raw / 23.3 КБ gzip вместо 194.3 / 27.4 (замер `gzip -9`).
+(`.social-link--<network>`), разметка несёт только класс и пустой `<a>`. Inline-SVG повторял
+бы один и тот же путь в каждой карточке, каждой модалке и подвале, поэтому маска дешевле
+и по разметке, и по числу узлов. Сейчас `dist/index.html` первого дня весит
+183.2 КБ raw / 25.6 КБ gzip (замер `gzip -9`); дни 2 и 3 отличаются числом карточек,
+а не устройством страницы.
 
 ## Измерения
 
@@ -90,10 +98,14 @@ Overlay перевода `src/data/program.en.json` весит **146 379 бай�
 src/
   data/program.json          слепок API, источник данных
   data/program.en.json       overlay перевода контента (EN)
+  data/socials.json          overlay соцсетей лекторов (telegram/linkedin/…)
   i18n/ui.ts                 словарь оболочки RU/EN
   i18n/format.ts             подписи дат и числительных по языкам
   i18n/paths.ts              адреса от BASE_URL с префиксом языка
-  lib/program.ts             типы и логика: дни, залы, строки
+  lib/program.ts             слепок PROGRAM и функции над ним (реэкспорт ядра)
+  lib/program-core.ts        чистое ядро без данных: типы, BASE_URL, firstParagraph
+  lib/socials.ts             сети и подписи соцсетей — один источник для view и клиента
+  lib/analytics.ts           UTM-атрибуция и единственный канал в PostHog
   lib/ics.ts                 RFC 5545: экранирование, VTIMEZONE
   lib/theme.ts               три темы, meta theme-color
   lib/localize.ts            overlay → Talk/Program
@@ -103,6 +115,7 @@ src/
   components/TalkCard.astro  карточка доклада
   components/TalkModal.astro модалка доклада
   components/SearchDialog.astro  каркас диалога поиска
+  components/Analytics.astro ленивый init PostHog, outbound_click
   components/Nav.astro       шапка, меню, дни, тема, язык
   pages/index.astro          день 1 → /
   pages/day/[n].astro        дни 2..N → /day/2/
@@ -119,7 +132,7 @@ src/
   styles/search.css          диалог поиска
 data/program.raw.json        сырой ответ API
 scripts/fetch-program.ts     загрузка, --check / --dry-run
-tests/lib/*.test.ts          117 юнит-тестов (bun test)
+tests/lib/*.test.ts          127 юнит-тестов (bun test)
 tests/built/program.spec.ts  браузерные (Playwright)
 tests/built/i18n-search.spec.ts  EN и поиск (Playwright)
 docs/reference/*.png         скриншоты оригинала
@@ -137,7 +150,7 @@ bun run build              # статика в dist/
 bun run preview            # посмотреть сборку
 
 bun run check              # типы в .astro и .ts
-bun test                   # 117 юнит-тестов
+bun test                   # 127 юнит-тестов
 bun run test:built         # браузерные тесты: 36 тестов × 3 проекта
 
 bun run data:fetch         # перекачать API
@@ -186,7 +199,7 @@ GET https://lms.matemarketing.ru/api/event-program/event/6/
 ## Проверка
 
 ```bash
-bun test                  # 117 pass
+bun test                  # 127 pass
 bun run test:built        # 36 тестов × 3 проекта = 108 прогонов
 ```
 

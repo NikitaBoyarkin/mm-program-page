@@ -5,7 +5,7 @@
  */
 import { t, type Lang } from "../i18n/ui";
 import { hallLabel, trackLabel } from "../lib/localize";
-import { firstParagraph, formatRange, type Talk } from "../lib/program";
+import { firstParagraph, formatRange, imageUrl, type Talk } from "../lib/program";
 import { SOCIAL_LABELS } from "../lib/socials";
 
 interface Props {
@@ -13,17 +13,15 @@ interface Props {
   /** Оригинальный ключ трека: по нему фильтрует клиент, поэтому не переводится. */
   trackKey?: string;
   lang: Lang;
+  /** Первый баннер в вьюпорте: грузим сразу и с высоким приоритетом (это LCP). */
+  priority?: boolean;
 }
 
-const { talk, trackKey, lang } = Astro.props;
+const { talk, trackKey, lang, priority = false } = Astro.props;
 
-/** Только `https:`: поля приходят из чужого API и не должны стать beacon'ом. */
-const safeUrl = (value: string | null): string | null => {
-  if (typeof value !== "string") return null;
-  return value.startsWith("https://") ? value : null;
-};
-
-const image = safeUrl(talk.image);
+// Баннер и аватар — только с трёх CDN первоисточника (`imageUrl`):
+// `https:` без проверки хоста пускал бы данные на любой сервер.
+const image = imageUrl(talk.image);
 const lectors = talk.lectors
   .filter((lector) => lector.name.trim() !== "")
   .map((lector) => ({ ...lector, socials: lector.socials ?? [] }));
@@ -96,6 +94,7 @@ const STAR =
             width="1200"
             height="900"
             loading="lazy"
+            fetchpriority={priority ? "high" : undefined}
             decoding="async"
             referrerpolicy="no-referrer"
           />
@@ -131,10 +130,10 @@ const STAR =
         <div class="talk-card__speakers">
           {lectors.map((lector) => (
             <div class="talk-card__speaker">
-              {safeUrl(lector.photo) ? (
+              {imageUrl(lector.photo) ? (
                 <img
                   class="talk-card__speaker-photo"
-                  src={safeUrl(lector.photo) as string}
+                  src={imageUrl(lector.photo) as string}
                   alt=""
                   width="36"
                   height="36"
@@ -227,7 +226,7 @@ const STAR =
     min-block-size: 44px;
     margin: 0;
     padding: var(--space-2) var(--space-3);
-    border: 1px solid color-mix(in srgb, #f8f2da 22%, transparent);
+    border: 1px solid var(--control-border);
     border-radius: var(--radius-md);
     background: #171717;
     color: #f8f2da;

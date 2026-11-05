@@ -34,6 +34,8 @@ interface Props {
   dayDate?: string;
   /** 1-based номер дня: подсвечивает строку в drawer'е. */
   dayOrdinal?: number;
+  /** Баннер первой карточки: `<link rel=preload>` только для десктопной сетки. */
+  preloadImage?: string | null;
 }
 
 const {
@@ -43,6 +45,7 @@ const {
   dayId,
   dayDate,
   dayOrdinal,
+  preloadImage = null,
 } = Astro.props;
 
 // Канонический адрес — только путь: `?track=` и прочие UTM-хвосты не должны
@@ -130,6 +133,19 @@ const [ticketsBefore, ticketsAfter = ""] = t(lang, "footerTickets").split("{link
       crossorigin="anonymous"
     />
 
+    {/* LCP на десктопе — первый баннер. `lazy`-картинка стартует слишком поздно,
+        а `eager` на телефоне качал бы её впустую: баннеры там `display: none`.
+        Поэтому предзагрузка с медиа-условием, а приоритет отдаёт `fetchpriority`. */}
+    {preloadImage && (
+      <link
+        rel="preload"
+        as="image"
+        href={preloadImage}
+        media="(min-width: 768px)"
+        fetchpriority="high"
+      />
+    )}
+
     <link rel="icon" type="image/svg+xml" href={`${BASE_URL}favicon.svg`} />
     <link rel="apple-touch-icon" sizes="180x180" href={`${BASE_URL}apple-touch-icon.png`} />
     <link rel="manifest" href={`${BASE_URL}manifest.webmanifest`} />
@@ -180,7 +196,31 @@ const [ticketsBefore, ticketsAfter = ""] = t(lang, "footerTickets").split("{link
           /* приватный режим — живём на дефолте */
         }
         root.setAttribute("data-theme", theme);
+        // Маркер для CSS: без него нельзя отличить «JS ещё не было» от «JS выключен»,
+        // а от этого зависит кламп тезисов (см. `program.css`).
+        root.setAttribute("data-js", "on");
         if (meta) meta.setAttribute("content", COLORS[theme] || COLORS.dark);
+
+        // Иконка тумблера берётся из карты, которую рендерит `Nav.astro`
+        // (`data-theme-icons`), — строки иконок не дублируются. Без этого
+        // светлая системная тема показывала бы луну до старта клиентского
+        // модуля, а на 404 без модуля — всё время.
+        var paintIcon = function () {
+          var holder = document.querySelector("[data-theme-icons]");
+          if (!holder) return;
+          var icons;
+          try {
+            icons = JSON.parse(holder.getAttribute("data-theme-icons") || "{}");
+          } catch (error) {
+            return;
+          }
+          var d = icons[root.getAttribute("data-theme") || "dark"];
+          if (!d) return;
+          document.querySelectorAll("[data-theme-toggle] path").forEach(function (path) {
+            path.setAttribute("d", d);
+          });
+        };
+        document.addEventListener("DOMContentLoaded", paintIcon);
       })();
     </script>
   </head>
@@ -243,12 +283,29 @@ const [ticketsBefore, ticketsAfter = ""] = t(lang, "footerTickets").split("{link
           var meta = document.querySelector('meta[name="theme-color"]');
           var COLORS = { dark: "#1400c3", light: "#f4efca", cyberpunk: "#171717" };
           var ORDER = ["dark", "light", "cyberpunk"];
+          var holder = document.querySelector("[data-theme-icons]");
+          var ICONS = {};
+          try {
+            ICONS = JSON.parse((holder && holder.getAttribute("data-theme-icons")) || "{}");
+          } catch (error) {
+            /* без карты остаётся иконка из разметки */
+          }
+          var paintIcon = function (name) {
+            var d = ICONS[name];
+            if (!d) return;
+            document.querySelectorAll("[data-theme-toggle] path").forEach(function (path) {
+              path.setAttribute("d", d);
+            });
+          };
           document.querySelectorAll("[data-theme-toggle]").forEach(function (button) {
             button.addEventListener("click", function () {
               var current = root.getAttribute("data-theme") || "dark";
               var next = ORDER[(ORDER.indexOf(current) + 1) % ORDER.length];
               root.setAttribute("data-theme", next);
               if (meta) meta.setAttribute("content", COLORS[next] || COLORS.dark);
+              // Модуля программы здесь нет, морфа тоже: иконку меняем руками,
+              // иначе кнопка врала бы о теме (было так на 404).
+              paintIcon(next);
               try {
                 localStorage.setItem("theme", next);
               } catch (error) {

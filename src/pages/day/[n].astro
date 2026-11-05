@@ -3,7 +3,7 @@ import Base from "../../layouts/Base.astro";
 import ProgramPage from "../../components/ProgramPage.astro";
 import { dayLongLabel } from "../../i18n/format";
 import { t } from "../../i18n/ui";
-import { days, type Day } from "../../lib/program";
+import { days, firstBanner, type Day } from "../../lib/program";
 
 export function getStaticPaths() {
   return days()
@@ -21,6 +21,7 @@ interface Props {
 }
 
 const { day, ordinal } = Astro.props;
+const banner = firstBanner(day);
 const lang = "ru" as const;
 const title = `${t(lang, "pageTitle")} ${t(lang, "brandEvent")} — ${dayLongLabel(day.date, lang)}`;
 const description =
@@ -34,6 +35,7 @@ const description =
   dayId={day.id}
   dayDate={day.date}
   dayOrdinal={ordinal}
+  preloadImage={banner?.url}
 >
   <ProgramPage day={day} ordinal={ordinal} lang={lang} />
 </Base>

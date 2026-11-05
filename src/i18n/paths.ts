@@ -3,7 +3,7 @@
  * остальные — в `day/N/`. Всё строится от `BASE_URL`, иначе деплой в подпапку
  * GitHub Pages даёт 404.
  */
-import { BASE_URL } from "../lib/program";
+import { BASE_URL } from "../lib/program-core";
 import type { Lang } from "./ui";
 
 export function langPrefix(lang: Lang): string {

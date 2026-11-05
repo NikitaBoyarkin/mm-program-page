@@ -14,8 +14,10 @@ import {
   dayLabel,
   dayLongLabel,
   days,
+  firstBanner,
   firstParagraph,
   hallsOfDay,
+  imageUrl,
   isPlaceable,
   minutes,
   occupiedCells,
@@ -174,6 +176,19 @@ describe("program.json — контракт нормализованного с�
         if (lector.photo !== null) expect(lector.photo).toMatch(HTTPS);
       }
     }
+  });
+
+  // Клиент рендерит только то, что прошло `imageUrl` (три CDN). Если `data:fetch`
+  // принесёт четвёртый хост, карточка молча станет текстовой — ловим здесь.
+  test("медиа: каждый непустой URL проходит белый список хостов", () => {
+    const bad: string[] = [];
+    for (const talk of PROGRAM.talks) {
+      if (talk.image !== null && imageUrl(talk.image) === null) bad.push(talk.image);
+      for (const lector of talk.lectors) {
+        if (lector.photo !== null && imageUrl(lector.photo) === null) bad.push(lector.photo);
+      }
+    }
+    expect(bad).toEqual([]);
   });
 
   test("тексты — плоский plain text без тегов и сущностей", () => {
@@ -490,5 +505,34 @@ describe("треки и размещаемость", () => {
     expect(isPlaceable(makeTalk({ start: "12:10", end: "11:00" }), halls)).toBe(false);
     expect(isPlaceable(makeTalk({ start: "aa:bb", end: "12:10" }), halls)).toBe(false);
     expect(isPlaceable(makeTalk({ end: "мусор" }), halls)).toBe(false);
+  });
+});
+
+describe("медиа: только известные CDN", () => {
+  test("imageUrl пускает только три CDN первоисточника по https", () => {
+    expect(imageUrl("https://img.matemarketing.ru/a/b.png")).toBe(
+      "https://img.matemarketing.ru/a/b.png",
+    );
+    expect(imageUrl("https://storage.yandexcloud.net/x.webp")).toBe(
+      "https://storage.yandexcloud.net/x.webp",
+    );
+    expect(imageUrl("https://mm-graphics.netlify.app/x.png")).toBe(
+      "https://mm-graphics.netlify.app/x.png",
+    );
+    // Свой хост, чужой хост и не-https — не картинка.
+    expect(imageUrl("https://attacker.example/pixel.png")).toBeNull();
+    expect(imageUrl("http://img.matemarketing.ru/a.png")).toBeNull();
+    expect(imageUrl("javascript:alert(1)")).toBeNull();
+    expect(imageUrl("data:image/png;base64,AAAA")).toBeNull();
+    expect(imageUrl("")).toBeNull();
+    expect(imageUrl(null)).toBeNull();
+  });
+
+  test("firstBanner на реальном дне возвращает id из этого дня и https-баннер", () => {
+    const day = days()[0]!;
+    const banner = firstBanner(day);
+    expect(banner).not.toBeNull();
+    expect(talksOfDay(day).some((item) => item.id === banner!.id)).toBe(true);
+    expect(banner!.url.startsWith("https://")).toBe(true);
   });
 });

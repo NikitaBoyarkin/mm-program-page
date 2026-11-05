@@ -18,13 +18,14 @@ import {
   BASE_URL,
   DATE_RE,
   formatRange,
+  imageUrl,
   isTime,
   type Day,
   type Program,
   type Talk,
-} from "../lib/program";
+} from "../lib/program-core";
 import { searchTalks } from "../lib/search";
-import { THEMES, THEME_COLORS, nextTheme, type Theme } from "../lib/theme";
+import { THEMES, THEME_COLORS, THEME_ICONS, nextTheme, type Theme } from "../lib/theme";
 import { SOCIAL_LABELS } from "../lib/socials";
 import { createMorph } from "morphicons/dom";
 
@@ -111,17 +112,11 @@ function applyTheme(theme: Theme, persist: boolean): void {
 }
 
 /**
- * Иконки трёх тем — сырые `d`: `morphicons` принимает строку как `IconInput`
- * и не требует пакета данных с иконками. Дуги нормализуются в кубические
- * кривые на стороне драйвера.
+ * Иконки трёх тем живут в `src/lib/theme.ts` (`THEME_PATHS` / `THEME_ICONS`):
+ * один источник для разметки, морфа и фолбэка без клиентского скрипта.
+ * `IconNode` — стабильная ссылка, поэтому `morphicons` кеширует разбор и план;
+ * сырая `d`-строка шла бы мимо обоих `WeakMap` и пересобирала план на каждый клик.
  */
-const THEME_ICON: Record<Theme, string> = {
-  dark: "M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z",
-  light:
-    "M12 8a4 4 0 1 0 0 8 4 4 0 0 0 0-8zM12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41",
-  cyberpunk: "M13 2 4.09 12.69a1 1 0 0 0 .77 1.64H10l-1 7.67L20.91 11.3a1 1 0 0 0-.77-1.63H14z",
-};
-
 /** Живые морфы тумблеров: их два (шапка и drawer), путь у обоих один. */
 const themeMorphs: Array<ReturnType<typeof createMorph>> = [];
 
@@ -134,7 +129,7 @@ function initTheme(): void {
   // Первая иконка ставится без анимации: сохранённая тема сразу получает свою
   // иконку, а не луну из разметки. Без JS разметка остаётся прежней.
   for (const path of $$<SVGPathElement>("[data-theme-toggle] path")) {
-    themeMorphs.push(createMorph(path, THEME_ICON[theme], { reducedMotion: "user" }));
+    themeMorphs.push(createMorph(path, THEME_ICONS[theme], { reducedMotion: "user" }));
   }
 
   // Тумблеров два — в шапке и в drawer'е (`Nav.astro`). Один делегированный
@@ -146,7 +141,7 @@ function initTheme(): void {
     const current = document.documentElement.dataset.theme;
     const next = nextTheme(isTheme(current) ? current : "dark");
     applyTheme(next, true);
-    for (const morph of themeMorphs) morph.morphTo(THEME_ICON[next]);
+    for (const morph of themeMorphs) morph.morphTo(THEME_ICONS[next]);
   });
 }
 
@@ -169,6 +164,8 @@ let drawerLayerToken = "";
 let searchLayerToken = "";
 /** Отложенный возврат фокуса в только что открытый drawer (см. `openDrawer`). */
 let focusTimer = 0;
+/** Снятие `transitionend`-слушателя drawer: закрытие до 260 мс иначе течёт. */
+let drawerCleanup: (() => void) | null = null;
 
 function currentLayerToken(): string {
   const state: unknown = window.history.state;
@@ -299,13 +296,17 @@ function openDrawer(): void {
       if (focused || !document.body.classList.contains("nav-open")) return;
       focused = true;
       window.clearTimeout(focusTimer);
-      nav.removeEventListener("transitionend", onTransitionEnd);
+      drawerCleanup?.();
+      drawerCleanup = null;
       focusFirst();
     };
     const onTransitionEnd = (event: Event): void => {
       if (event.target === nav && (event as TransitionEvent).propertyName === "visibility") settle();
     };
     nav.addEventListener("transitionend", onTransitionEnd);
+    // Слушатель обязан сниматься и при закрытии до конца перехода, иначе
+    // каждый быстрый open/close оставлял бы замыкание с ссылкой на `nav`.
+    drawerCleanup = () => nav.removeEventListener("transitionend", onTransitionEnd);
     focusTimer = window.setTimeout(settle, 260);
   }
   // Упрощённая версия приёма из модалки: запись в истории, чтобы системная
@@ -322,6 +323,8 @@ function hideDrawer(returnFocus = true): void {
   drawerLayerToken = "";
   // Ожидающий возврат фокуса из `openDrawer` больше не нужен.
   window.clearTimeout(focusTimer);
+  drawerCleanup?.();
+  drawerCleanup = null;
   // Снять `inert` с фона нужно ДО возврата фокуса: `focus()` внутри инертного
   // поддерева молча не срабатывает. И до выхода по отсутствующей кнопке —
   // иначе фон остался бы инертным до перезагрузки.
@@ -641,6 +644,34 @@ function saveFavorites(): void {
   writeStorage(FAV_KEY, JSON.stringify([...favorites]));
 }
 
+/**
+ * Чистка осиротевших id. `bun run data:fetch` пересобирает слепок, и часть
+ * докладов получает новые id: без чистки бейдж показывал бы избранное, которое
+ * нечем открыть (фильтр выводит пустой экран, а снять счётчик неоткуда).
+ * Список известных докладов есть только в `/program.json`, поэтому чистка
+ * запускается после его загрузки, а не на старте.
+ */
+function pruneFavorites(talks: Talk[]): void {
+  // Перечитываем хранилище: вторая вкладка могла добавить своё, пока ехали данные.
+  loadFavorites();
+  const known = new Set(talks.map((talk) => talk.id));
+  // Плюс всё, что отрендерено на этой странице: если `/program.json` пришёл из
+  // старого кеша, его id не должны удалять избранное, которое видно на экране.
+  for (const button of $$<HTMLButtonElement>("button[data-fav][data-talk-id]")) {
+    const id = Number(button.dataset.talkId);
+    if (Number.isFinite(id)) known.add(id);
+  }
+  let changed = false;
+  for (const id of [...favorites]) {
+    if (known.has(id)) continue;
+    favorites.delete(id);
+    changed = true;
+  }
+  if (!changed) return;
+  saveFavorites();
+  syncFavorites();
+}
+
 function syncModalFav(): void {
   const button = $<HTMLButtonElement>("button[data-modal-fav]");
   if (!button) return;
@@ -689,6 +720,9 @@ function syncFavorites(): void {
 
 function toggleFavorite(id: number): void {
   if (!Number.isFinite(id)) return;
+  // Перечитываем хранилище перед записью: вторая вкладка могла добавить своё,
+  // и `saveFavorites()` ниже затёр бы её набор своим (last-writer-wins).
+  loadFavorites();
   if (favorites.has(id)) favorites.delete(id);
   else favorites.add(id);
   saveFavorites();
@@ -698,6 +732,13 @@ function toggleFavorite(id: number): void {
 function initFavorites(): void {
   loadFavorites();
   syncFavorites();
+
+  // Другая вкладка изменила избранное — подхватываем без перезагрузки.
+  window.addEventListener("storage", (event) => {
+    if (event.key !== null && event.key !== FAV_KEY) return;
+    loadFavorites();
+    syncFavorites();
+  });
 
   for (const button of $$<HTMLButtonElement>("button[data-fav][data-talk-id]")) {
     button.addEventListener("click", (event) => {
@@ -805,6 +846,9 @@ function loadProgram(): Promise<Program> {
         if (!data || !Array.isArray(data.days) || !Array.isArray(data.talks)) {
           throw new Error("program.json: неожиданная форма данных");
         }
+        // Здесь впервые известен полный список докладов: только теперь можно
+        // отличить «избранное с другого дня» от id, которого больше нет.
+        pruneFavorites(data.talks);
         return data;
       })
       .catch((error: unknown) => {
@@ -893,7 +937,7 @@ function buildSpeaker(lector: Talk["lectors"][number]): HTMLElement {
   const row = document.createElement("div");
   row.className = "talk-modal__speaker";
 
-  const photo = safeUrl(lector.photo);
+  const photo = imageUrl(lector.photo) ?? "";
   const fallback = (): HTMLElement => {
     const node = document.createElement("span");
     node.className = "talk-modal__speaker-avatar-fallback";
@@ -985,7 +1029,7 @@ function fillPoster(talk: Talk): void {
   if (!media) return;
   clearPosterSkeleton(media);
   media.replaceChildren();
-  const poster = safeUrl(talk.image);
+  const poster = imageUrl(talk.image);
   if (!poster) {
     // Без баннера блок не должен занимать пустое место в диалоге.
     media.hidden = true;
@@ -1108,6 +1152,14 @@ function showModal(talk: Talk): void {
   dialog.focus();
 }
 
+/**
+ * Номер последнего запроса «открой доклад». Пока `/program.json` едет, `Esc` и
+ * системная «Назад» уже закрывают модалку — но `hideModal` выходит рано, когда
+ * её ещё нет, и промис открыл бы диалог сам через секунду. Счётчик отменяет
+ * устаревший ответ.
+ */
+let openRequestSeq = 0;
+
 /** Последний рубеж для фокуса: `main` помечен `tabindex="-1"` и фокусируем. */
 function focusMain(): void {
   const main = document.getElementById("main");
@@ -1116,6 +1168,7 @@ function focusMain(): void {
 
 /** Скрытие без истории — единственная точка, где модалка реально исчезает. */
 function hideModal(): void {
+  openRequestSeq += 1;
   const modal = modalRoot();
   if (!modal || modal.hidden) return;
   modal.hidden = true;
@@ -1153,6 +1206,8 @@ function hideModal(): void {
  * нет — `back()` не зовём: он выкинул бы со страницы.
  */
 function closeModal(): void {
+  // `Esc` во время загрузки данных: модалки ещё нет, но запрос уже в полёте.
+  openRequestSeq += 1;
   if (!isModalOpen()) return;
   const token = modalLayerToken;
   hideModal();
@@ -1180,8 +1235,11 @@ function openTalk(talkId: number, opener: HTMLElement | null): void {
   // Отклик в первую секунду: `/program.json` может ещё ехать, но тап уже
   // виден — кнопка помечена занятой и вернёт вид после ответа.
   setBusy(opener, true);
+  const seq = ++openRequestSeq;
   loadProgram()
     .then((program) => {
+      // Пока ехали данные, слой закрыли или открыли другой доклад.
+      if (seq !== openRequestSeq) return;
       const talk = program.talks.find((item) => item.id === talkId);
       if (!talk) {
         modalOpener = null;
@@ -1191,10 +1249,15 @@ function openTalk(talkId: number, opener: HTMLElement | null): void {
       showModal(talk);
     })
     .catch(() => {
+      if (seq !== openRequestSeq) return;
       modalOpener = null;
       toast(t(LANG, "toastLoadFailed"));
     })
-    .finally(() => setBusy(opener, false));
+    // Снимает занятость только актуальный запрос: устаревший `finally` погасил
+    // бы `is-busy` у кнопки, по которой уже идёт новый клик.
+    .finally(() => {
+      if (seq === openRequestSeq) setBusy(opener, false);
+    });
 }
 
 /** Общий трап Tab: модалка доклада и диалог поиска держат фокус внутри. */
@@ -1283,7 +1346,7 @@ function exportIcs(): void {
         toast(t(LANG, "toastNoExport"));
         return;
       }
-      downloadIcs(calendarFilename(day), buildCalendar(day, talks));
+      downloadIcs(calendarFilename(day), buildCalendar(day, talks, new Date(), t(LANG, "brandEvent")));
       toast(
         t(LANG, "toastExported", {
           count: `${talks.length} ${pluralTalks(talks.length, LANG)}`,
@@ -1455,9 +1518,8 @@ function initSearch(): void {
   const input = $<HTMLInputElement>("[data-search-input]");
   if (!dialog || !panel || !form || !input) return;
 
-  // `aria-controls` кнопки в шапке ссылается на этот id: разметку диалога
-  // держит `SearchDialog.astro`, поэтому id ставим здесь, когда скрипт есть.
-  if (!dialog.id) dialog.id = "search-dialog";
+  // `id="search-dialog"` ставит `SearchDialog.astro`: `aria-controls` кнопки в
+  // шапке должен резолвиться уже в собранном HTML, а не только после гидрации.
 
   // Триггер — делегирование, как у темы: кнопка живёт в `Nav.astro`.
   document.addEventListener("click", (event) => {
@@ -1496,6 +1558,17 @@ function initDeepLink(): void {
 
   const id = Number(raw);
   if (!Number.isFinite(id)) return;
+
+  // `?talk=` — одноразовый вход: id уже прочитан, адрес чистим до `pushLayer`,
+  // иначе он остался бы в записи истории и после закрытия модалки: reload
+  // открывал бы её снова, а «Вперёд» вёл на запись без слоя.
+  try {
+    const url = new URL(window.location.href);
+    url.searchParams.delete("talk");
+    window.history.replaceState(window.history.state, "", url);
+  } catch {
+    /* History недоступен — адрес остаётся как есть */
+  }
 
   const opener = $<HTMLButtonElement>(`button.talk-card__title-btn[data-talk-id="${id}"]`);
   openTalk(id, opener);

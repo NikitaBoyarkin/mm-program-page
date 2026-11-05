@@ -56,7 +56,7 @@ const { lang } = Astro.props;
           {t(lang, "modalBuy")}
         </a>
         <button class="talk-modal__fav" type="button" data-modal-fav aria-pressed="false">
-          {t(lang, "modalFavAdd")}
+          <span data-modal-fav-label>{t(lang, "modalFavAdd")}</span>
         </button>
       </div>
     </div>

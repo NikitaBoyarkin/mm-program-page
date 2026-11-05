@@ -11,6 +11,7 @@ import { hallLabel, dayNameLabel, localizeTalk, trackLabel } from "../lib/locali
 import {
   PROGRAM,
   days,
+  firstBanner,
   hallsOfDay,
   isPlaceable,
   occupiedCells,
@@ -68,6 +69,12 @@ for (let row = 0; row < rows.length; row += 1) {
 }
 
 const total = slots.length;
+/**
+ * Первый баннер в порядке сетки — он же LCP на десктопе. Приоритет отдаётся
+ * `fetchpriority` + `preload` из `Base.astro`; сама картинка остаётся `lazy`,
+ * потому что страница дня весит десятки мегабайт чужих баннеров.
+ */
+const firstBannerId = firstBanner(day)?.id ?? -1;
 const trackChips = tracksOfProgram().map((track) => ({
   track,
   count: placeable.filter((talk) => talk.track === track).length,
@@ -220,6 +227,7 @@ const hallsFact = lang === "en" ? `${hallCount} halls` : `${hallCount} зало�
               talk={localizeTalk(lang, cell.slot.talk)}
               trackKey={cell.slot.talk.track}
               lang={lang}
+              priority={cell.slot.talk.id === firstBannerId}
             />
           </div>
         );

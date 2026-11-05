@@ -8,6 +8,7 @@ import { dayHrefFor, switchLangHref } from "../i18n/paths";
 import { otherLang, t, type Lang } from "../i18n/ui";
 import { dayNameLabel } from "../lib/localize";
 import { days } from "../lib/program";
+import { THEME_PATHS } from "../lib/theme";
 
 interface Props {
   /** 1-based номер текущего дня — подсвечивает соответствующую строку. */
@@ -126,6 +127,7 @@ const langCode = targetLang.toUpperCase();
       data-theme-toggle
       aria-label={t(lang, "navThemeToggle")}
       title={t(lang, "navThemeHint")}
+      data-theme-icons={JSON.stringify(THEME_PATHS)}
     >
       <svg
         viewBox="0 0 24 24"
@@ -139,7 +141,7 @@ const langCode = targetLang.toUpperCase();
         aria-hidden="true"
         focusable="false"
       >
-        <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+        <path d={THEME_PATHS.dark}></path>
       </svg>
     </button>
 
@@ -239,7 +241,7 @@ const langCode = targetLang.toUpperCase();
         aria-hidden="true"
         focusable="false"
       >
-        <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+        <path d={THEME_PATHS.dark}></path>
       </svg>
       <span>{t(lang, "navThemeToggle")}</span>
     </button>
@@ -303,7 +305,7 @@ const langCode = targetLang.toUpperCase();
     padding: 0;
     /* Литералы, а не `--button-*`: в киберпанке те токены красят кнопку в
        розовый. Пара #171717 / #f8f2da — контраст 15.7:1 в любой теме. */
-    border: 1px solid color-mix(in srgb, #f8f2da 22%, transparent);
+    border: 1px solid var(--control-border);
     border-radius: var(--radius-full);
     background: #171717;
     color: #f8f2da;

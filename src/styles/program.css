@@ -28,7 +28,9 @@ nav.day-tabs {
   gap: var(--space-2);
   min-block-size: 44px;
   padding: var(--space-2) var(--space-4);
-  border: 1px solid var(--border-color);
+  /* Таб дня — контрол: граница единственная подсказка формы, поэтому
+     `--border-strong` (3:1), а не волосяной `--border-color`. */
+  border: 1px solid var(--border-strong);
   border-radius: var(--radius-full);
   color: var(--text-normal);
   text-decoration: none;
@@ -109,7 +111,7 @@ nav.day-tabs {
   padding: 0.25rem 0.5rem;
   /* Литералы, а не тема: `--button-bg` в киберпанке розовый, а выбранный чип
      и так заливается акцентом — их нельзя разводить одинаковой заливкой. */
-  border: 1px solid color-mix(in srgb, #f8f2da 22%, transparent);
+  border: 1px solid var(--control-border);
   border-radius: var(--radius-full);
   background: #171717;
   color: #f8f2da;
@@ -374,7 +376,7 @@ nav.day-tabs {
   padding: 0;
   /* Литералы, а не тема: `--button-bg` в киберпанке розовый. Пара
      #171717 / #f8f2da — контраст 15.7:1 и на светлом баннере карточки. */
-  border: 1px solid color-mix(in srgb, #f8f2da 22%, transparent);
+  border: 1px solid var(--control-border);
   border-radius: var(--radius-full);
   background: #171717;
   color: #f8f2da;
@@ -567,9 +569,10 @@ nav.day-tabs {
 .social-links {
   display: flex;
   flex-wrap: wrap;
-  /* 12px, а не 4: зона нажатия выросла до 36px (24 + 2 × 6, см. `::after`),
-     и при меньшем зазоре соседние зоны перекрывались бы. */
-  gap: var(--space-3);
+  /* 20px, а не 4: зона нажатия — 44px (24 + 2 × 10, см. `::after`), и при
+     меньшем зазоре соседние зоны перекрывались бы: верхний псевдоэлемент
+     съедал бы у соседа 8px, и цель ужималась бы до ~26px. */
+  gap: var(--space-5);
   margin-block-start: 2px;
 }
 
@@ -595,12 +598,14 @@ nav.day-tabs {
 }
 
 /* Маска обязана остаться 24px, но палец в неё не попадает: псевдоэлемент
-   расширяет зону нажатия до 36×36 (24 + 2 × 6), а клик по нему всё равно
-   принадлежит самой ссылке. */
+   расширяет зону нажатия до 44×44 (24 + 2 × 10), а клик по нему всё равно
+   принадлежит самой ссылке. Зазор ряда (`gap`) не меньше 20px, иначе соседние
+   зоны перекрываются и цель у следующей ссылки ужимается. */
 .social-link::after {
   content: "";
   position: absolute;
-  inset: -6px;
+  /* 24 + 2 × 10 = 44px: норма WCAG 2.5.8, как у кнопок шапки. */
+  inset: -10px;
 }
 
 .social-link:hover,
@@ -652,6 +657,19 @@ nav.day-tabs {
   -webkit-line-clamp: unset;
 }
 
+/* Без JS развернуть карточку нечем: кнопка осталась бы мёртвой, а кламп
+   спрятал бы половину тезисов. Маркер `data-js` ставит предрисуночный скрипт,
+   поэтому «JS выключен или упал» = текст целиком, кнопки нет. */
+html:not([data-js]) .talk-card__theses p {
+  display: block;
+  overflow: visible;
+  -webkit-line-clamp: unset;
+}
+
+html:not([data-js]) .talk-card__toggle-btn {
+  display: none;
+}
+
 .talk-card__toggle-btn {
   position: relative;
   display: inline-flex;
@@ -661,7 +679,7 @@ nav.day-tabs {
      переопределяет `--button-bg` на розовый). */
   min-block-size: 44px;
   padding: var(--space-2) var(--space-4);
-  border: 1px solid color-mix(in srgb, #f8f2da 22%, transparent);
+  border: 1px solid var(--control-border);
   border-radius: var(--radius-full);
   background: #171717;
   color: #f8f2da;
@@ -782,7 +800,7 @@ nav.day-tabs {
   padding: 0;
   /* Та же пара литералов, что у остальных кнопок: в киберпанке `--button-bg`
      розовый, а кнопка должна оставаться тёмной во всех трёх темах. */
-  border: 1px solid color-mix(in srgb, #f8f2da 22%, transparent);
+  border: 1px solid var(--control-border);
   border-radius: var(--radius-full);
   background: #171717;
   color: #f8f2da;
@@ -990,7 +1008,7 @@ h2.talk-modal__title {
   padding: var(--space-3) var(--space-4);
   /* Та же пара литералов, что у остальных кнопок: в киберпанке `--button-bg`
      розовый. */
-  border: 1px solid color-mix(in srgb, #f8f2da 22%, transparent);
+  border: 1px solid var(--control-border);
   border-radius: var(--radius-md);
   background: #171717;
   color: #f8f2da;
@@ -1267,7 +1285,7 @@ html:has(body.is-search-open) {
     max-inline-size: 100%;
     min-block-size: 36px;
     padding: 0.25rem 0.5rem;
-    border: 1px solid color-mix(in srgb, #f8f2da 22%, transparent);
+    border: 1px solid var(--control-border);
     border-radius: var(--radius-full);
     background: #171717;
     color: #f8f2da;

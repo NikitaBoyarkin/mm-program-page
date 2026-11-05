@@ -3,10 +3,11 @@ import Base from "../../layouts/Base.astro";
 import ProgramPage from "../../components/ProgramPage.astro";
 import { dayLongLabel } from "../../i18n/format";
 import { t } from "../../i18n/ui";
-import { dayByOrdinal } from "../../lib/program";
+import { dayByOrdinal, firstBanner } from "../../lib/program";
 
 const lang = "en" as const;
 const day = dayByOrdinal(1);
+const banner = firstBanner(day);
 const title = `${t(lang, "pageTitle")} ${t(lang, "brandEvent")} — ${dayLongLabel(day.date, lang)}`;
 const description = t(lang, "metaDescription");
 ---
@@ -18,6 +19,7 @@ const description = t(lang, "metaDescription");
   dayId={day.id}
   dayDate={day.date}
   dayOrdinal={1}
+  preloadImage={banner?.url}
 >
   <ProgramPage day={day} ordinal={1} lang={lang} />
 </Base>

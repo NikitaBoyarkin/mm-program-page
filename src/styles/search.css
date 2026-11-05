@@ -134,7 +134,7 @@
   inline-size: 44px;
   block-size: 44px;
   padding: 0;
-  border: 1px solid var(--border-color);
+  border: 1px solid var(--border-strong);
   border-radius: var(--radius-full);
   background: transparent;
   color: var(--text-muted);

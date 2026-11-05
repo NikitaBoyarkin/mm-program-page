@@ -9,7 +9,7 @@
  * Запрос пользователя никогда не превращается в RegExp: только `includes`.
  * Строка вида `a.*(` должна искать символы, а не бросать исключение.
  */
-import type { Program, Talk } from "./program";
+import type { Program, Talk } from "./program-core";
 
 /** Ранг совпадения: меньше — выше в выдаче. */
 const RANK_TITLE_START = 0;

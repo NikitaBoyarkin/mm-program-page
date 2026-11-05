@@ -102,7 +102,7 @@ describe("buildCalendar", () => {
     expect(count(text, "BEGIN:VEVENT\r\n")).toBe(talks.length);
     expect(count(text, "END:VEVENT\r\n")).toBe(talks.length);
     expect(flat).toContain("VERSION:2.0");
-    expect(flat).toContain("PRODID:-//mm-program-page//RU");
+    expect(flat).toContain("PRODID:-//mm-program-page//NONSGML program//EN");
     expect(flat).toContain("CALSCALE:GREGORIAN");
     expect(flat).toContain("METHOD:PUBLISH");
     expect(flat).toContain("X-WR-CALNAME:Матемаркетинг 2026 — 1 день");
@@ -206,6 +206,23 @@ describe("calendarFilename", () => {
   test("matemarketing-<дата>.ics", () => {
     expect(calendarFilename(makeDay({ date: "2026-11-26" }))).toBe("matemarketing-2026-11-26.ics");
     expect(calendarFilename(makeDay({ date: "2026-11-17" }))).toBe("matemarketing-2026-11-17.ics");
+  });
+});
+
+describe("время доклада вне контракта", () => {
+  const local = makeDay({ date: "2026-11-26", name: "1 день" });
+
+  test("buildCalendar отвергает время, из которого можно собрать свойство", () => {
+    expect(() => buildCalendar(local, [makeTalk({ start: "11:00\r\nX-EVIL:1" })], NOW)).toThrow(
+      /время доклада/,
+    );
+    expect(() => buildCalendar(local, [makeTalk({ end: "25:00" })], NOW)).toThrow(/время доклада/);
+    expect(() => buildCalendar(local, [makeTalk({ start: "1:00" })], NOW)).toThrow(/время доклада/);
+  });
+
+  test("X-WR-CALNAME берёт имя конференции из аргумента (EN-страница)", () => {
+    const flat = unfold(buildCalendar(local, [], NOW, "Matemarketing 2026"));
+    expect(flat).toContain("X-WR-CALNAME:Matemarketing 2026 — 1 день");
   });
 });
 

@@ -8,7 +8,8 @@
 import { expect, test } from "bun:test";
 import { readFileSync } from "node:fs";
 import path from "node:path";
-import { THEMES, THEME_COLORS, nextTheme } from "../../src/lib/theme";
+import { createMorph } from "morphicons/dom";
+import { THEMES, THEME_COLORS, THEME_ICONS, THEME_PATHS, nextTheme } from "../../src/lib/theme";
 
 const ROOT = path.resolve(import.meta.dir, "../..");
 const tokens = readFileSync(path.join(ROOT, "src/styles/tokens.css"), "utf8");
@@ -58,4 +59,50 @@ test("nextTheme крутит три темы по кругу и пережива
 
 test("THEMES и THEME_COLORS описывают один и тот же набор", () => {
   expect(Object.keys(THEME_COLORS).sort()).toEqual([...THEMES].sort());
+});
+
+/* ── Иконки темы ───────────────────────────────────────────────────────
+ * Морф падает не «на глаз», а исключением в `createMorph` при разборе `d`.
+ * Фейковый элемент satisfies `PathEl` (нужен только `setAttribute`), поэтому
+ * тест ловит опечатку в пути до браузера, а не после.
+ */
+
+const pathEl = () => {
+  const written: string[] = [];
+  return {
+    written,
+    setAttribute(name: string, value: string) {
+      if (name === "d") written.push(value);
+    },
+  };
+};
+
+test("каждая иконка темы разбирается morphicons", () => {
+  for (const theme of THEMES) {
+    const el = pathEl();
+    expect(() => createMorph(el, THEME_ICONS[theme]), `тема ${theme}`).not.toThrow();
+    expect(el.written.length).toBe(1);
+  }
+});
+
+test("THEME_ICONS и THEME_PATHS описывают один набор иконок на сетке 24", () => {
+  expect(Object.keys(THEME_ICONS).sort()).toEqual([...THEMES].sort());
+  expect(Object.keys(THEME_PATHS).sort()).toEqual([...THEMES].sort());
+  for (const theme of THEMES) {
+    const node = THEME_ICONS[theme];
+    expect(node).toHaveLength(1);
+    const [tag, attrs] = node[0] as [string, { d: string }];
+    expect(tag).toBe("path");
+    expect(attrs.d).toBe(THEME_PATHS[theme]);
+    // 24×24: ни одна координата не выходит за холст.
+    const numbers = attrs.d.match(/-?\d*\.?\d+/g)?.map(Number) ?? [];
+    expect(numbers.every((value) => Math.abs(value) <= 24)).toBe(true);
+  }
+});
+
+test("разметка берёт иконку из того же источника, а не из литерала", () => {
+  const nav = readFileSync(path.join(ROOT, "src/components/Nav.astro"), "utf8");
+  expect(nav).toContain("THEME_PATHS.dark");
+  expect(nav).toContain("data-theme-icons");
+  expect(nav).not.toContain("M21 12.79A9 9 0 1 1 11.21 3");
 });

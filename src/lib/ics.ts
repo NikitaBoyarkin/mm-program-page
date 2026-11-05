@@ -4,7 +4,7 @@
  * Функции чистые (кроме `downloadIcs`, который трогает DOM), поэтому календарь
  * проверяется в `bun test` сравнением с фикстурой, а не «на глаз в календаре».
  */
-import { DATE_RE, firstParagraph, type Day, type Talk } from "./program";
+import { DATE_RE, firstParagraph, isTime, type Day, type Talk } from "./program-core";
 
 const CRLF = "\r\n";
 const TZID = "Europe/Moscow";
@@ -74,6 +74,20 @@ function assertIcsDate(date: string): void {
   }
 }
 
+/**
+ * Время доклада проверяется так же, как дата: `DTSTART:20261126T110000` собирается
+ * из `talk.start`, а `"11:00\r\nX-EVIL:1"` вписал бы в календарь произвольное
+ * свойство. Клиент сегодня вызывает `buildCalendar` только после `isTime`,
+ * но сама функция — публичная и обязана защищаться сама.
+ *
+ * @throws если `talk.start`/`talk.end` не `HH:MM` в пределах суток.
+ */
+function assertIcsTime(time: string, id: number): void {
+  if (!isTime(time)) {
+    throw new Error(`ics: некорректное время доклада ${id} — ${JSON.stringify(time)}`);
+  }
+}
+
 /** UTC-метка `DTSTAMP`: 20261102T182210Z. */
 export function icsStamp(date: Date): string {
   const pad = (value: number) => String(value).padStart(2, "0");
@@ -87,16 +101,26 @@ export function icsStamp(date: Date): string {
  * Собирает календарь дня: один VEVENT на доклад.
  * `now` подставляется в тестах, чтобы вывод был побайтово стабильным.
  */
-export function buildCalendar(day: Day, talks: Talk[], now: Date = new Date()): string {
+export function buildCalendar(
+  day: Day,
+  talks: Talk[],
+  now: Date = new Date(),
+  /** Имя конференции для `X-WR-CALNAME`; на EN-странице — английское. */
+  eventName: string = "Матемаркетинг 2026",
+): string {
   assertIcsDate(day.date);
+  for (const talk of talks) {
+    assertIcsTime(talk.start, talk.id);
+    assertIcsTime(talk.end, talk.id);
+  }
   const stamp = icsStamp(now);
   const lines = [
     "BEGIN:VCALENDAR",
     "VERSION:2.0",
-    "PRODID:-//mm-program-page//RU",
+    "PRODID:-//mm-program-page//NONSGML program//EN",
     "CALSCALE:GREGORIAN",
     "METHOD:PUBLISH",
-    `X-WR-CALNAME:${icsEscape(`Матемаркетинг 2026 — ${day.name || day.date}`)}`,
+    `X-WR-CALNAME:${icsEscape(`${eventName} — ${day.name || day.date}`)}`,
     `X-WR-TIMEZONE:${TZID}`,
     ...VTIMEZONE,
   ];

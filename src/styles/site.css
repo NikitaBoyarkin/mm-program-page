@@ -193,7 +193,7 @@ dl.facts dt:lang(ru) {
    `--button-bg` розовый. Единственный потребитель — «Загрузить .ics». */
 .button--ghost {
   background: #171717;
-  border-color: color-mix(in srgb, #f8f2da 22%, transparent);
+  border-color: var(--control-border);
   color: #f8f2da;
 }
 
@@ -407,7 +407,7 @@ ul.nav-inline {
   /* Литералы, не `--button-*`: в киберпанке те токены красят кнопку в
      розовый. Пара #171717 / #f8f2da — контраст 15.7:1 в любой теме и та же,
      что у переключателя темы рядом (`.nav-icon-btn` в `Nav.astro`). */
-  border: 1px solid color-mix(in srgb, #f8f2da 22%, transparent);
+  border: 1px solid var(--control-border);
   border-radius: var(--radius-full);
   background: #171717;
   color: #f8f2da;
@@ -522,10 +522,11 @@ body.nav-open #site-nav {
   flex: none;
   align-items: center;
   justify-content: center;
-  inline-size: 40px;
-  block-size: 40px;
+  /* 44px — норма WCAG 2.5.8, как у остальных кнопок шапки. */
+  inline-size: 44px;
+  block-size: 44px;
   padding: 0;
-  border: 1px solid var(--border-color);
+  border: 1px solid var(--border-strong);
   border-radius: var(--radius-full);
   background: transparent;
   color: var(--text-muted);
