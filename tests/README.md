@@ -3,16 +3,17 @@
 Два набора, оба на bun. Первый — без браузера и без сборки, второй — на собранной странице.
 
 ```bash
-bun test                # tests/lib — 66 юнит-тестов ядра (4 файла)
+bun test                # tests/lib — 127 юнит-тестов ядра (6 файлов)
 bun run test:built      # tests/built — браузерные тесты (Playwright + astro preview)
 ```
 
 ## `tests/lib` — ядро без DOM
 
-`bun test` гоняет чистые функции `src/lib/program.ts`, `src/lib/ics.ts` и
-`src/lib/analytics.ts` против реального слепка `src/data/program.json`.
+`bun test` гоняет чистые функции `src/lib/program.ts`, `src/lib/ics.ts`,
+`src/lib/theme.ts`, `src/lib/search.ts`, `src/lib/analytics.ts` и модули i18n
+против реального слепка `src/data/program.json`.
 
-`program.test.ts` (33 теста):
+`program.test.ts` (37 тестов):
 
 - инварианты данных: 3 дня в порядке `order`, 91 доклад, 11 треков, 9 залов, форма `HH:MM`,
   `image`/`photo` — либо `https://…`, либо `null`, в текстах нет HTML-тегов и сущностей,
@@ -23,11 +24,14 @@ bun run test:built      # tests/built — браузерные тесты (Playw
   `dayLabel`, `dayLongLabel`, `resolveDay` (id / дата / номер / мусор), `dayHref`,
   `hallsOfDay`, `tracksOfProgram`, `isPlaceable`.
 
-`theme.test.ts` (4 теста): три hex для `meta[name=theme-color]` совпадают с
+`theme.test.ts` (7 тестов): три hex для `meta[name=theme-color]` совпадают с
 `--background-primary` каждой темы в `tokens.css`; `Base.astro` повторяет те же три значения
-в инлайновых скриптах; `nextTheme` крутит цикл и переживает мусор в `localStorage`.
+в инлайновых скриптах; `nextTheme` крутит цикл и переживает мусор в `localStorage`;
+`THEMES` и `THEME_COLORS` описывают один набор, `THEME_PATHS` и `THEME_ICONS` — один набор
+иконок на сетке 24, каждая иконка разбирается `morphicons`, а разметка берёт `d` из того же
+источника, а не из литерала.
 
-`ics.test.ts` (19 тестов): экранирование `\ ; ,` и переводов строк, перенос строки по
+`ics.test.ts` (23 теста): экранирование `\ ; ,` и переводов строк, перенос строки по
 75 **октетам** UTF-8 (кириллица не рвётся посередине символа), `icsDate`/`icsStamp`,
 `buildCalendar` со стабильным `now` (VTIMEZONE, `DTSTART;TZID=Europe/Moscow`, `DTEND`,
 `SUMMARY`, `LOCATION`, `DESCRIPTION`, CRLF, число `VEVENT` = числу докладов), `calendarFilename`,
@@ -38,6 +42,14 @@ bun run test:built      # tests/built — браузерные тесты (Playw
 хосты, `other`, битый `referrer` не бросает), `computeFirstTouch` (класс, путь входа и UTM
 собираются вместе).
 
+`i18n.test.ts` (24 теста): совпадение ключей RU/EN, `t` с параметрами, `pluralTalks`/`pluralDays`
+в обоих языках, подписи дат, `BASE_URL` и адреса дней, `switchLangHref`, покрытие overlay'я
+91/91, `localizeTalk`/`localizeProgram` и перевод справочников.
+
+`search.test.ts` (23 теста): пустой и мусорный запрос, нормализация регистра и `ё → е`,
+ранги (заголовок выше спикера, спикер выше трека и зала, трек и зал выше текста), поиск
+по каждому полю, дедупликация по id, `limit` по умолчанию 12, стабильный порядок выдачи.
+
 ## `tests/built` — сборка в браузере
 
 `playwright.config.ts` поднимает `astro preview` на `127.0.0.1:4321` и проверяет `dist/`,
@@ -47,7 +59,7 @@ bun run test:built      # tests/built — браузерные тесты (Playw
 
 | Проект | Окно | Что покрывает |
 | --- | --- | --- |
-| `chromium` | 1280×900, Chromium | десктопная сетка «время × залы», широкая строка вкладок, `.ics`, `@media print`; базовый прогон всех 27 тестов |
+| `chromium` | 1280×900, Chromium | десктопная сетка «время × залы», широкая строка вкладок, `.ics`, `@media print`; базовый прогон всех 36 тестов (28 в `program.spec.ts` + 8 в `i18n-search.spec.ts`) |
 | `chromium-mobile` | 320×700, Chromium, `isMobile`, `hasTouch`, DPR 3 | нижняя граница мобильной модели: вкладки дней в строку, липкая цепочка, отсутствие горизонтального скролла |
 | `webkit-iphone` | 390×844, WebKit, iPhone 13 (`devices["iPhone 13"]`) | второй движок: `position: sticky` крестика модалки, `inert`, `history.pushState`/`popstate`, CSS `:has()`, сенсорные состояния |
 
@@ -82,9 +94,8 @@ drawer; три темы (тумблер в шапке и тумблер в drawe
   трека по «И», а в URL по-прежнему попадает только `?track=`;
 - в режиме списка группа времени без видимых докладов прячет свой разделитель.
 
-Число тестов здесь не названо намеренно: набор мобильной группы ещё дописывается, и
-любая цифра устареет раньше, чем её прочтут. Источник истины — `grep -c "test("
-tests/built/program.spec.ts`.
+Числа выше сняты с текущего дерева; если они разойдутся с файлами, прав файл.
+Источник истины — `grep -c "test(" tests/built/program.spec.ts`.
 
 ## Мобильный бюджет
 
