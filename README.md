@@ -34,8 +34,8 @@
 | `index.html` и 3 файла, запуск двойным кликом по `file://` | Astro: 6 страниц дней (3 RU + 3 EN), 404 и два JSON-эндпоинта; `bun run build` |
 | Браузер рисует сетку из `window.MM_PROGRAM` | Сетка **лежит в HTML**: три страницы по 39 / 37 / 15 карточек, у каждого дня свой URL |
 | День переключается на клиенте, состояние живёт в памяти | День — это адрес: `/`, `/day/2/`, `/day/3/` (в EN — `/en/`, `/en/day/2/`, `/en/day/3/`) — ссылки, история, шаринг |
-| `app.js` — IIFE на 780 строк без типов | `src/lib/program.ts` и `src/lib/ics.ts` — типизированное ядро и 127 юнит-тестов без браузера |
-| Тесты — Python и headless Chrome | `bun test` (127 тестов) и Playwright на собранной странице, включая прогон с выключенным JS |
+| `app.js` — IIFE на 780 строк без типов | `src/lib/program.ts` и `src/lib/ics.ts` — типизированное ядро и 132 юнит-теста без браузера |
+| Тесты — Python и headless Chrome | `bun test` (132 теста) и Playwright на собранной странице, включая прогон с выключенным JS |
 | Только русский интерфейс, нет поиска | Словарь RU/EN + overlay перевода контента; поиск по названию, спикеру, треку и залу |
 | Свой CSS на 2381 строку с фиолетовым брендом | Токены портфельной дизайн-системы: три темы, Inter и Cormorant, кремовые баннеры |
 
@@ -132,7 +132,7 @@ src/
   styles/search.css          диалог поиска
 data/program.raw.json        сырой ответ API
 scripts/fetch-program.ts     загрузка, --check / --dry-run
-tests/lib/*.test.ts          127 юнит-тестов (bun test)
+tests/lib/*.test.ts          132 юнит-теста (bun test, 7 файлов)
 tests/built/program.spec.ts  браузерные (Playwright)
 tests/built/i18n-search.spec.ts  EN и поиск (Playwright)
 docs/reference/*.png         скриншоты оригинала
@@ -150,7 +150,7 @@ bun run build              # статика в dist/
 bun run preview            # посмотреть сборку
 
 bun run check              # типы в .astro и .ts
-bun test                   # 127 юнит-тестов
+bun test                   # 132 юнит-теста
 bun run test:built         # браузерные тесты: 36 тестов × 3 проекта
 
 bun run data:fetch         # перекачать API
@@ -199,7 +199,7 @@ GET https://lms.matemarketing.ru/api/event-program/event/6/
 ## Проверка
 
 ```bash
-bun test                  # 127 pass
+bun test                  # 132 pass
 bun run test:built        # 36 тестов × 3 проекта = 108 прогонов
 ```
 

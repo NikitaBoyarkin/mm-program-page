@@ -468,8 +468,17 @@ ul.nav-inline {
     calc(var(--space-5) + env(safe-area-inset-left));
   overflow-y: auto;
   overscroll-behavior: contain;
-  background: var(--background-secondary);
-  border-inline-end: 1px solid var(--border-color);
+  /* Панель живёт на поверхности карточки, а не на `--background-secondary`:
+     в тёмной теме вторичный токен (#16009f) — это 55 %-стоп `--gradient-page`,
+     то есть ровно тот цвет, что под панелью, и шов исчезает. В тёмной теме
+     `--card-background` (#0d0068) темнее рампы (1.49:1), в светлой кремовый.
+     В киберпанке разницы заливок нет вовсе — там панель держит ребро, см. ниже. */
+  background: var(--card-background);
+  color: var(--text-normal);
+  /* Ребро панели — `--border-strong`: в киберпанке `--card-background` равен
+     `--background-secondary` (#232327), то есть стопу рампы под панелью, и
+     отделяет её именно ребро (3.18:1), а не разница заливок (≈1.14:1). */
+  border-inline-end: 1px solid var(--border-strong);
   box-shadow: 0 24px 60px var(--shadow-color);
   transform: translateX(-102%);
   visibility: hidden;
@@ -482,35 +491,18 @@ body.nav-open {
   overflow: hidden;
 }
 
-/* Панель меню — «светлая тема» независимо от темы страницы: белая поверхность
-   и тёмные чернила, ровно та пара, что даёт светлая тема. Причина не в вкусе:
-   в тёмной теме панель красилась `--background-secondary` (#16009f) и на синем
-   градиенте страницы переставала быть отдельным слоем — её держала одна тень.
-   Токены переопределены локально, поэтому вся внутренность (ссылки, счётчик,
-   кнопки, монограмма на `currentColor`) получает светлую пару без второй копии
-   правил. Значения совпадают с `[data-theme="light"]` в tokens.css. */
-#site-nav {
-  --background-primary: #f4efca;
-  --background-secondary: #f8f2d8;
-  --card-background: #f8f2da;
-  --background-tertiary: #f4f4f5;
-  --interactive-normal: #f4f4f5;
-  --interactive-hover: #e4e4e7;
-  --text-normal: #18181b;
-  --text-muted: #52525b;
-  --border-color: #84848b;
-  --border-strong: #6b6b73;
-  --border-active: #a8331a;
-  --text-accent: #a8331a;
-  --text-accent-hover: #8a2a16;
-  /* На светлой панели тень несёт ту же работу, что на тёмной делал цвет, —
-     поэтому она плотнее, а не прозрачнее. */
-  --shadow-color: rgba(0, 0, 0, 0.22);
-  /* Базовая краска панели. Без неё цвет наследуется от `body` (кремовый ink
-     тёмной темы), и текст, у которого своего `color` нет — сноска в подвале,
-     — оказывается кремовым на белом. */
-  color: var(--text-normal);
-}
+/* Панель меню идёт за темой экрана: ни одного локального переопределения
+   токенов. Раньше здесь стояла «светлая тема независимо от страницы» —
+   четырнадцать локальных токенов из `[data-theme="light"]`. Это работало, но
+   означало, что в тёмной и киберпанк-теме меню вспыхивало белым на тёмном
+   градиенте. Теперь панель читает ту же пару, что и карточка, поэтому
+   монограмма, иконки пунктов, звезда и шеврон (все на `currentColor`)
+   перекрашиваются сами, без второй копии правил.
+   Собственный `color` у панели сейчас избыточен (`body` задаёт тот же токен),
+   но остаётся страховкой: в прежней всегда-светлой панели без него сноска
+   подвала наследовала кремовый `#f8f2da` от `body` и оказывалась кремовой на
+   кремовом (контраст ≈1). Возврат к светлой поверхности не должен воскресить
+   этот дефект молча. */
 
 /* iOS: overflow: hidden на body вьюпорт уже получает (перенос overflow со
    второго корневого ящика), но документ всё равно «резинит» — известная
@@ -600,7 +592,11 @@ ul.drawer-links {
 
 @media (hover: hover) and (pointer: fine) {
   .drawer-link:hover {
-    background: var(--interactive-hover);
+    /* Не `--interactive-hover`: в тёмной теме он равен `--card-background`,
+       то есть ровно фону панели, и ховер не давал подложки вообще. Нейтральная
+       примесь `--text-normal` работает во всех трёх темах: в тёмных светлит,
+       в светлой затемняет. */
+    background: color-mix(in srgb, var(--text-normal) 9%, transparent);
     color: var(--text-normal);
   }
 }
@@ -664,7 +660,11 @@ ul.drawer-links {
   inline-size: 100%;
   min-block-size: 44px;
   padding: var(--space-2) var(--space-4);
-  border: 1px solid var(--border-color);
+  /* `--border-strong`, а не `--border-color`: на панели киберпанка (#232327)
+     волосяная линия даёт 1.79:1 — граница контрола не добирает до нормы 3:1
+     (WCAG 1.4.11). У `--border-strong` к той же панели 3.18:1, к панели
+     тёмной темы (#0d0068) 6.24:1, к кремовой 4.70:1. */
+  border: 1px solid var(--border-strong);
   border-radius: var(--radius-md);
   background: transparent;
   color: var(--text-muted);
@@ -744,7 +744,9 @@ ul.drawer-links {
   gap: var(--space-2);
   min-block-size: 44px;
   padding: var(--space-3) var(--space-4);
-  border: 1px solid var(--border-color);
+  /* Та же причина, что у `.drawer-favs`: граница контрола на панели обязана
+     держать 3:1 в каждой теме (у `--border-strong` минимум 3.18:1 — киберпанк). */
+  border: 1px solid var(--border-strong);
   border-radius: var(--radius-md);
   background: transparent;
   color: var(--text-normal);

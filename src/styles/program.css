@@ -206,7 +206,7 @@ nav.day-tabs {
   min-inline-size: calc(var(--mm-time-col) + var(--mm-hall-count) * var(--mm-hall-max));
   padding-block: var(--space-3);
   border-block-end: 1px solid var(--border-color);
-  background: var(--background-primary);
+  background: var(--surface-sticky);
 }
 
 /* Браузер без overflow-y: clip не умеет держать липкость шапки относительно
@@ -223,7 +223,7 @@ nav.day-tabs {
   inset-inline-start: 0;
   z-index: 1;
   padding-inline: var(--space-3) var(--space-2);
-  background: var(--background-primary);
+  background: var(--surface-sticky);
   color: var(--text-muted);
   font-size: 0.75rem;
   text-transform: uppercase;
@@ -255,7 +255,7 @@ nav.day-tabs {
   z-index: 2;
   padding: var(--space-3) var(--space-3) var(--space-3) 0;
   border-block-start: 1px solid color-mix(in srgb, var(--border-color) 45%, transparent);
-  background: var(--background-primary);
+  background: var(--surface-sticky);
   color: var(--text-muted);
   font-family: var(--font-mono);
   font-size: 0.8125rem;
@@ -1134,7 +1134,7 @@ html:has(body.is-search-open) {
     /* Скрытая полоса прокрутки — страховка токена высоты: появившийся
        скроллбар прибавил бы к полосе свои ~15px. */
     scrollbar-width: none;
-    background: var(--background-primary);
+    background: var(--surface-sticky);
     border-block-end: 1px solid var(--border-color);
   }
 

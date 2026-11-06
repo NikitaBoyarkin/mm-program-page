@@ -3,7 +3,7 @@
 Два набора, оба на bun. Первый — без браузера и без сборки, второй — на собранной странице.
 
 ```bash
-bun test                # tests/lib — 127 юнит-тестов ядра (6 файлов)
+bun test                # tests/lib — 132 юнит-теста ядра (7 файлов)
 bun run test:built      # tests/built — браузерные тесты (Playwright + astro preview)
 ```
 
