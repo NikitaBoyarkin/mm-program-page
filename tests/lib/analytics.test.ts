@@ -5,6 +5,7 @@
  */
 import { describe, expect, test } from "bun:test";
 import {
+  classifyLink,
   classifyReferrer,
   computeFirstTouch,
   parseUtm,
@@ -73,5 +74,43 @@ describe("computeFirstTouch", () => {
 
   test("битый referrer не бросает", () => {
     expect(computeFirstTouch("not a url", "/").referrer_class).toBe("direct");
+  });
+});
+
+describe("classifyLink", () => {
+  const base = { hostname: "matemarketing.ru", pathname: "/tickets/" };
+
+  test("соцсеть спикера берётся из класса, а не из хоста", () => {
+    expect(
+      classifyLink({
+        ...base,
+        className: "social-link social-link--telegram",
+        hostname: "t.me",
+        pathname: "/lofinibo",
+      }),
+    ).toEqual({ link: "social:telegram", kind: "social", network: "telegram" });
+  });
+
+  test("utm_content важнее хоста: портфолио живёт на том же домене", () => {
+    expect(
+      classifyLink({
+        hostname: "nikitaboyarkin.github.io",
+        pathname: "/projects/",
+        utmContent: "nav-projects",
+      }),
+    ).toEqual({ link: "portfolio:nav-projects", kind: "portfolio", network: null });
+  });
+
+  test("билеты и первоисточник — свои слаги", () => {
+    expect(classifyLink(base).link).toBe("ticket");
+    expect(
+      classifyLink({ hostname: "lms.matemarketing.ru", pathname: "/events/all/6/" }),
+    ).toEqual({ link: "source", kind: "source", network: null });
+  });
+
+  test("прочее падает обратно на хост и путь", () => {
+    expect(
+      classifyLink({ hostname: "example.com", pathname: "/x/" }),
+    ).toEqual({ link: "example.com/x/", kind: "other", network: null });
   });
 });

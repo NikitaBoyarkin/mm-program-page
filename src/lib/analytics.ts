@@ -221,19 +221,83 @@ export interface PostHogLike {
 
 let ph: PostHogLike | null = null;
 
+/**
+ * События, отправленные до загрузки SDK. Их два источника: `?talk=<id>`
+ * открывает модалку без единого клика, а SDK стартует только по первому
+ * взаимодействию. Без очереди такой показ доклада терялся бы целиком.
+ */
+const QUEUE_MAX = 25;
+const queued: Array<{ event: string; props: Record<string, unknown> }> = [];
+
 /** Передать инициализированный экземпляр PostHog модулю (зовёт Analytics.astro). */
 export function attachPosthog(instance: PostHogLike): void {
   ph = instance;
 }
 
+function flushQueue(): void {
+  if (!ph) return;
+  for (const item of queued.splice(0)) {
+    try {
+      ph.capture(item.event, item.props);
+    } catch {
+      // Молча: сломанный транспорт не должен ронять обработчик клика.
+    }
+  }
+}
+
 /** Событие в PostHog. Никогда не бросает: аналитика не ломает страницу. */
 export function track(event: string, props: Record<string, unknown> = {}): void {
-  if (!ph) return;
+  if (!ph) {
+    if (queued.length < QUEUE_MAX) queued.push({ event, props });
+    return;
+  }
   try {
     ph.capture(event, props);
   } catch {
     // Молча: сломанный транспорт не должен ронять обработчик клика.
   }
+}
+
+export type LinkKind = "social" | "ticket" | "portfolio" | "source" | "other";
+
+export interface LinkTarget {
+  /** Стабильный слаг для разбивки: у одного спикера и один, и второй клик — та же строка. */
+  link: string;
+  kind: LinkKind;
+  /** Сеть спикера для `social:*`; у остальных `null`. */
+  network: string | null;
+}
+
+const SOCIAL_CLASS = /\bsocial-link--([a-z]+)\b/;
+
+/**
+ * Что за ссылку открыли — по разметке, хосту и UTM. Чистая функция: тайл
+ * «топ ссылок» группирует по `link`, поэтому слаг не должен содержать
+ * query-мусор и не должен зависеть от порядка карточек на странице.
+ *
+ * `utm_content` проверяется раньше хоста: ссылки в портфолио живут на том же
+ * домене, что и сайт, и по хосту неотличимы от внутренних.
+ */
+export function classifyLink(input: {
+  className?: string;
+  hostname: string;
+  pathname: string;
+  utmContent?: string | null;
+}): LinkTarget {
+  const social = SOCIAL_CLASS.exec(input.className ?? "");
+  if (social) {
+    return { link: `social:${social[1]}`, kind: "social", network: social[1] };
+  }
+  if (input.utmContent) {
+    return { link: `portfolio:${input.utmContent}`, kind: "portfolio", network: null };
+  }
+  if (input.hostname === "matemarketing.ru" && input.pathname.startsWith("/tickets")) {
+    return { link: "ticket", kind: "ticket", network: null };
+  }
+  if (input.hostname === "lms.matemarketing.ru") {
+    return { link: "source", kind: "source", network: null };
+  }
+  return { link: `${input.hostname}${input.pathname}`, kind: "other", network: null };
 }
 
 /**
@@ -261,4 +325,7 @@ export function registerSuperProperties(): void {
   } catch {
     // Не ломаем init.
   }
+
+  // Только здесь: до `register` у накопленных событий не было бы `site` и UTM.
+  flushQueue();
 }

@@ -15,7 +15,7 @@ const posthogKey = import.meta.env.PUBLIC_POSTHOG_KEY;
 
 {posthogKey && (
   <script>
-    import { attachPosthog, registerSuperProperties, track } from "../lib/analytics";
+    import { attachPosthog, classifyLink, registerSuperProperties, track } from "../lib/analytics";
 
     const POSTHOG_KEY = import.meta.env.PUBLIC_POSTHOG_KEY as string;
     const POSTHOG_HOST = import.meta.env.PUBLIC_POSTHOG_HOST || "https://us.i.posthog.com";
@@ -96,6 +96,15 @@ const posthogKey = import.meta.env.PUBLIC_POSTHOG_KEY;
           const leavesApp = !url.pathname.startsWith(appBase);
           if (url.hostname === sameHost && !leavesApp) return;
 
+          const linkTarget = classifyLink({
+            className: anchor.className,
+            hostname: url.hostname,
+            pathname: url.pathname,
+            utmContent: url.searchParams.get("utm_content"),
+          });
+          const holder = anchor.closest("[data-talk-id]");
+          const talkId = holder?.getAttribute("data-talk-id") ?? null;
+
           track("outbound_click", {
             domain: url.hostname,
             // Только путь: полный href утащил бы в аналитику чужие query-токены,
@@ -103,6 +112,13 @@ const posthogKey = import.meta.env.PUBLIC_POSTHOG_KEY;
             url: url.origin + url.pathname + utmSuffix(url),
             surface: anchor.dataset.analytics || "content",
             path,
+            link: linkTarget.link,
+            kind: linkTarget.kind,
+            network: linkTarget.network,
+            // Доклад и спикер — чтобы «топ ссылок» читался рядом с «топом докладов».
+            talk_id: talkId ? Number(talkId) : null,
+            speaker: anchor.dataset.speaker || null,
+            label: (anchor.getAttribute("aria-label") || "").slice(0, 80) || null,
           });
         };
 

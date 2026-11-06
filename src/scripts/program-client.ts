@@ -27,6 +27,7 @@ import {
 import { searchTalks } from "../lib/search";
 import { THEMES, THEME_COLORS, THEME_ICONS, nextTheme, type Theme } from "../lib/theme";
 import { SOCIAL_LABELS } from "../lib/socials";
+import { track } from "../lib/analytics";
 import { createMorph } from "morphicons/dom";
 
 /* ── Константы контракта ───────────────────────────────────────────── */
@@ -1019,6 +1020,8 @@ function buildSpeaker(lector: Talk["lectors"][number]): HTMLElement {
       anchor.rel = "noopener noreferrer nofollow";
       anchor.title = SOCIAL_LABELS[link.network];
       anchor.setAttribute("aria-label", `${SOCIAL_LABELS[link.network]}: ${lector.name}`);
+      anchor.dataset.analytics = "speaker-social";
+      anchor.dataset.speaker = lector.name;
 
       list.appendChild(anchor);
     }
@@ -1161,13 +1164,26 @@ function isModalOpen(): boolean {
   return !!modal && !modal.hidden;
 }
 
-function showModal(talk: Talk): void {
+function showModal(talk: Talk, surface: TalkOpenSurface): void {
   const modal = modalRoot();
   const dialog = modalDialog();
   if (!modal || !dialog) return;
 
   modalTalk = talk;
   fillModal(talk);
+  // Доклад на диалоге, а не только `modalTalk` в замыкании: по этому атрибуту
+  // `outbound_click` в Analytics.astro связывает клик со спикером с докладом.
+  dialog.dataset.talkId = String(talk.id);
+  track("talk_open", {
+    talk_id: talk.id,
+    talk_title: talk.title,
+    talk_track: talk.track,
+    talk_hall: talk.hall,
+    talk_start: talk.start,
+    day_id: talk.dayId,
+    surface,
+    path: window.location.pathname,
+  });
   // Запись в истории: системная «Назад» закрывает модалку, а не уводит со
   // страницы. `pushLayer` возвращает `""`, если History API недоступен —
   // тогда закрытие пойдёт напрямую.
@@ -1256,8 +1272,15 @@ function setBusy(button: HTMLElement | null, busy: boolean): void {
   }
 }
 
+/** `card` — клик по карточке; `deeplink` — `?talk=<id>` из поиска/внешней ссылки. */
+type TalkOpenSurface = "card" | "deeplink";
+
 /** `opener` пуст у deep-link: доклад может быть с другого дня. */
-function openTalk(talkId: number, opener: HTMLElement | null): void {
+function openTalk(
+  talkId: number,
+  opener: HTMLElement | null,
+  surface: TalkOpenSurface = "card",
+): void {
   if (!modalRoot() || !modalDialog()) return;
   modalOpener = opener;
   // Отклик в первую секунду: `/program.json` может ещё ехать, но тап уже
@@ -1274,7 +1297,7 @@ function openTalk(talkId: number, opener: HTMLElement | null): void {
         toast(t(LANG, "toastTalkNotFound"));
         return;
       }
-      showModal(talk);
+      showModal(talk, surface);
     })
     .catch(() => {
       if (seq !== openRequestSeq) return;
@@ -1599,7 +1622,7 @@ function initDeepLink(): void {
   }
 
   const opener = $<HTMLButtonElement>(`button.talk-card__title-btn[data-talk-id="${id}"]`);
-  openTalk(id, opener);
+  openTalk(id, opener, "deeplink");
 }
 
 /* ── 8–9. Запуск ───────────────────────────────────────────────────── */

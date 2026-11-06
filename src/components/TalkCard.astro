@@ -165,6 +165,8 @@ const STAR =
                         rel="noopener noreferrer nofollow"
                         aria-label={`${SOCIAL_LABELS[link.network]}: ${lector.name}`}
                         title={SOCIAL_LABELS[link.network]}
+                        data-analytics="speaker-social"
+                        data-speaker={lector.name}
                       ></a>
                     ))}
                   </span>
