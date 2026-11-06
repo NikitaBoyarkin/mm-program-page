@@ -189,10 +189,12 @@ html[data-theme=dark|light|cyberpunk][data-lang=ru|en][data-day-id][data-day-dat
 страницах дня), `a.nav-icon-btn.nav-lang[href][hreflang][lang]` (переключатель языка, текст
 `EN`/`RU`), `button.nav-icon-btn.theme-toggle--header[data-theme-toggle]` (тема из шапки, без
 меню) и `button.nav-toggle[data-nav-open][aria-expanded][aria-controls=site-nav]`; второй
-`button.theme-toggle[data-theme-toggle]`, `[data-favorites-count]` и второй `a.nav-lang`
-живут в `.drawer-foot` внутри `nav#site-nav`, где также `ul.drawer-links >
-a.drawer-link.is-current`. Оба тумблера темы несут `data-theme-toggle` и обрабатываются
-делегированным слушателем. Ещё: `div.nav-scrim[data-nav-close]`, `body.nav-open`.
+`button.theme-toggle[data-theme-toggle]`, `button.drawer-favs[data-fav-drawer]`
+(внутри — `[data-favorites-count]`; только на страницах дня, иначе кнопка-фильтр мертва)
+и второй `a.nav-lang` живут в `.drawer-foot` внутри `nav#site-nav`, где также
+`ul.drawer-links > a.drawer-link`; класс-модификатор `drawer-link--day|home|projects|contacts`
+даёт пункту иконку маской (`::before`). Оба тумблера темы несут `data-theme-toggle` и
+обрабатываются делегированным слушателем. Ещё: `div.nav-scrim[data-nav-close]`, `body.nav-open`.
 
 Программа:
 
@@ -216,7 +218,7 @@ section.program-grid[data-grid][style=--mm-hall-count:N]
     div.program-grid__talk-cell[data-track][data-span][style="grid-area:R / C / span N"]
       article.talk-card[data-talk-id][data-track]
         div.talk-card__top
-          div.talk-card__header > span.talk-card__time + span.talk-card__hall + button.talk-card__favorite[data-fav][data-talk-id][aria-pressed]
+          div.talk-card__header > span.talk-card__time + span.talk-card__hall + span.talk-card__track + button.talk-card__favorite[data-fav][data-talk-id][aria-pressed]
           div.talk-card__media > img.talk-card__banner-img | div.talk-card__media-text > h3 > button.talk-card__title-btn[data-talk-open]
         div.talk-card__bottom
           div.talk-card__speakers > div.talk-card__speaker > img.talk-card__speaker-photo | span.talk-card__speaker-initials + div.talk-card__speaker-info > span.talk-card__speaker-name + span.talk-card__speaker-desc + span.social-links > a.social-link.social-link--<network>[href^=https][target=_blank][rel="noopener noreferrer nofollow"][aria-label]
@@ -274,8 +276,10 @@ span.search-result__day + span.search-result__title + span.search-result__meta`;
 | `article.talk-card` | `block-size: auto`: карточка по контенту, минимум строки 460 px не действует |
 | `.talk-card__media` у карточки **с** баннером | скрыт целиком |
 | `.talk-card__media` у `.talk-card--compact` | остаётся: в нём живёт `h3` с кнопкой заголовка |
-| `.talk-card__time` | скрыт — время несёт разделитель |
+| `.talk-card__time` | виден: шапка карточки на телефоне — строка координат, а не оверлей на баннере |
 | `.talk-card__hall` | виден только здесь; на десктопе `display: none` |
+| `.talk-card__track` | виден только здесь: в сетке трек задан колонкой, на десктопе `display: none`. Две строки клампа — одна обрезала бы имя наполовину |
+| `.talk-card__media-meta` | скрыт: трек и зал уже в шапке, дубль не нужен |
 | `.talk-card__title-btn`, `.track-chip` | заголовок-кнопка — `min-block-size: 44px` (сенсорная цель, а не только визуальная высота), подписи не мельче 0.75 rem. Чип компактнее — `36px`: он в ряду фильтров, 44 px на каждом давали три строки тулбара; 36 ≥ 24 px (WCAG 2.5.8 AA) с запасом на палец |
 | `.talk-card__favorite`, `.talk-card__toggle-btn`, `.talk-modal__close` | целевой размер 44 px даёт псевдоэлемент (`::after`/`::before`), глиф остаётся прежнего размера |
 | `header.nav-mobile` | `backdrop-filter: none`: блюр на каждой прокрутке дороже, чем даёт, а фон `color-mix(… 97%)` и так почти непрозрачен |

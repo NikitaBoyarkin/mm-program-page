@@ -421,13 +421,19 @@ test.describe("мобильный 390×844", () => {
     );
     expect(titleButtons).toBe(DAY1_TALKS);
 
-    // Время в карточке лишнее, зал — наоборот, виден только в списке.
-    await expect
-      .poll(() =>
-        page.locator(".talk-card__time").first().evaluate((node) => getComputedStyle(node).display),
-      )
-      .toBe("none");
+    // Свёрнутая карточка несёт всю координату доклада: время, зал и трек
+    // читаются без открытия модалки — колонок сетки в списке больше нет.
+    await expect(page.locator(".talk-card__time").first()).toBeVisible();
     await expect(page.locator(".talk-card__hall").first()).toBeVisible();
+    await expect(page.locator(".talk-card__track").first()).toBeVisible();
+
+    // Трек ограничен двумя строками: одна обрезала бы имя наполовину.
+    expect(
+      await page
+        .locator(".talk-card__track")
+        .first()
+        .evaluate((node) => getComputedStyle(node).webkitLineClamp),
+    ).toBe("2");
   });
 
   test("10 · drawer: body.nav-open, aria-expanded, Esc закрывает", async ({ page }) => {
@@ -961,6 +967,11 @@ test.describe("десктоп 1440×900", () => {
     await expect
       .poll(() =>
         page.locator(".talk-card__hall").first().evaluate((node) => getComputedStyle(node).display),
+      )
+      .toBe("none");
+    await expect
+      .poll(() =>
+        page.locator(".talk-card__track").first().evaluate((node) => getComputedStyle(node).display),
       )
       .toBe("none");
     await expect

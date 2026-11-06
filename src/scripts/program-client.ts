@@ -587,6 +587,10 @@ function setFavoritesOnly(next: boolean): void {
     chip.setAttribute("aria-pressed", String(next));
     chip.classList.toggle("track-chip--active", next);
   }
+  // Панель дублирует состояние того же фильтра: открыв меню, видно, что
+  // избранное уже включено, а не только сколько докладов отмечено.
+  const drawerButton = $<HTMLButtonElement>("button[data-fav-drawer]");
+  if (drawerButton) drawerButton.setAttribute("aria-pressed", String(next));
   // Выбор экрана, а не данные: sessionStorage переживает перезагрузку и не
   // тащит фильтр в новую вкладку, в отличие от localStorage.
   writeStorage(FAV_FILTER_KEY, next ? "1" : "0", "session");
@@ -603,6 +607,30 @@ function initFavFilter(): void {
   // В URL избранное не живёт, но трек из `?track=` уже мог примениться —
   // прогон выравнивает состояние и счётчик с разметкой.
   setFavoritesOnly(favoritesOnly);
+}
+
+/* «Избранное» в панели: тот же фильтр, что у чипа, но одним тапом и сразу с
+   закрытием меню — иначе после нажатия пользователь остаётся смотреть на
+   полупрозрачную панель вместо списка. Фокус на тумблер не возвращаем:
+   следующий Tab должен попасть в отфильтрованный список, а не в шапку. */
+function initDrawerFavorites(): void {
+  const button = $<HTMLButtonElement>("button[data-fav-drawer]");
+  if (!button) return;
+  button.addEventListener("click", () => {
+    closeDrawer(false);
+    setFavoritesOnly(true);
+    // Без прокрутки фильтр выглядит как «ничего не произошло»: список живёт
+    // ниже шапки, вкладок дня и тулбара, а панель открывается с любого места.
+    const grid = $(".program-grid");
+    if (!grid) return;
+    const nav = $("header.nav-mobile");
+    const offset = (nav?.getBoundingClientRect().height ?? 0) + 8;
+    const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    window.scrollTo({
+      top: grid.getBoundingClientRect().top + window.scrollY - offset,
+      behavior: reduce ? "auto" : "smooth",
+    });
+  });
 }
 
 function initTimeGroups(): void {
@@ -1587,6 +1615,7 @@ export function init(): void {
   initFilter();
   initFavorites();
   initFavFilter();
+  initDrawerFavorites();
   initTimeGroups();
   initExpand();
   initModal();

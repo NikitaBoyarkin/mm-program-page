@@ -363,6 +363,13 @@ nav.day-tabs {
   display: none;
 }
 
+/* Трек — как и зал, дубль координаты из сетки: на десктопе он читается
+   колонкой зала и meta-строкой компактной карточки, поэтому скрыт. Виден
+   только внутри мобильной модели списка, одним переопределением. */
+.talk-card__track {
+  display: none;
+}
+
 /* Звезда избранного: на кремовой поверхности живёт пара «чернила баннера +
    крем», акцент сюда не ставим — это картинка, а не тема интерфейса. */
 .talk-card__favorite {
@@ -1197,15 +1204,33 @@ html:has(body.is-search-open) {
     display: none;
   }
 
-  /* От шапки баннерной карточки остаётся полоса в строку бейджа и звезды:
-     34px видимый круг кнопки избранного + два паддинга шапки по 12px = 58px.
-     Зона нажатия звезды — 44px (34 + 2 × 5px псевдоэлемента) и в эти 58px
-     встаёт с запасом 7px сверху и снизу, поэтому полоса не растёт и строка
-     карточки в списке сохраняет замороженную высоту. Кремовая поверхность
-     уходит вместе с баннером — иначе на карточке остаётся светлая плашка
-     без картинки. */
+  /* Шапка карточки на телефоне — не оверлей на баннере (баннера здесь нет), а
+     строка координат в потоке: время · зал · трек. Все три поля читаются в
+     свёрнутой карточке — это и есть замена колонкам сетки, которых в списке
+     больше нет. */
+  .talk-card__header {
+    position: static;
+    display: grid;
+    grid-template-columns: auto minmax(0, auto) 1fr;
+    align-items: center;
+    gap: var(--space-1) var(--space-2);
+    padding: var(--space-3) var(--space-4) 0;
+  }
+
+  /* Звезда держит правый край первой строки, трек уходит под неё во всю
+     ширину — иначе длинное имя трека выталкивало бы звезду из шапки. */
+  .talk-card__favorite {
+    grid-column: 3;
+    grid-row: 1;
+    justify-self: end;
+  }
+
+  /* Паддинг шапки теперь в потоке, поэтому полоса фиксированной высоты под
+     абсолютную звезду не нужна. Кремовая поверхность уходит вместе с
+     баннером — иначе на карточке остаётся светлая плашка без картинки. */
   .talk-card:not(.talk-card--compact) .talk-card__top {
-    min-block-size: calc(34px + 2 * var(--space-3));
+    min-block-size: 0;
+    padding-block-end: 0;
     background: transparent;
     color: var(--text-normal);
   }
@@ -1217,13 +1242,56 @@ html:has(body.is-search-open) {
     display: block;
   }
 
-  /* Время несёт разделитель группы, в карточке оно лишнее. */
-  .talk-card__time {
-    display: none;
+  /* Шапка вышла из оверлея, поэтому её резерв под бейдж времени в кремовом
+     блоке больше не нужен — заголовок поднимается к строке координат. */
+  .talk-card__media-text {
+    padding-block-start: var(--space-4);
   }
 
-  /* Зал уже назван бейджем ниже; в meta-строке компактной карточки остаётся трек. */
-  .talk-card__meta-hall {
+  /* Время видно в свёрнутой карточке: на десктопе это тёмная плашка на
+     баннере, здесь — прозрачный чип с рамкой из currentColor. Одна пара
+     правил работает на двух поверхностях: прозрачной полосе баннерной
+     карточки (кремовый ink) и кремовой компактной (чернила баннера). */
+  .talk-card__time {
+    display: inline-flex;
+    grid-column: 1;
+    grid-row: 1;
+    align-items: center;
+    padding: 0.15rem 0.6rem;
+    border: 1px solid color-mix(in srgb, currentColor 30%, transparent);
+    border-radius: var(--radius-full);
+    background: transparent;
+    color: inherit;
+    font-size: 0.75rem;
+    line-height: 1.4;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+  }
+
+  /* Трек — единственное поле, которого в свёрнутой карточке не было вовсе:
+     на телефоне сетка залов не рисуется, и координата терялась. Две строки
+     с клампом, а не одна: полное имя трека не влезает в 320px одной строкой,
+     а обрезка в одну строку съедала бы половину названия. */
+  .talk-card__track {
+    display: -webkit-box;
+    grid-column: 1 / -1;
+    grid-row: 2;
+    overflow: hidden;
+    color: inherit;
+    opacity: 0.75;
+    font-family: var(--font-mono);
+    font-size: 0.72rem;
+    line-height: 1.4;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    overflow-wrap: anywhere;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+    line-clamp: 2;
+  }
+
+  /* Meta-строка компактной карточки дублировала бы шапку: трек и зал уже там. */
+  .talk-card__media-meta {
     display: none;
   }
 
@@ -1231,6 +1299,8 @@ html:has(body.is-search-open) {
      поверхность компактной карточки и прозрачная полоса баннерной дают разный
      ink без второй пары правил. */
   .talk-card__hall {
+    grid-column: 2;
+    grid-row: 1;
     /* inline-block, а не inline-flex: у анонимного flex-item не работает
        `text-overflow` — длинное имя зала обрезалось вровень, без «…». */
     display: inline-block;
@@ -1436,6 +1506,7 @@ html:has(body.is-search-open) {
 .button[data-export-ics]::before,
 .talk-card__time::before,
 .talk-card__hall::before,
+.talk-card__track::before,
 .talk-card__toggle-btn::before,
 .talk-card__title-btn::before,
 .talk-modal__buy::before,
@@ -1461,6 +1532,7 @@ html:has(body.is-search-open) {
 .facts__item--halls dt::before,
 .track-chip[data-fav-filter]::before,
 .track-chip[data-track]::before,
+.talk-card__track::before,
 .talk-modal__track-chip::before,
 .talk-modal__time-badge::before,
 .talk-modal__hall-badge::before {
@@ -1546,6 +1618,13 @@ html:has(body.is-search-open) {
   --icon-size: 12px;
 }
 
+/* Трек носит иконку слоёв — ту же, что чип трека в модалке: одна метка на
+   два места вместо второй геометрии. */
+.talk-card__track::before {
+  --icon: var(--icon-layers);
+  --icon-size: 12px;
+}
+
 .talk-modal__buy::before {
   --icon: var(--icon-ticket);
   --icon-size: 16px;
@@ -1593,6 +1672,7 @@ html:has(body.is-search-open) {
    `:lang()` добавляет специфичности, это намеренно. */
 :lang(ru) .talk-card__media-meta,
 :lang(ru) .talk-card__hall,
+:lang(ru) .talk-card__track,
 :lang(ru) .talk-modal__meta,
 :lang(ru) .program-grid__time-label {
   letter-spacing: 0.06em;

@@ -228,8 +228,14 @@ const [ticketsBefore, ticketsAfter = ""] = t(lang, "footerTickets").split("{link
   <body>
     <a class="skip-link" href="#main">{t(lang, "skipLink")}</a>
 
-    {/* Поиск есть только на страницах дня: у 404 нет ни диалога, ни скрипта. */}
-    <Nav ordinal={dayOrdinal} lang={lang} search={Boolean(dayOrdinal)} />
+    {/* Поиск и избранное есть только на страницах дня: у 404 нет ни диалога,
+        ни клиентского скрипта, и кнопка-фильтр осталась бы мёртвой. */}
+    <Nav
+      ordinal={dayOrdinal}
+      lang={lang}
+      search={Boolean(dayOrdinal)}
+      favorites={Boolean(dayOrdinal)}
+    />
 
     <main id="main" class="page" tabindex="-1">
       <slot />

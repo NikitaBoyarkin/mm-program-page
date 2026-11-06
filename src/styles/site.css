@@ -482,6 +482,36 @@ body.nav-open {
   overflow: hidden;
 }
 
+/* Панель меню — «светлая тема» независимо от темы страницы: белая поверхность
+   и тёмные чернила, ровно та пара, что даёт светлая тема. Причина не в вкусе:
+   в тёмной теме панель красилась `--background-secondary` (#16009f) и на синем
+   градиенте страницы переставала быть отдельным слоем — её держала одна тень.
+   Токены переопределены локально, поэтому вся внутренность (ссылки, счётчик,
+   кнопки, монограмма на `currentColor`) получает светлую пару без второй копии
+   правил. Значения совпадают с `[data-theme="light"]` в tokens.css. */
+#site-nav {
+  --background-primary: #f4efca;
+  --background-secondary: #f8f2d8;
+  --card-background: #f8f2da;
+  --background-tertiary: #f4f4f5;
+  --interactive-normal: #f4f4f5;
+  --interactive-hover: #e4e4e7;
+  --text-normal: #18181b;
+  --text-muted: #52525b;
+  --border-color: #84848b;
+  --border-strong: #6b6b73;
+  --border-active: #a8331a;
+  --text-accent: #a8331a;
+  --text-accent-hover: #8a2a16;
+  /* На светлой панели тень несёт ту же работу, что на тёмной делал цвет, —
+     поэтому она плотнее, а не прозрачнее. */
+  --shadow-color: rgba(0, 0, 0, 0.22);
+  /* Базовая краска панели. Без неё цвет наследуется от `body` (кремовый ink
+     тёмной темы), и текст, у которого своего `color` нет — сноска в подвале,
+     — оказывается кремовым на белом. */
+  color: var(--text-normal);
+}
+
 /* iOS: overflow: hidden на body вьюпорт уже получает (перенос overflow со
    второго корневого ящика), но документ всё равно «резинит» — известная
    особенность WebKit. Дубль на html адресует корневой скроллер прямо.
@@ -581,6 +611,35 @@ ul.drawer-links {
   color: var(--text-accent);
 }
 
+/* Иконки пунктов меню: та же маска на `::before`, что у ссылок шапки, —
+   разметка остаётся текстом, поэтому скринридер читает только подпись. */
+.drawer-link::before {
+  content: "";
+  flex: none;
+  inline-size: 18px;
+  block-size: 18px;
+  margin-inline-end: var(--space-3);
+  background-color: currentColor;
+  -webkit-mask: var(--nav-icon) center / contain no-repeat;
+  mask: var(--nav-icon) center / contain no-repeat;
+}
+
+.drawer-link--day {
+  --nav-icon: var(--nav-calendar);
+}
+
+.drawer-link--home {
+  --nav-icon: var(--nav-home);
+}
+
+.drawer-link--projects {
+  --nav-icon: var(--nav-projects);
+}
+
+.drawer-link--contacts {
+  --nav-icon: var(--nav-contact);
+}
+
 .drawer-foot {
   display: flex;
   flex-direction: column;
@@ -590,16 +649,60 @@ ul.drawer-links {
   border-block-start: 1px solid var(--border-color);
 }
 
-.drawer-favs {
+/* «Избранное» в подвале панели — кнопка, а не подпись: из меню список
+   открывается одним тапом. Селектор с `.drawer-foot` поднимает специфичность
+   над общим рецептом `.drawer-foot button`, иначе тот перебил бы раскладку
+   «подпись + счётчик» своим паддингом и цветом обычной кнопки. */
+.drawer-foot .drawer-favs {
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  /* `flex-start`, а не `space-between`: у кнопки теперь три части (звезда,
+     подпись, счётчик со стрелкой), и раскладка «по краям» задвинула бы
+     подпись в середину. Правый край держит `margin-inline-start: auto` ниже. */
+  justify-content: flex-start;
   gap: var(--space-3);
+  inline-size: 100%;
+  min-block-size: 44px;
   padding: var(--space-2) var(--space-4);
   border: 1px solid var(--border-color);
   border-radius: var(--radius-md);
+  background: transparent;
   color: var(--text-muted);
+  font-family: inherit;
   font-size: 0.9rem;
+  text-align: start;
+  cursor: pointer;
+  transition:
+    border-color 0.2s ease,
+    color 0.2s ease,
+    background-color 0.2s ease;
+}
+
+/* Звезда — маской, как у остальных иконок панели: второй inline-SVG рядом с
+   шевроном раздувал бы разметку ради одной геометрии. */
+.drawer-foot .drawer-favs::before {
+  content: "";
+  flex: none;
+  inline-size: 18px;
+  block-size: 18px;
+  background-color: currentColor;
+  -webkit-mask: var(--nav-favorites) center / contain no-repeat;
+  mask: var(--nav-favorites) center / contain no-repeat;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .drawer-foot .drawer-favs:hover {
+    border-color: var(--border-active);
+    background: color-mix(in srgb, var(--text-accent) 8%, transparent);
+    color: var(--text-accent);
+  }
+}
+
+/* Фильтр включён этим же нажатием: состояние видно, не открывая страницу. */
+.drawer-foot .drawer-favs[aria-pressed="true"] {
+  border-color: var(--border-active);
+  background: color-mix(in srgb, var(--text-accent) 10%, transparent);
+  color: var(--text-accent);
 }
 
 .drawer-favs__count {
@@ -613,6 +716,26 @@ ul.drawer-links {
   color: var(--text-accent);
   font-variant-numeric: tabular-nums;
   font-weight: 600;
+}
+
+/* Счётчик и стрелка — один блок у правого края: без стрелки кнопка читалась
+   как подпись с числом, то есть ровно как прежний `<p>`. */
+.drawer-favs__tail {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  margin-inline-start: auto;
+}
+
+.drawer-favs__arrow {
+  flex: none;
+  transition: transform 0.2s ease;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .drawer-foot .drawer-favs:hover .drawer-favs__arrow {
+    transform: translateX(2px);
+  }
 }
 
 .drawer-foot button {
@@ -661,6 +784,11 @@ ul.drawer-links {
   --nav-home: url("data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%2024%2024'%20fill='none'%20stroke='%23000'%20stroke-width='2'%20stroke-linecap='round'%20stroke-linejoin='round'%3E%3Cpath%20d='M3%209l9-7%209%207v11a2%202%200%200%201-2%202H5a2%202%200%200%201-2-2zM9%2022V12h6v10'/%3E%3C/svg%3E");
   --nav-projects: url("data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%2024%2024'%20fill='none'%20stroke='%23000'%20stroke-width='2'%20stroke-linecap='round'%20stroke-linejoin='round'%3E%3Cpath%20d='M22%2019a2%202%200%200%201-2%202H4a2%202%200%200%201-2-2V5a2%202%200%200%201%202-2h5l2%203h9a2%202%200%200%201%202%202z'/%3E%3C/svg%3E");
   --nav-contact: url("data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%2024%2024'%20fill='none'%20stroke='%23000'%20stroke-width='2'%20stroke-linecap='round'%20stroke-linejoin='round'%3E%3Cpath%20d='M4%204h16a2%202%200%200%201%202%202v12a2%202%200%200%201-2%202H4a2%202%200%200%201-2-2V6a2%202%200%200%201%202-2zM22%206l-10%207L2%206'/%3E%3C/svg%3E");
+  /* Две иконки пунктов бокового меню: дни программы и избранное. Лежат здесь,
+     а не в program.css, потому что панель есть и на 404, где стили программы
+     не грузятся. */
+  --nav-calendar: url("data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%2024%2024'%20fill='none'%20stroke='%23000'%20stroke-width='2'%20stroke-linecap='round'%20stroke-linejoin='round'%3E%3Cpath%20d='M8%202v4M16%202v4M3%2010h18M5%204h14a2%202%200%200%201%202%202v14a2%202%200%200%201-2%202H5a2%202%200%200%201-2-2V6a2%202%200%200%201%202-2z'/%3E%3C/svg%3E");
+  --nav-favorites: url("data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%2024%2024'%20fill='none'%20stroke='%23000'%20stroke-width='2'%20stroke-linecap='round'%20stroke-linejoin='round'%3E%3Cpath%20d='M12%202l3.1%206.3%206.9%201-5%204.9%201.2%206.8L12%2017.8%205.8%2021l1.2-6.8-5-4.9%206.9-1z'/%3E%3C/svg%3E");
   /* Монограмма: шестиугольник фавикона с вырезанными «NB» — глифы Inter 800
      путями, потому что маска не видит веб-шрифт страницы. */
   --brand-logo: url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%224%2010.2%2092%2079.6%22%3E%3Cpath%20fill-rule%3D%22evenodd%22%20d%3D%22M96%2050%2073%2089.8%2027%2089.8%204%2050%2027%2010.2%2073%2010.2ZM23.3%2065V34.4H31.3L39.8%2048.3Q40.7%2049.6%2041.5%2051.1Q42.2%2052.6%2043%2054.3Q43.8%2056.1%2044.6%2058.4H43.9Q43.8%2056.8%2043.7%2054.7Q43.5%2052.7%2043.4%2050.7Q43.3%2048.8%2043.3%2047.5V34.4H50.7V65H42.8L35%2052.3Q33.9%2050.6%2033.1%2049Q32.2%2047.5%2031.4%2045.7Q30.5%2043.8%2029.4%2041.4H30.2Q30.3%2043.6%2030.5%2045.6Q30.6%2047.7%2030.7%2049.5Q30.8%2051.2%2030.8%2052.3V65ZM53.5%2065V34.4H66.2Q69.6%2034.4%2071.9%2035.4Q74.2%2036.4%2075.4%2038.1Q76.5%2039.9%2076.5%2042.2Q76.5%2043.9%2075.8%2045.3Q75.1%2046.7%2073.8%2047.6Q72.5%2048.5%2070.8%2048.8V49.1Q72.7%2049.2%2074.2%2050.1Q75.8%2051%2076.8%2052.6Q77.7%2054.3%2077.7%2056.5Q77.7%2058.9%2076.5%2060.9Q75.2%2062.8%2072.9%2063.9Q70.5%2065%2067.1%2065ZM60.7%2059.2H65.4Q67.9%2059.2%2069%2058.2Q70.2%2057.3%2070.2%2055.6Q70.2%2054.5%2069.6%2053.6Q69.1%2052.7%2068%2052.2Q67%2051.7%2065.6%2051.7H60.7ZM60.7%2047H64.9Q66.2%2047%2067.1%2046.6Q68.1%2046.2%2068.6%2045.4Q69.2%2044.7%2069.2%2043.6Q69.2%2042%2068%2041.1Q66.9%2040.2%2065.1%2040.2H60.7Z%22%2F%3E%3C%2Fsvg%3E");

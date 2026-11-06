@@ -16,9 +16,11 @@ interface Props {
   lang: Lang;
   /** Кнопка поиска: только там, где есть клиентский скрипт (страницы дня). */
   search?: boolean;
+  /** Строка «Избранное»: тот же фильтр, что у чипа, значит нужен тот же скрипт. */
+  favorites?: boolean;
 }
 
-const { ordinal, lang, search = false } = Astro.props;
+const { ordinal, lang, search = false, favorites = false } = Astro.props;
 const portfolio = "https://nikitaboyarkin.github.io";
 
 // Переход на портфолио размечен: без UTM визит, начавшийся в новой сессии,
@@ -205,7 +207,7 @@ const langCode = targetLang.toUpperCase();
       dayLinks.map((link) => (
         <li>
           <a
-            class:list={["drawer-link", link.ordinal === ordinal ? "is-current" : null]}
+            class:list={["drawer-link", "drawer-link--day", link.ordinal === ordinal ? "is-current" : null]}
             href={link.href}
             aria-current={link.ordinal === ordinal ? "page" : undefined}
           >
@@ -217,17 +219,45 @@ const langCode = targetLang.toUpperCase();
     {
       siteLinks.map((link) => (
         <li>
-          <a class="drawer-link" href={link.href} rel="noopener">{link.label}</a>
+          <a class={`drawer-link drawer-link--${link.icon}`} href={link.href} rel="noopener">{link.label}</a>
         </li>
       ))
     }
   </ul>
 
   <div class="drawer-foot">
-    <p class="drawer-favs">
+    {/* Не подпись, а кнопка: из панели избранное открывается одним тапом.
+        Счётчик остаётся тем же `data-favorites-count`, его обновляет клиент. */}
+    {favorites && (
+    <button
+      class="drawer-favs"
+      type="button"
+      data-fav-drawer
+      aria-pressed="false"
+      aria-label={t(lang, "navFavoritesOpen")}
+      title={t(lang, "navFavoritesOpen")}
+    >
       <span>{t(lang, "navFavorites")}</span>
-      <span class="drawer-favs__count" data-favorites-count>0</span>
-    </p>
+      <span class="drawer-favs__tail">
+        <span class="drawer-favs__count" data-favorites-count>0</span>
+        <svg
+          class="drawer-favs__arrow"
+          viewBox="0 0 24 24"
+          width="16"
+          height="16"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          aria-hidden="true"
+          focusable="false"
+        >
+          <path d="M9 6l6 6-6 6"></path>
+        </svg>
+      </span>
+    </button>
+    )}
     <button class="theme-toggle" type="button" data-theme-toggle aria-label={t(lang, "navThemeToggle")}>
       <svg
         viewBox="0 0 24 24"
@@ -245,7 +275,6 @@ const langCode = targetLang.toUpperCase();
       </svg>
       <span>{t(lang, "navThemeToggle")}</span>
     </button>
-    <p>{t(lang, "navThemeNote")}</p>
     <a
       class="nav-icon-btn nav-lang"
       href={langHref}
