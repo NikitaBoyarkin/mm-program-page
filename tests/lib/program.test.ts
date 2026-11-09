@@ -31,6 +31,7 @@ import {
   tracksOfProgram,
 } from "../../src/lib/program";
 import socialsOverlay from "../../src/data/socials.json";
+import copyOverlay from "../../src/data/copy.ru.json";
 import { SOCIAL_NETWORKS } from "../../src/lib/socials";
 import { makeDay, makeTalk } from "./fixtures";
 
@@ -228,6 +229,19 @@ describe("program.json — контракт нормализованного с�
         expect(talk.short).toBe(talk.short.trim());
         expect(talk.short).not.toContain("\n");
       }
+    }
+  });
+
+  test("overlay текста карточки: ключи — реальные id, текст чистый, short из overlay", () => {
+    const byId = new Map(PROGRAM.talks.map((talk) => [String(talk.id), talk]));
+    for (const [id, text] of Object.entries(copyOverlay)) {
+      const talk = byId.get(id);
+      expect(talk, `overlay: нет доклада ${id}`).toBeDefined();
+      expect(text).toBe(text.trim());
+      expect(text).not.toContain("\n");
+      expect(text).not.toContain("<");
+      expect(text).not.toContain(">");
+      expect(talk!.short).toBe(text);
     }
   });
 

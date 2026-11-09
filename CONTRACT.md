@@ -21,6 +21,7 @@
 | `src/data/program.json` | data | нормализованный слепок API — единственный источник данных |
 | `src/data/socials.json` | data | overlay соцсетей лекторов: имя → `telegram/linkedin/youtube/site`. Отдельный файл: `data:fetch` пересобирает `program.json` побайтово и стёр бы поле. Ключ — полное имя из слепка (все 94 уникальны), значение — только подтверждённые `https`-ссылки |
 | `src/lib/socials.ts` | core | сети и подписи — один источник для Astro-разметки и клиента. Геометрии иконок здесь нет: пути соцсетей живут в `src/styles/site.css` (`--social-*`), декоративные — в `src/styles/program.css` (`--icon-*`), оба как CSS-маски |
+| `src/data/copy.ru.json` | data | overlay текста карточки (`short`) по id доклада — редакция по стайлгайду Доки. Отдельный файл по той же причине, что `socials.json`: `data:fetch` пересобирает `program.json` побайтово. Нет ключа или пустое значение — остаётся текст слепка |
 | `src/i18n/ui.ts` | i18n | словарь оболочки RU/EN: шапка, табы, фильтры, модалка, поиск, подвал. `UiKey` выводится из русской ветки, поэтому пропуск в `en` — ошибка типов |
 | `src/i18n/format.ts` | i18n | подписи дат и числительных по языкам; русская ветка побайтово совпадает с замороженным ядром |
 | `src/i18n/paths.ts` | i18n | адреса от `BASE_URL` с префиксом языка: `/`, `/day/N/`, `/en/`, `/en/day/N/` |
@@ -32,7 +33,7 @@
 | `src/pages/en/program.json.ts` | data | `/en/program.json` — тот же слепок с переведёнными на билде текстами |
 | `data/program.raw.json` | data | сырой ответ API (вход пересборки) |
 | `scripts/fetch-program.ts` | data | `--fetch` / `--check` / `--dry-run`, нормализация |
-| `src/lib/program.ts` | core | типы + чистые функции домена (заморожено) |
+| `src/lib/program.ts` | core | типы + чистые функции домена; собирает `PROGRAM` из слепка и overlay'ев `socials.json` / `copy.ru.json` (заморожено) |
 | `src/lib/ics.ts` | core | сборка `.ics` (заморожено) |
 | `src/lib/theme.ts` | core | три темы, цвета `theme-color`, `nextTheme` |
 | `src/lib/analytics.ts` | core | UTM-атрибуция и единственный канал в PostHog (`track`, супер-свойства) |

@@ -12,6 +12,7 @@
  * (`bun run data:fetch` пересобирает его из `data/program.raw.json`).
  */
 import raw from "../data/program.json";
+import copyOverlay from "../data/copy.ru.json";
 import socialsOverlay from "../data/socials.json";
 import { SOCIAL_NETWORKS, type SocialLink, type SocialNetwork } from "./socials";
 import {
@@ -57,6 +58,21 @@ export function socialsOf(
   });
 }
 
+type CopyOverlay = Record<string, string>;
+
+const COPY = copyOverlay as CopyOverlay;
+
+/**
+ * Текст карточки (`short`) из overlay `src/data/copy.ru.json`, ключ — id доклада.
+ * Файл отдельный по той же причине, что `socials.json`: `bun run data:fetch`
+ * пересобирает `program.json` побайтово, а `--check` сравнивает его строкой.
+ * Пустое значение или отсутствие ключа — остаётся текст из слепка.
+ */
+export function cardTextOf(id: number, snapshot: string, overlay: CopyOverlay = COPY): string {
+  const text = (overlay[String(id)] ?? "").trim();
+  return text === "" ? snapshot : text;
+}
+
 const snapshot = raw as unknown as Program;
 
 /** Разобранный слепок. Единственный источник данных на весь проект. */
@@ -64,6 +80,7 @@ export const PROGRAM: Program = {
   ...snapshot,
   talks: snapshot.talks.map((talk) => ({
     ...talk,
+    short: cardTextOf(talk.id, talk.short),
     lectors: talk.lectors.map((lector) => ({ ...lector, socials: socialsOf(lector.name) })),
   })),
 };
