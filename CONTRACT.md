@@ -39,7 +39,7 @@
 | `src/lib/analytics.ts` | core | UTM-атрибуция и единственный канал в PostHog (`track`, супер-свойства) |
 | `src/components/Analytics.astro` | view | ленивый `init` PostHog, `outbound_click` |
 | `src/layouts/Base.astro` | view | `<head>`, тема до отрисовки, шапка, подвал; `og:image` — `src/assets/og/program-2026.png` (1200×630), пересборка `bun run og` |
-| `src/components/Nav.astro` | view | шапка, drawer, дни, тумблер темы (луна в разметке), счётчик избранного, кнопка поиска и переключатель `.nav-lang` |
+| `src/components/Nav.astro` | view | шапка, drawer (дни, «Граф докладов», ссылки портфолио), тумблер темы (луна в разметке), счётчик избранного, кнопка поиска и переключатель `.nav-lang` |
 | `src/components/ProgramPage.astro` | view | день: шапка, табы, чипы, тулбар, сетка, модалка |
 | `src/components/TalkCard.astro` | view | карточка доклада; звезда избранного (контур → заливка через `fill-opacity`) |
 | `src/components/TalkModal.astro` | view | оболочка диалога |
@@ -193,8 +193,10 @@ html[data-theme=dark|light|cyberpunk][data-lang=ru|en][data-day-id][data-day-dat
 `button.theme-toggle[data-theme-toggle]`, `button.drawer-favs[data-fav-drawer]`
 (внутри — `[data-favorites-count]`; только на страницах дня, иначе кнопка-фильтр мертва)
 и второй `a.nav-lang` живут в `.drawer-foot` внутри `nav#site-nav`, где также
-`ul.drawer-links > a.drawer-link`; класс-модификатор `drawer-link--day|home|projects|contacts`
-даёт пункту иконку маской (`::before`). Оба тумблера темы несут `data-theme-toggle` и
+`ul.drawer-links > a.drawer-link`; класс-модификатор `drawer-link--day|home|projects|contacts|talks`
+даёт пункту иконку маской (`::before`). «Граф докладов» (`drawer-link--talks`) стоит сразу после
+дней и ведёт в портфолио (`/talks/`, EN — `/en/talks/`), а не в инлайновую полосу шапки: та
+рассчитана ровно на три ссылки портфолио. Оба тумблера темы несут `data-theme-toggle` и
 обрабатываются делегированным слушателем. Ещё: `div.nav-scrim[data-nav-close]`, `body.nav-open`.
 
 Программа:

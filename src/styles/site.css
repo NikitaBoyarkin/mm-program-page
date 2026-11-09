@@ -636,6 +636,10 @@ ul.drawer-links {
   --nav-icon: var(--nav-contact);
 }
 
+.drawer-link--talks {
+  --nav-icon: var(--nav-talks);
+}
+
 .drawer-foot {
   display: flex;
   flex-direction: column;
@@ -790,6 +794,9 @@ ul.drawer-links {
      а не в program.css, потому что панель есть и на 404, где стили программы
      не грузятся. */
   --nav-calendar: url("data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%2024%2024'%20fill='none'%20stroke='%23000'%20stroke-width='2'%20stroke-linecap='round'%20stroke-linejoin='round'%3E%3Cpath%20d='M8%202v4M16%202v4M3%2010h18M5%204h14a2%202%200%200%201%202%202v14a2%202%200%200%201-2%202H5a2%202%200%200%201-2-2V6a2%202%200%200%201%202-2z'/%3E%3C/svg%3E");
+  /* «Граф докладов»: три узла, связанные рёбрами, — та же геометрия, что у
+     иконки раздела в портфолио, поэтому переход читается как продолжение. */
+  --nav-talks: url("data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%2024%2024'%20fill='none'%20stroke='%23000'%20stroke-width='2'%20stroke-linecap='round'%20stroke-linejoin='round'%3E%3Ccircle%20cx='18'%20cy='5'%20r='3'/%3E%3Ccircle%20cx='6'%20cy='12'%20r='3'/%3E%3Ccircle%20cx='18'%20cy='19'%20r='3'/%3E%3Cpath%20d='M8.59%2013.51l6.83%203.98M15.41%206.51L8.59%2010.49'/%3E%3C/svg%3E");
   --nav-favorites: url("data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%2024%2024'%20fill='none'%20stroke='%23000'%20stroke-width='2'%20stroke-linecap='round'%20stroke-linejoin='round'%3E%3Cpath%20d='M12%202l3.1%206.3%206.9%201-5%204.9%201.2%206.8L12%2017.8%205.8%2021l1.2-6.8-5-4.9%206.9-1z'/%3E%3C/svg%3E");
   /* Монограмма: шестиугольник фавикона с вырезанными «NB» — глифы Inter 800
      путями, потому что маска не видит веб-шрифт страницы. */

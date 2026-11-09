@@ -41,6 +41,12 @@ const siteLinks = [
   { href: portfolioHref("/contact/", "nav-contacts"), label: t(lang, "navContacts"), icon: "contacts" },
 ];
 
+// «Граф докладов» живёт в портфолио, но описывает те же 91 доклад: это
+// продолжение дней программы, а не общая ссылка сайта. Поэтому пункт стоит
+// сразу после дней и только в drawer'е — инлайновая полоса шапки рассчитана
+// ровно на три ссылки портфолио.
+const talksHref = portfolioHref(lang === "en" ? "/en/talks/" : "/talks/", "nav-talks");
+
 // Переключатель уводит на тот же день другой локали: подпись — код цели.
 const targetLang = otherLang(lang);
 const langHref = switchLangHref(lang, ordinal ?? 1);
@@ -216,6 +222,9 @@ const langCode = targetLang.toUpperCase();
         </li>
       ))
     }
+    <li>
+      <a class="drawer-link drawer-link--talks" href={talksHref} rel="noopener">{t(lang, "navTalks")}</a>
+    </li>
     {
       siteLinks.map((link) => (
         <li>
