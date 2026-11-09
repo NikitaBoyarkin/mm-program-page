@@ -27,7 +27,7 @@
 | `src/i18n/paths.ts` | i18n | адреса от `BASE_URL` с префиксом языка: `/`, `/day/N/`, `/en/`, `/en/day/N/` |
 | `src/data/program.en.json` | data | overlay перевода контента: `tracks`/`halls`/`days` + `talks` по id доклада. Отдельный файл: `data:fetch` пересобирает `program.json` побайтово и стёр бы переводы (та же причина, что у `socials.json`) |
 | `src/lib/localize.ts` | core | overlay → `Talk`/`Program`: `localizeTalk` переводит только текстовые поля, `localizeProgram` — ещё `track/hall/day` |
-| `src/lib/search.ts` | core | чистый поиск без DOM и `fetch`: нормализация, ранги, дедупликация по id, лимит 12 |
+| `src/lib/search.ts` | core | чистый поиск без DOM и `fetch`: нормализация, ранги, многословный режим (все слова важнее части), опечатки по Левенштейну только на пустой литеральной выдаче, дедупликация по id, лимит 12 |
 | `src/components/SearchDialog.astro` | view | каркас диалога поиска: `data-search-*`, пустой список на билде |
 | `src/pages/en/index.astro`, `src/pages/en/day/[n].astro` | view | английские дни: `/en/` и `/en/day/2..N/` |
 | `src/pages/en/program.json.ts` | data | `/en/program.json` — тот же слепок с переведёнными на билде текстами |
@@ -50,7 +50,7 @@
 | `src/styles/site.css` | design | каркас страницы, шапка, подвал с контактами; геометрия иконок соцсетей — маски `--social-*` (нужны и карточкам, и подвалу, в том числе на `404`); иконки ссылок шапки — маски `--nav-*`; монограмма в шапке — маска `--brand-logo`: шестиугольник фавикона с вырезанными «NB» (`fill-rule: evenodd`, глифы Inter 800 путями) |
 | `src/styles/program.css` | design | сетка, карточка, модалка, печать; геометрия всех декоративных иконок — маски `--icon-*` |
 | `src/styles/search.css` | design | диалог поиска; файл глобальный, потому что результаты вставляет клиент уже после отрисовки и узлы `.search-result` не получают scope-атрибут Astro |
-| `tests/lib/*.test.ts` | verify | 132 юнит-теста ядра, i18n, поиска и фона (`bun test tests/lib`, 7 файлов) |
+| `tests/lib/*.test.ts` | verify | 148 юнит-тестов ядра, i18n, поиска и фона (`bun test tests/lib`, 7 файлов) |
 | `tests/built/program.spec.ts` | verify | 28 браузерных тестов сборки (Playwright) |
 | `tests/built/i18n-search.spec.ts` | verify | 8 тестов EN-маршрутов, переключателя языка и поиска; вместе 36 тестов × 3 проекта = 108 прогонов |
 | `package.json`, `bun.lock` | deps | версии сборки; `morphicons` запинен на `1.7.0` — иконки тем |

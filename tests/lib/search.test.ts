@@ -190,6 +190,86 @@ describe("дедупликация и лимит", () => {
   });
 });
 
+describe("многословный запрос", () => {
+  test("доклад, ответивший на все слова, находится", () => {
+    const program = makeProgram([talk(1, { title: "Аналитика роста" })]);
+    expect(ids(searchTalks(program, "аналитика роста"))).toEqual([1]);
+  });
+
+  test("все слова важнее части: частичное совпадение не разбавляет полное", () => {
+    const program = makeProgram([
+      talk(1, { title: "Аналитика роста" }),
+      talk(2, { title: "Аналитика продаж" }),
+    ]);
+    expect(ids(searchTalks(program, "аналитика роста"))).toEqual([1]);
+  });
+
+  test("нет полного совпадения → доклады, закрывшие хоть одно слово", () => {
+    const program = makeProgram([
+      talk(1, { title: "Аналитика продаж" }),
+      talk(2, { title: "Прогноз роста" }),
+    ]);
+    expect(ids(searchTalks(program, "аналитика роста")).sort()).toEqual([1, 2]);
+  });
+
+  test("место в выдаче определяет худшее поле доклада", () => {
+    const program = makeProgram([
+      talk(1, { track: "Ретейл", short: "Полки и выкладка." }),
+      talk(2, { title: "Ретейл и полки" }),
+    ]);
+    expect(ids(searchTalks(program, "ретейл полки"))).toEqual([2, 1]);
+  });
+
+  test("слова могут лежать в разных полях: заголовок + имя лектора", () => {
+    const program = makeProgram([
+      talk(1, { title: "Юнит-экономика", lectors: [makeLector({ name: "Мария Бабушкина" })] }),
+    ]);
+    expect(ids(searchTalks(program, "экономика бабушкина"))).toEqual([1]);
+  });
+
+  test("порядок при равном ранге стабилен между вызовами", () => {
+    const program = makeProgram([
+      talk(1, { title: "Ретейл полки" }),
+      talk(2, { title: "Ретейл и полки" }),
+    ]);
+    expect(ids(searchTalks(program, "ретейл полки"))).toEqual(
+      ids(searchTalks(program, "ретейл полки")),
+    );
+  });
+});
+
+describe("опечатки", () => {
+  test("одна лишняя буква в длинном слове не убивает выдачу", () => {
+    const program = makeProgram([talk(1, { title: "Аналитика роста" })]);
+    expect(ids(searchTalks(program, "аналитикка"))).toEqual([1]);
+  });
+
+  test("фолбэк по опечаткам не включается, когда точное совпадение есть", () => {
+    // «Аналогика» отличается от «аналитика» на две правки — но выдача не
+    // пуста, значит фолбэк молчит и лишнего не добавляет.
+    const program = makeProgram([
+      talk(1, { title: "Аналитика роста" }),
+      talk(2, { title: "Аналогика данных" }),
+    ]);
+    expect(ids(searchTalks(program, "аналитика"))).toEqual([1]);
+  });
+
+  test("короткое слово не нечёткое: «рот» не находит «рост»", () => {
+    const program = makeProgram([talk(1, { title: "Рост" })]);
+    expect(searchTalks(program, "рот")).toEqual([]);
+  });
+
+  test("запрос со знаком ищется буквально, без нечёткого фолбэка", () => {
+    const program = makeProgram([talk(1, { title: "Аналитика роста" })]);
+    expect(searchTalks(program, "аналитик-ка")).toEqual([]);
+  });
+
+  test("совсем чужое слово по-прежнему даёт пусто", () => {
+    const program = makeProgram([talk(1, { title: "Аналитика роста" })]);
+    expect(searchTalks(program, "криптовалюта")).toEqual([]);
+  });
+});
+
 describe("порядок при равном ранге", () => {
   test("сначала день, затем время начала, затем id", () => {
     const program = makeProgram([
