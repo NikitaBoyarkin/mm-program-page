@@ -588,10 +588,12 @@ function setFavoritesOnly(next: boolean): void {
     chip.setAttribute("aria-pressed", String(next));
     chip.classList.toggle("track-chip--active", next);
   }
-  // Панель дублирует состояние того же фильтра: открыв меню, видно, что
-  // избранное уже включено, а не только сколько докладов отмечено.
-  const drawerButton = $<HTMLButtonElement>("button[data-fav-drawer]");
-  if (drawerButton) drawerButton.setAttribute("aria-pressed", String(next));
+  // Панель и шапка дублируют состояние того же фильтра: открыв меню, видно, что
+  // избранное уже включено, а не только сколько докладов отмечено. Три точки —
+  // один фильтр, поэтому и обновляются одним проходом.
+  for (const button of $$<HTMLButtonElement>("[data-fav-drawer], [data-fav-header]")) {
+    button.setAttribute("aria-pressed", String(next));
+  }
   // Выбор экрана, а не данные: sessionStorage переживает перезагрузку и не
   // тащит фильтр в новую вкладку, в отличие от localStorage.
   writeStorage(FAV_FILTER_KEY, next ? "1" : "0", "session");
@@ -610,6 +612,24 @@ function initFavFilter(): void {
   setFavoritesOnly(favoritesOnly);
 }
 
+/* Фильтр, включённый из шапки или панели, применяется мгновенно и с любого
+   места страницы. Без прокрутки это выглядит как «ничего не произошло»: список
+   живёт ниже шапки, вкладок дня и тулбара, а шапка липкая — нажатие на звезду
+   возможно, когда сетки на экране нет вовсе. Если верх сетки уже виден, не
+   трогаем scroll: иначе каждое переключение дёргало бы страницу. */
+function revealGrid(): void {
+  const grid = $(".program-grid");
+  if (!grid) return;
+  const navHeight = $("header.nav-mobile")?.getBoundingClientRect().height ?? 0;
+  const box = grid.getBoundingClientRect();
+  if (box.top >= navHeight && box.top <= window.innerHeight) return;
+  const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  window.scrollTo({
+    top: box.top + window.scrollY - navHeight - 8,
+    behavior: reduce ? "auto" : "smooth",
+  });
+}
+
 /* «Избранное» в панели: тот же фильтр, что у чипа, но одним тапом и сразу с
    закрытием меню — иначе после нажатия пользователь остаётся смотреть на
    полупрозрачную панель вместо списка. Фокус на тумблер не возвращаем:
@@ -620,17 +640,20 @@ function initDrawerFavorites(): void {
   button.addEventListener("click", () => {
     closeDrawer(false);
     setFavoritesOnly(true);
-    // Без прокрутки фильтр выглядит как «ничего не произошло»: список живёт
-    // ниже шапки, вкладок дня и тулбара, а панель открывается с любого места.
-    const grid = $(".program-grid");
-    if (!grid) return;
-    const nav = $("header.nav-mobile");
-    const offset = (nav?.getBoundingClientRect().height ?? 0) + 8;
-    const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-    window.scrollTo({
-      top: grid.getBoundingClientRect().top + window.scrollY - offset,
-      behavior: reduce ? "auto" : "smooth",
-    });
+    revealGrid();
+  });
+}
+
+/* «Избранное» в шапке — переключатель, а не «показать»: повторное нажатие
+   возвращает весь список, поэтому и `aria-pressed`, в отличие от кнопки в
+   панели, которая всегда включает. Меню закрывать нечего, фокус остаётся на
+   кнопке — шапка не уезжает, и второе нажатие доступно сразу. */
+function initHeaderFavorites(): void {
+  const button = $<HTMLButtonElement>("button[data-fav-header]");
+  if (!button) return;
+  button.addEventListener("click", () => {
+    setFavoritesOnly(!favoritesOnly);
+    revealGrid();
   });
 }
 
@@ -734,8 +757,11 @@ function syncFavorites(): void {
     button.title = verb;
   }
 
-  const counter = $("[data-favorites-count]");
-  if (counter) counter.textContent = String(favorites.size);
+  // Счётчик живёт в двух местах — в панели и в шапке. Атрибут один, потому что
+  // число одно: обновляем все узлы, иначе шапка показывала бы 0 до перезагрузки.
+  for (const counter of $$("[data-favorites-count]")) {
+    counter.textContent = String(favorites.size);
+  }
   // Второй счётчик — в чипе фильтра: то же число, одна точка обновления.
   const chipCounter = $("[data-fav-filter-count]");
   if (chipCounter) chipCounter.textContent = String(favorites.size);
@@ -1639,6 +1665,7 @@ export function init(): void {
   initFavorites();
   initFavFilter();
   initDrawerFavorites();
+  initHeaderFavorites();
   initTimeGroups();
   initExpand();
   initModal();

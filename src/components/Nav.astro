@@ -6,6 +6,7 @@
 import { dayLabel } from "../i18n/format";
 import { dayHrefFor, switchLangHref } from "../i18n/paths";
 import { otherLang, t, type Lang } from "../i18n/ui";
+import { STAR } from "../lib/icons";
 import { dayNameLabel } from "../lib/localize";
 import { days } from "../lib/program";
 import { THEME_PATHS } from "../lib/theme";
@@ -73,6 +74,39 @@ const langCode = targetLang.toUpperCase();
   </ul>
 
   <div class="nav-top-actions">
+    {/* «Избранное» в шапке — первым в группе: это фильтр по контенту, а поиск,
+        язык и тема обслуживают страницу. Тот же переключатель, что у чипа под
+        вкладками дня, но всегда на виду: чип уезжает вверх вместе с тулбаром.
+        Счётчик несёт `data-favorites-count` — тот же атрибут, что у кнопки в
+        панели, поэтому обновляет их одна функция. */}
+    {favorites && (
+      <button
+        class="nav-icon-btn nav-fav"
+        type="button"
+        data-fav-header
+        aria-pressed="false"
+        title={t(lang, "navFavoritesOpen")}
+      >
+        <svg
+          viewBox="0 0 24 24"
+          width="18"
+          height="18"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="1.6"
+          stroke-linejoin="round"
+          aria-hidden="true"
+          focusable="false"
+        >
+          <path d={STAR}></path>
+        </svg>
+        {/* Подпись скрыта, но из неё и счётчика складывается имя кнопки:
+            «Избранное 3» — число в имени, а не только на экране. */}
+        <span class="visually-hidden">{t(lang, "navFavorites")}</span>
+        <span class="nav-fav__count" data-favorites-count>0</span>
+      </button>
+    )}
+
     {
       search && (
         <button
@@ -360,6 +394,34 @@ const langCode = targetLang.toUpperCase();
       border-color: var(--border-active);
       background: #2e2e2e;
       color: #f8f2da;
+    }
+  }
+
+  /* «Избранное»: звезда + число в том же круге 44 px, что и прочие кнопки —
+     круг один, содержимое разное. Число моноширинными цифрами, иначе на смене
+     9 → 10 подпись сдвигается вместе со звездой. */
+  .nav-fav {
+    gap: 0.15em;
+    padding-inline: 0;
+    font-size: 0.75rem;
+    font-variant-numeric: tabular-nums;
+  }
+
+  /* Нажатое состояние — заливка акцентом с `--accent-ink`: ровно как у
+     выбранного чипа трека (`program.css`, `.track-chip[aria-pressed="true"]`).
+     Это один и тот же фильтр, и в двух местах он не должен выглядеть двумя
+     разными состояниями. */
+  .nav-fav[aria-pressed="true"] {
+    border-color: var(--text-accent);
+    background: var(--text-accent);
+    color: var(--accent-ink);
+  }
+
+  @media (hover: hover) and (pointer: fine) {
+    .nav-fav[aria-pressed="true"]:hover {
+      border-color: var(--text-accent-hover);
+      background: var(--text-accent-hover);
+      color: var(--accent-ink);
     }
   }
 

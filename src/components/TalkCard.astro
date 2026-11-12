@@ -4,6 +4,7 @@
  * тезисы и «Подробнее». JS только переключает состояния — разметку не создаёт.
  */
 import { t, type Lang } from "../i18n/ui";
+import { STAR } from "../lib/icons";
 import { hallLabel, trackLabel } from "../lib/localize";
 import { firstParagraph, formatRange, imageUrl, type Talk } from "../lib/program";
 import { SOCIAL_LABELS } from "../lib/socials";
@@ -43,9 +44,6 @@ const initials = (name: string): string =>
     .map((word) => Array.from(word)[0] ?? "")
     .join("")
     .toUpperCase() || "•";
-
-const STAR =
-  "M12 3.1l2.72 5.51 6.08.88-4.4 4.29 1.04 6.06L12 16.98l-5.44 2.86 1.04-6.06-4.4-4.29 6.08-.88z";
 ---
 
 <article

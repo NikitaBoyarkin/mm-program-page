@@ -242,7 +242,10 @@ test("06 · избранное: звезда, [data-favorites-count], сохра
   try {
     await star.click();
     await expect(star).toHaveAttribute("aria-pressed", "true");
-    await expect(page.locator("[data-favorites-count]")).toHaveText("1");
+    // Число одно на два места — шапку и панель. Строгий локатор без скоупа
+    // упал бы на двух совпадениях, поэтому место названо явно.
+    await expect(page.locator("#site-nav [data-favorites-count]")).toHaveText("1");
+    await expect(page.locator("header.nav-mobile [data-favorites-count]")).toHaveText("1");
 
     await page.reload();
     await page.waitForLoadState("load");
@@ -250,7 +253,8 @@ test("06 · избранное: звезда, [data-favorites-count], сохра
       "aria-pressed",
       "true",
     );
-    await expect(page.locator("[data-favorites-count]")).toHaveText("1");
+    await expect(page.locator("#site-nav [data-favorites-count]")).toHaveText("1");
+    await expect(page.locator("header.nav-mobile [data-favorites-count]")).toHaveText("1");
   } finally {
     await page.evaluate(() => window.localStorage.clear());
   }
@@ -1082,4 +1086,56 @@ test("28 · соцсети спикера: иконка в карточке и �
     "href",
     first.url,
   );
+});
+
+// «Избранное» в шапке. Проверяется то, что ломается молча: звезда есть, но не
+// на виду (шапка узкая), число в шапке отстаёт от числа в панели, а нажатие не
+// переключает `aria-pressed` — тогда вид кнопки и состояние фильтра расходятся,
+// и повторный клик читается как «ничего не произошло».
+test("29 · «Избранное» в шапке: видно, число общее с панелью, клик переключает фильтр", async ({
+  page,
+}) => {
+  await open(page, "/");
+
+  const header = page.locator("header.nav-mobile button[data-fav-header]");
+  await expect(header).toBeVisible();
+  await expect(header).toHaveAttribute("aria-pressed", "false");
+  await expect(header.locator("[data-favorites-count]")).toHaveText("0");
+  // Имя складывается из скрытой подписи и числа: без подписи скринридер
+  // услышал бы голое «0».
+  await expect(header).toHaveAccessibleName(/Избранное/);
+
+  // Одна звезда в карточке — оба счётчика. Это и есть «одно число, два места».
+  await page.locator("button[data-fav][data-talk-id]").first().click();
+  await expect(header.locator("[data-favorites-count]")).toHaveText("1");
+  await expect(page.locator("#site-nav [data-favorites-count]")).toHaveText("1");
+
+  // Клик по шапке включает тот же фильтр, что чип: список и счётчик докладов.
+  await header.click();
+  await expect(header).toHaveAttribute("aria-pressed", "true");
+  await expect(page.locator("article.talk-card:visible")).toHaveCount(1);
+  await expect(page.locator("button.track-chip[data-fav-filter]")).toHaveAttribute(
+    "aria-pressed",
+    "true",
+  );
+
+  // И выключает: это переключатель, а не «показать».
+  await header.click();
+  await expect(header).toHaveAttribute("aria-pressed", "false");
+  await expect(page.locator("article.talk-card:visible")).toHaveCount(DAY1_TALKS);
+  await expect(page.locator("button.track-chip[data-fav-filter]")).toHaveAttribute(
+    "aria-pressed",
+    "false",
+  );
+
+  // Состояние фильтра живёт в sessionStorage: после перезагрузки вид кнопки
+  // обязан прийти из него, а не из разметки (там всегда `false`).
+  await header.click();
+  await page.reload();
+  await page.waitForLoadState("load");
+  await expect(page.locator("header.nav-mobile button[data-fav-header]")).toHaveAttribute(
+    "aria-pressed",
+    "true",
+  );
+  await expect(page.locator("article.talk-card:visible")).toHaveCount(1);
 });

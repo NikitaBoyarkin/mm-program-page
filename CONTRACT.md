@@ -35,11 +35,12 @@
 | `scripts/fetch-program.ts` | data | `--fetch` / `--check` / `--dry-run`, нормализация |
 | `src/lib/program.ts` | core | типы + чистые функции домена; собирает `PROGRAM` из слепка и overlay'ев `socials.json` / `copy.ru.json` (заморожено) |
 | `src/lib/ics.ts` | core | сборка `.ics` (заморожено) |
+| `src/lib/icons.ts` | core | общие глифы: звезда (контур для карточки и для шапки — один литерал, потому что это одна функция) |
 | `src/lib/theme.ts` | core | три темы, цвета `theme-color`, `nextTheme` |
 | `src/lib/analytics.ts` | core | UTM-атрибуция и единственный канал в PostHog (`track`, супер-свойства) |
 | `src/components/Analytics.astro` | view | ленивый `init` PostHog, `outbound_click` |
 | `src/layouts/Base.astro` | view | `<head>`, тема до отрисовки, шапка, подвал; `og:image` — `src/assets/og/program-2026.png` (1200×630), пересборка `bun run og` |
-| `src/components/Nav.astro` | view | шапка, drawer (дни, «Граф докладов», ссылки портфолио), тумблер темы (луна в разметке), счётчик избранного, кнопка поиска и переключатель `.nav-lang` |
+| `src/components/Nav.astro` | view | шапка, drawer (дни, «Граф докладов», ссылки портфолио), тумблер темы (луна в разметке), звезда «Избранное» со счётчиком (первая в группе действий, только на страницах дня), кнопка поиска и переключатель `.nav-lang` |
 | `src/components/ProgramPage.astro` | view | день: шапка, табы, чипы, тулбар, сетка, модалка |
 | `src/components/TalkCard.astro` | view | карточка доклада; звезда избранного (контур → заливка через `fill-opacity`) |
 | `src/components/TalkModal.astro` | view | оболочка диалога |
@@ -51,8 +52,8 @@
 | `src/styles/program.css` | design | сетка, карточка, модалка, печать; геометрия всех декоративных иконок — маски `--icon-*` |
 | `src/styles/search.css` | design | диалог поиска; файл глобальный, потому что результаты вставляет клиент уже после отрисовки и узлы `.search-result` не получают scope-атрибут Astro |
 | `tests/lib/*.test.ts` | verify | 151 юнит-тест ядра, i18n, поиска и земли (`bun test tests/lib`, 7 файлов) |
-| `tests/built/program.spec.ts` | verify | 28 браузерных тестов сборки (Playwright) |
-| `tests/built/i18n-search.spec.ts` | verify | 8 тестов EN-маршрутов, переключателя языка и поиска; вместе 36 тестов × 3 проекта = 108 прогонов |
+| `tests/built/program.spec.ts` | verify | 29 браузерных тестов сборки (Playwright) |
+| `tests/built/i18n-search.spec.ts` | verify | 8 тестов EN-маршрутов, переключателя языка и поиска; вместе 37 тестов × 3 проекта = 111 прогонов |
 | `package.json`, `bun.lock` | deps | версии сборки; `morphicons` запинен на `1.7.0` — иконки тем |
 
 Иконка темы живёт в двух видах: луна в разметке (`.astro` не знает о `localStorage`) и
@@ -182,16 +183,22 @@ buildCalendar, calendarFilename, downloadIcs`.
 
 ```
 html[data-theme=dark|light|cyberpunk][data-lang=ru|en][data-day-id][data-day-date]
-  body > a.skip-link + header.nav-mobile + div.nav-scrim + nav#site-nav + main#main.page + footer.site-footer
+  body > div.ground-bloom[aria-hidden] + a.skip-link + header.nav-mobile + div.nav-scrim + nav#site-nav + main#main.page + footer.site-footer
 ```
 
+`div.ground-bloom` — второй слой земли (`tokens.css`, `tests/lib/ground.test.ts`): стоит
+первым ребёнком `body`, потому что все три декоративных слоя делят `z-index: −1` и порядок
+отрисовки задаёт только порядок в дереве (ramp → свет → соты).
+
 Шапка и меню: `header.nav-mobile > div.nav-top-actions` с
-`button.nav-icon-btn[data-search-open][aria-controls=search-dialog][aria-expanded]` (только на
-страницах дня), `a.nav-icon-btn.nav-lang[href][hreflang][lang]` (переключатель языка, текст
-`EN`/`RU`), `button.nav-icon-btn.theme-toggle--header[data-theme-toggle]` (тема из шапки, без
-меню) и `button.nav-toggle[data-nav-open][aria-expanded][aria-controls=site-nav]`; второй
+`button.nav-icon-btn.nav-fav[data-fav-header][aria-pressed]` (звезда + `[data-favorites-count]`;
+только на страницах дня — на `404` фильтровать нечего), `button.nav-icon-btn[data-search-open]
+[aria-controls=search-dialog][aria-expanded]` (только на страницах дня),
+`a.nav-icon-btn.nav-lang[href][hreflang][lang]` (переключатель языка, текст `EN`/`RU`),
+`button.nav-icon-btn.theme-toggle--header[data-theme-toggle]` (тема из шапки, без меню) и
+`button.nav-toggle[data-nav-open][aria-expanded][aria-controls=site-nav]`; второй
 `button.theme-toggle[data-theme-toggle]`, `button.drawer-favs[data-fav-drawer]`
-(внутри — `[data-favorites-count]`; только на страницах дня, иначе кнопка-фильтр мертва)
+(внутри тоже `[data-favorites-count]`; только на страницах дня, иначе кнопка-фильтр мертва)
 и второй `a.nav-lang` живут в `.drawer-foot` внутри `nav#site-nav`, где также
 `ul.drawer-links > a.drawer-link`; класс-модификатор `drawer-link--day|home|projects|contacts|talks`
 даёт пункту иконку маской (`::before`). «Граф докладов» (`drawer-link--talks`) стоит сразу после
@@ -314,6 +321,10 @@ span.search-result__day + span.search-result__title + span.search-result__meta`;
    Второй, независимый переключатель — «Избранное»: `button.track-chip[data-fav-filter]`,
    первый в `.track-chips`, **без `data-track`**, поэтому селектор чипов трека
    (`[data-track-chips] > button.track-chip[data-track]`) его не подхватывает.
+   Тот же фильтр висит на звезде в шапке (`button[data-fav-header]`, тоже
+   `aria-pressed`): это переключатель, а не «показать», поэтому повторный клик возвращает
+   список; клик из шапки или панели досматривает сетку (прокрутка к ней), если её верх не в
+   кадре, а клик по чипу — нет, чип стоит прямо над списком.
    На телефоне (≤ 767.98 px) чипы треков скрыты, а тот же `activeTrack` выбирается
    нативным `select[data-track-select]` внутри `label.track-select`: 12 подписей — 2147 px,
    в строку 358 px они не влезают, а перенос даёт 8 строк / 252 px над карточками.
@@ -333,7 +344,11 @@ span.search-result__day + span.search-result__title + span.search-result__meta`;
 5. **Счётчик**: число докладов дня (с учётом фильтра), подпись через `pluralTalks`
    (`доклад / доклада / докладов`). Не имитация «онлайна».
 6. **Избранное**: `localStorage['mm-program:favorites']` (массив id), синхронизация звезды,
-   `aria-pressed`, `[data-favorites-count]` (число, включая 0) и `[data-modal-fav]`.
+   `aria-pressed`, `[data-favorites-count]` (число, включая 0; атрибут стоит на двух узлах —
+   в шапке и в панели — и обновляются оба) и `[data-modal-fav]`. Выбор «только избранное» —
+   отдельное состояние: `sessionStorage['mm-program:favorites-only']`, общее у чипа, звезды в
+   шапке и кнопки в панели, поэтому все три несут `aria-pressed` и переключаются одной
+   функцией.
 7. **Карточка**: `button.talk-card__title-btn` открывает модалку; «Подробнее» разворачивает
    текст в карточке (`talk-card--expanded`, подпись «Свернуть», `aria-expanded`).
 8. **Модалка**: `hidden` по умолчанию; открытие — `hidden = false`, `body.is-modal-open`,
