@@ -1,7 +1,7 @@
 /**
  * Проверка СОБРАННОЙ страницы программы (dist/) в реальном браузере:
  * тесты читают фактический DOM после `astro preview`, ничего не мокают и
- * не подменяют данные. 28 тестов = 28 фактов контракта; набор идёт в трёх
+ * не подменяют данные. 30 тестов = 30 фактов контракта; набор идёт в трёх
  * проектах (`playwright.config.ts`): chromium 1280×900, chromium 320×700
  * и WebKit iPhone 13 390×844.
  */
@@ -514,10 +514,12 @@ test.describe("мобильный 390×844", () => {
     await expect(page.locator("[data-theme-toggle]")).toHaveCount(2);
   });
 
-  // Липкая цепочка: шапка → табы дня → разделитель группы времени. Каждая
-  // ступень смещена на сумму высот предыдущих, поэтому разделитель встаёт ровно
-  // под табами, а не заезжает под них.
-  test("16 · липкая цепочка: разделитель времени под табами дня при scrollY = 1200", async ({
+  // Разделитель времени больше НЕ липнет: вторая ступень цепочки — только табы
+  // дня. Тест держит обе половины этого решения: разделитель не висит над
+  // карточками (уходит вверх при прокрутке), а табы при этом продолжают
+  // стоять под шапкой. Без второй половины тест проходил бы и на странице,
+  // где сломалась вся липкость.
+  test("16 · разделитель времени уезжает при прокрутке, табы дня остаются под шапкой", async ({
     page,
   }) => {
     await open(page, "/");
@@ -526,19 +528,47 @@ test.describe("мобильный 390×844", () => {
     await expect.poll(() => page.evaluate(() => window.scrollY)).toBe(1200);
 
     const chain = await page.evaluate(() => {
+      const header = document.querySelector("header.nav-mobile")!.getBoundingClientRect();
       const tabs = document.querySelector("nav.day-tabs")!.getBoundingClientRect();
       const times = Array.from(document.querySelectorAll(".program-grid__time-cell"))
         .filter((node) => !(node as HTMLElement).hidden)
-        .map((node) => node.getBoundingClientRect().top);
-      return { tabsBottom: tabs.bottom, times };
+        .map((node) => ({
+          top: node.getBoundingClientRect().top,
+          position: getComputedStyle(node).position,
+        }));
+      return { headerBottom: header.bottom, tabsBottom: tabs.bottom, times };
     });
 
+    // Табы — по-прежнему липкие, ровно под шапкой.
+    expect(chain.tabsBottom).toBeGreaterThan(chain.headerBottom);
+
     expect(chain.times.length).toBeGreaterThan(1);
-    const topmost = Math.min(...chain.times);
-    // Ни один разделитель не ушёл под табы…
-    expect(topmost).toBeGreaterThanOrEqual(chain.tabsBottom - 1);
-    // …а верхний стоит именно под ними, в пределах 3 px.
-    expect(topmost).toBeLessThanOrEqual(chain.tabsBottom + 3);
+    // Ни один разделитель не позиционирован липко…
+    for (const time of chain.times) expect(time.position).not.toBe("sticky");
+
+    // …и он едет вместе со страницей: те же ячейки после ещё 100 px прокрутки
+    // сместились ровно на 100. Липкая полоса на этом месте осталась бы стоять,
+    // поэтому проверка ловит возврат sticky, а не «оказалось выше табов».
+    const before = await page.evaluate(() =>
+      Array.from(document.querySelectorAll(".program-grid__time-cell"))
+        .filter((node) => !(node as HTMLElement).hidden)
+        .map((node) => ({ text: node.textContent?.trim() ?? "", top: node.getBoundingClientRect().top })),
+    );
+    await page.evaluate(() => window.scrollTo(0, 1300));
+    await expect.poll(() => page.evaluate(() => window.scrollY)).toBe(1300);
+    const after = await page.evaluate(() =>
+      Array.from(document.querySelectorAll(".program-grid__time-cell"))
+        .filter((node) => !(node as HTMLElement).hidden)
+        .map((node) => ({ text: node.textContent?.trim() ?? "", top: node.getBoundingClientRect().top })),
+    );
+    const moved = before
+      .map((cell) => {
+        const match = after.find((next) => next.text === cell.text);
+        return match ? Math.round(cell.top - match.top) : null;
+      })
+      .filter((delta): delta is number => delta !== null && Math.abs(delta) < 500);
+    expect(moved.length).toBeGreaterThan(0);
+    for (const delta of moved) expect(Math.abs(delta - 100)).toBeLessThanOrEqual(2);
   });
 
   test("17 · «Избранное» как фильтр: 1 видимая ячейка, счётчик 1, пусто после снятия звезды", async ({
@@ -887,7 +917,10 @@ test.describe("мобильный 320×700", () => {
       const tabs = document.querySelector("nav.day-tabs")!.getBoundingClientRect();
       const times = Array.from(document.querySelectorAll(".program-grid__time-cell"))
         .filter((node) => !(node as HTMLElement).hidden)
-        .map((node) => node.getBoundingClientRect().top);
+        .map((node) => ({
+          top: node.getBoundingClientRect().top,
+          position: getComputedStyle(node).position,
+        }));
       return { headerBottom: header.bottom, tabsTop: tabs.top, tabsBottom: tabs.bottom, times };
     });
 
@@ -895,11 +928,10 @@ test.describe("мобильный 320×700", () => {
     expect(chain.tabsTop).toBeGreaterThanOrEqual(chain.headerBottom - 1);
     expect(chain.tabsTop).toBeLessThanOrEqual(chain.headerBottom + 2);
 
-    // Разделитель времени — под табами, не заезжая под них.
+    // Разделителя в цепочке нет: он не липкий и ушёл выше табов.
     expect(chain.times.length).toBeGreaterThan(1);
-    const topmost = Math.min(...chain.times);
-    expect(topmost).toBeGreaterThanOrEqual(chain.tabsBottom - 1);
-    expect(topmost).toBeLessThanOrEqual(chain.tabsBottom + 3);
+    for (const time of chain.times) expect(time.position).not.toBe("sticky");
+    expect(Math.min(...chain.times.map((time) => time.top))).toBeLessThan(chain.tabsBottom);
   });
 });
 
@@ -1139,3 +1171,86 @@ test("29 · «Избранное» в шапке: видно, число общ�
   );
   await expect(page.locator("article.talk-card:visible")).toHaveCount(1);
 });
+
+// «Все треки» в шапке — раскрывающийся список из 12 пунктов (сброс + 11 треков).
+// Первая версия кнопки только снимала фильтр, и при полном списке клик не делал
+// ничего: со стороны это «кнопка не работает». Тест держит четыре вещи, которые
+// ломаются молча: меню не открывается, выбор не доходит до чипов и URL, панель не
+// закрывается по Esc/клику мимо, и кнопки нет на телефоне.
+test("30 · «Все треки» в шапке: меню из 12 пунктов, синхронно с чипами и URL", async ({
+  page,
+}) => {
+  await open(page, "/");
+
+  const trigger = page.locator("header.nav-mobile button[data-track-header]");
+  const panel = page.locator("[data-track-menu]");
+  const options = panel.locator("button[data-track-option]");
+  const allOption = panel.locator('button[data-track-option][data-track=""]');
+
+  // Кнопка есть на любой ширине, включая 320 px.
+  await expect(trigger).toBeVisible();
+  await expect(trigger).toHaveAttribute("aria-expanded", "false");
+  await expect(panel).toBeHidden();
+
+  await trigger.click();
+  await expect(trigger).toHaveAttribute("aria-expanded", "true");
+  await expect(panel).toBeVisible();
+  await expect(options).toHaveCount(12);
+  // Без фильтра нажат сброс — ровно как у чипов.
+  await expect(allOption).toHaveAttribute("aria-pressed", "true");
+  await expect(trigger).toHaveAttribute("data-active", "false");
+
+  // Выбор трека из меню фильтрует так же, как чип: список, URL, чип, кнопка.
+  const option = page.locator('button[data-track-option]:not([data-track=""])').first();
+  const track = await option.getAttribute("data-track");
+  expect(track).toBeTruthy();
+  await option.click();
+  await expect(panel).toBeHidden();
+  await expect(option).toHaveAttribute("aria-pressed", "true");
+  await expect(allOption).toHaveAttribute("aria-pressed", "false");
+  await expect(trigger).toHaveAttribute("data-active", "true");
+  expect(page.url()).toContain("track=");
+  await expect(page.locator('button.track-chip[data-track][aria-pressed="true"]')).toHaveCount(1);
+  const visibleCells = await page.locator("article.talk-card:visible").count();
+  expect(visibleCells).toBeLessThan(DAY1_TALKS);
+  expect(visibleCells).toBeGreaterThan(0);
+
+  // Esc закрывает панель и возвращает фокус на кнопку.
+  await trigger.click();
+  await expect(panel).toBeVisible();
+  await page.keyboard.press("Escape");
+  await expect(panel).toBeHidden();
+  await expect(trigger).toBeFocused();
+
+  // Клик мимо — тоже закрывает. Точка в левом нижнем углу вьюпорта: на 390 px
+  // панель занимает почти всю верхнюю половину, и «клик по заголовку» попадал
+  // в саму панель (поймано в WebKit, где перехват идёт иначе, чем в Chromium).
+  await trigger.click();
+  await expect(panel).toBeVisible();
+  const viewport = page.viewportSize()!;
+  const urlBefore = page.url();
+  await page.mouse.click(4, viewport.height - 4);
+  await expect(panel).toBeHidden();
+  expect(page.url()).toBe(urlBefore);
+
+  // Сброс из меню возвращает весь день и чистит URL.
+  await trigger.click();
+  await allOption.click();
+  await expect(page.locator("article.talk-card:visible")).toHaveCount(DAY1_TALKS);
+  expect(page.url()).not.toContain("track=");
+  await expect(trigger).toHaveAttribute("data-active", "false");
+
+  // Состояние из `?track=` приезжает из URL: разметка отдаёт «Все треки»
+  // нажатой, и только клиент знает про query — он и обязан переписать меню.
+  await open(page, `/?track=${encodeURIComponent(track!)}`);
+  await expect(page.locator("header.nav-mobile button[data-track-header]")).toHaveAttribute(
+    "data-active",
+    "true",
+  );
+  await page.locator("header.nav-mobile button[data-track-header]").click();
+  await expect(page.locator(`button[data-track-option][data-track="${track}"]`)).toHaveAttribute(
+    "aria-pressed",
+    "true",
+  );
+});
+

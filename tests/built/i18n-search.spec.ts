@@ -7,7 +7,7 @@
  * Набор идёт в трёх проектах (`playwright.config.ts`): chromium 1280×900,
  * chromium 320×700 и WebKit iPhone 13 390×844.
  */
-import { expect, test, type APIRequestContext, type Page } from "playwright/test";
+import { expect, test, type APIRequestContext, type Locator, type Page } from "playwright/test";
 
 /** `base` проекта (`astro.config.mjs`): страница живёт на подпути. */
 const BASE = "/mm-program-page";
@@ -125,10 +125,22 @@ test("29 · /en/ — английская страница: html[lang], data-lan
   expect(ruTrackCells, "data-track ячейки должен остаться русским").toBeGreaterThan(0);
 });
 
+/**
+ * Ссылка на другой язык есть в двух местах: в шапке (≥ 480 px) и в панели меню
+ * (везде). На телефоне шапку занимают фильтры, поэтому тест идёт тем путём,
+ * который у читателя действительно есть, — а не тем, что первым попал в DOM.
+ */
+async function langLink(page: Page): Promise<Locator> {
+  const header = page.locator("header.nav-mobile a.nav-lang");
+  if (await header.isVisible()) return header;
+  await page.locator("[data-nav-open]").click();
+  return page.locator("#site-nav a.nav-lang");
+}
+
 test("30 · переключатель языка: /day/2/ → /en/day/2/ и обратно на /", async ({ page }) => {
   await open(page, "/day/2/");
 
-  const headerLang = page.locator("header.nav-mobile a.nav-lang");
+  const headerLang = await langLink(page);
   await expect(headerLang).toHaveAttribute("href", `${BASE}/en/day/2/`);
   await expect(headerLang).toHaveAttribute("hreflang", "en");
   await headerLang.click();
@@ -138,7 +150,7 @@ test("30 · переключатель языка: /day/2/ → /en/day/2/ и о�
 
   // Обратно с английского первого дня — на русский первый день (он же `/`).
   await open(page, "/en/");
-  const backLang = page.locator("header.nav-mobile a.nav-lang");
+  const backLang = await langLink(page);
   await expect(backLang).toHaveAttribute("href", `${BASE}/`);
   await expect(backLang).toHaveAttribute("hreflang", "ru");
   await backLang.click();
@@ -232,13 +244,19 @@ test("34 · Esc закрывает поиск и возвращает фокус
 test.describe("мобильный 320×700", () => {
   test.use({ viewport: { width: 320, height: 700 } });
 
-  test("35 · на /en/: кнопки поиска и языка видны, вбок ничего не скроллится", async ({
+  test("35 · на /en/ 320 px: поиск и треки в шапке, язык — в drawer'е, вбок не скроллится", async ({
     page,
   }) => {
     await open(page, "/en/");
 
     await expect(page.locator("[data-search-open]")).toBeVisible();
-    await expect(page.locator("header.nav-mobile a.nav-lang")).toBeVisible();
+    await expect(page.locator("header.nav-mobile button[data-track-header]")).toBeVisible();
+    // Шестая кнопка в полосу 320 px не влезает, поэтому язык живёт в панели:
+    // проверяем именно тот путь, который есть у читателя.
+    await expect(page.locator("header.nav-mobile a.nav-lang")).toBeHidden();
+    await page.locator("[data-nav-open]").click();
+    await expect(page.locator("#site-nav a.nav-lang")).toBeVisible();
+    await page.keyboard.press("Escape");
 
     const overflow = await page.evaluate(
       () => document.documentElement.scrollWidth - document.documentElement.clientWidth,

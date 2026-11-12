@@ -9,8 +9,12 @@ import Nav from "../components/Nav.astro";
 import { dayHrefFor } from "../i18n/paths";
 import { t, type Lang } from "../i18n/ui";
 import { BASE_URL } from "../lib/program";
+import type { BannerSources } from "../lib/images";
 import "../styles/tokens.css";
 import "../styles/site.css";
+// Стили шапки и её меню — после каркаса: `.nav-icon-btn` обязан перекрывать
+// кнопочные правила site.css, как это делал scoped-блок компонента.
+import "../styles/nav.css";
 
 // Шрифты живут в `src/assets/fonts` и проходят через бандлер (DECISIONS §8):
 // `?url` отдаёт тот же хешированный путь, что и `url()` в `tokens.css`, поэтому
@@ -34,8 +38,11 @@ interface Props {
   dayDate?: string;
   /** 1-based номер дня: подсвечивает строку в drawer'е. */
   dayOrdinal?: number;
-  /** Баннер первой карточки: `<link rel=preload>` только для десктопной сетки. */
-  preloadImage?: string | null;
+  /** Баннер первой карточки: `<link rel=preload>` только для десктопной сетки.
+   *  Это `bannerSources(...)` — тот же объект, что уходит в `<img srcset>` карточки:
+   *  предзагрузка обязана просить ровно тот вариант, который выберет `srcset`,
+   *  иначе браузер качает два файла. */
+  preloadBanner?: BannerSources | null;
 }
 
 const {
@@ -45,7 +52,7 @@ const {
   dayId,
   dayDate,
   dayOrdinal,
-  preloadImage = null,
+  preloadBanner = null,
 } = Astro.props;
 
 // Канонический адрес — только путь: `?track=` и прочие UTM-хвосты не должны
@@ -136,11 +143,13 @@ const [ticketsBefore, ticketsAfter = ""] = t(lang, "footerTickets").split("{link
     {/* LCP на десктопе — первый баннер. `lazy`-картинка стартует слишком поздно,
         а `eager` на телефоне качал бы её впустую: баннеры там `display: none`.
         Поэтому предзагрузка с медиа-условием, а приоритет отдаёт `fetchpriority`. */}
-    {preloadImage && (
+    {preloadBanner && (
       <link
         rel="preload"
         as="image"
-        href={preloadImage}
+        href={preloadBanner.src}
+        imagesrcset={preloadBanner.srcset}
+        imagesizes={preloadBanner.sizes}
         media="(min-width: 768px)"
         fetchpriority="high"
       />
@@ -243,6 +252,7 @@ const [ticketsBefore, ticketsAfter = ""] = t(lang, "footerTickets").split("{link
       lang={lang}
       search={Boolean(dayOrdinal)}
       favorites={Boolean(dayOrdinal)}
+      tracks={Boolean(dayOrdinal)}
     />
 
     <main id="main" class="page" tabindex="-1">

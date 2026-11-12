@@ -7,3 +7,6 @@ playwright-report/
 test-results/
 .env
 .env.*
+
+# Производные аватарки: пересобираются `bun run photos` (prebuild), в репозиторий не кладутся.
+public/media/

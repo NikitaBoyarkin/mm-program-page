@@ -4,8 +4,10 @@
   "version": "2.0.0",
   "private": true,
   "scripts": {
-    "dev": "astro dev",
+    "dev": "bun run scripts/optimize-photos.ts && astro dev",
     "build": "astro build",
+    "prebuild": "bun run scripts/optimize-photos.ts",
+    "photos": "bun run scripts/optimize-photos.ts",
     "preview": "astro preview",
     "check": "astro check",
     "test": "bun test tests/lib",
@@ -24,6 +26,7 @@
     "@astrojs/check": "^0.9.10",
     "@types/bun": "^1.4.2",
     "playwright": "^1.64.1",
+    "sharp": "^0.35.5",
     "typescript": "^5.9.3"
   }
 }

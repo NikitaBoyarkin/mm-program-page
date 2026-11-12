@@ -35,7 +35,10 @@
 | `scripts/fetch-program.ts` | data | `--fetch` / `--check` / `--dry-run`, нормализация |
 | `src/lib/program.ts` | core | типы + чистые функции домена; собирает `PROGRAM` из слепка и overlay'ев `socials.json` / `copy.ru.json` (заморожено) |
 | `src/lib/ics.ts` | core | сборка `.ics` (заморожено) |
-| `src/lib/icons.ts` | core | общие глифы: звезда (контур для карточки и для шапки — один литерал, потому что это одна функция) |
+| `src/lib/icons.ts` | core | общие глифы: звезда и ярлык трека (один контур на карточку/шапку и на чип/шапку — потому что это одна функция) |
+| `src/lib/images.ts` | core | доставка картинок: `bannerSources` (WebP-варианты 400/800 только у Netlify-хоста), `photoSources` / `photoMapEntry` (локальная аватарка из `photos.json` с фолбэком на оригинал). Только билд: в `/program.json` локальные пути не уезжают — модалка валидирует `photo` через `imageUrl()`, а тот относительный адрес отвергает |
+| `src/data/photos.json` | data | производная карта «оригинал аватарки → `/media/lectors/<hash>.webp`»; производится `bun run photos`, коммитится (по ней читают карточка и эндпоинт) |
+| `scripts/optimize-photos.ts` | data | `prebuild`: качает аватарки, режет до 144×144 WebP q72 в `public/media/lectors/` (каталог не коммитится), ошибка сети не валит сборку |
 | `src/lib/theme.ts` | core | три темы, цвета `theme-color`, `nextTheme` |
 | `src/lib/analytics.ts` | core | UTM-атрибуция и единственный канал в PostHog (`track`, супер-свойства) |
 | `src/components/Analytics.astro` | view | ленивый `init` PostHog, `outbound_click` |
@@ -48,12 +51,13 @@
 | `src/pages/program.json.ts` | data | `/program.json` — тот же слепок для клиента |
 | `src/scripts/program-client.ts` | client | единственный JS: тема (морф иконки), drawer, фильтр, избранное, модалка, `.ics`, поиск, `?talk=<id>` |
 | `src/styles/tokens.css` | design | токены трёх тем + шрифты + типографическая шкала (заморожено) + три слоя земли: ramp (`body::before`), свечение (`.ground-bloom`), соты (`body::after`), рампа и свечение едут двумя орбитами |
+| `src/styles/nav.css` | design | шапка и её меню: круг кнопок группы действий, звезда избранного, меню треков (триггер + панель 12 пунктов), переключатель языка. Глобальный файл, потому что правила были scoped в `Nav.astro`, а все селекторы и так из `.nav-*`/`.track-menu*`; вынесено, когда компонент перевалил за бюджет 20 КБ на файл |
 | `src/styles/site.css` | design | каркас страницы, шапка, подвал с контактами; геометрия иконок соцсетей — маски `--social-*` (нужны и карточкам, и подвалу, в том числе на `404`); иконки ссылок шапки — маски `--nav-*`; монограмма в шапке — маска `--brand-logo`: шестиугольник фавикона с вырезанными «NB» (`fill-rule: evenodd`, глифы Inter 800 путями) |
 | `src/styles/program.css` | design | сетка, карточка, модалка, печать; геометрия всех декоративных иконок — маски `--icon-*` |
 | `src/styles/search.css` | design | диалог поиска; файл глобальный, потому что результаты вставляет клиент уже после отрисовки и узлы `.search-result` не получают scope-атрибут Astro |
-| `tests/lib/*.test.ts` | verify | 151 юнит-тест ядра, i18n, поиска и земли (`bun test tests/lib`, 7 файлов) |
-| `tests/built/program.spec.ts` | verify | 29 браузерных тестов сборки (Playwright) |
-| `tests/built/i18n-search.spec.ts` | verify | 8 тестов EN-маршрутов, переключателя языка и поиска; вместе 37 тестов × 3 проекта = 111 прогонов |
+| `tests/lib/*.test.ts` | verify | 161 юнит-тест ядра, i18n, поиска, земли и картинок (`bun test tests/lib`, 8 файлов) |
+| `tests/built/program.spec.ts` | verify | 30 браузерных тестов сборки (Playwright) |
+| `tests/built/i18n-search.spec.ts` | verify | 8 тестов EN-маршрутов, переключателя языка и поиска; вместе 38 тестов × 3 проекта = 114 прогонов |
 | `package.json`, `bun.lock` | deps | версии сборки; `morphicons` запинен на `1.7.0` — иконки тем |
 
 Иконка темы живёт в двух видах: луна в разметке (`.astro` не знает о `localStorage`) и
@@ -165,7 +169,9 @@ site`. Ссылка принимается только при подтверж�
 talksOfDay, hallsOfDay, tracksOfProgram, isPlaceable, startsOf, spanOf, placeTalks,
 occupiedCells, pluralTalks, dayLabel, dayLongLabel, firstParagraph, resolveDay, dayByOrdinal,
 resolveTrack, talkById, dayHref, socialsOf`; медиа: `IMAGE_HOSTS, imageUrl` — белый список
-трёх CDN, единственный путь картинки из данных в разметку. Соцсети: `SOCIAL_NETWORKS, SOCIAL_LABELS,
+трёх CDN, единственный путь картинки из данных в разметку, плюс `src/lib/images.ts`
+(`bannerSources, photoSources, photoMapEntry, BANNER_SIZES`) — единственное место, где из
+разрешённого URL делается уменьшенный вариант. Соцсети: `SOCIAL_NETWORKS, SOCIAL_LABELS,
 SocialNetwork, SocialLink` из `src/lib/socials.ts`. Календарь: `icsEscape, foldLine, icsDate, icsStamp,
 buildCalendar, calendarFilename, downloadIcs`.
 
@@ -192,7 +198,11 @@ html[data-theme=dark|light|cyberpunk][data-lang=ru|en][data-day-id][data-day-dat
 
 Шапка и меню: `header.nav-mobile > div.nav-top-actions` с
 `button.nav-icon-btn.nav-fav[data-fav-header][aria-pressed]` (звезда + `[data-favorites-count]`;
-только на страницах дня — на `404` фильтровать нечего), `button.nav-icon-btn[data-search-open]
+только на страницах дня — на `404` фильтровать нечего), `div.nav-tracks > button.nav-icon-btn.nav-tracks__trigger[data-track-header][aria-expanded]
+[aria-controls=track-menu][data-active]` + `div.track-menu#track-menu[data-track-menu][hidden]`
+с 12 пунктами `button.track-menu__item[data-track-option][data-track][aria-pressed]`
+(«Все треки» + 11 треков; только на страницах дня) — раскрывающийся фильтр трека, а не сброс:
+`button.nav-icon-btn[data-search-open]
 [aria-controls=search-dialog][aria-expanded]` (только на страницах дня),
 `a.nav-icon-btn.nav-lang[href][hreflang][lang]` (переключатель языка, текст `EN`/`RU`),
 `button.nav-icon-btn.theme-toggle--header[data-theme-toggle]` (тема из шапки, без меню) и
@@ -281,7 +291,7 @@ span.search-result__day + span.search-result__title + span.search-result__meta`;
 | `.program-grid` | `overflow-x: visible`, без `min-inline-size` — горизонтального скролла нет вовсе |
 | `.program-grid__halls-header` | `display: none` — зал показан бейджем в карточке |
 | `.program-grid__content` | `display: flex; flex-direction: column` — строки сетки исчезают |
-| `.program-grid__time-cell` | липкий разделитель группы времени, а не колонка |
+| `.program-grid__time-cell` | заголовок группы времени: `position: static` — не липнет и уезжает вместе со своей группой; время при докладе несёт чип `.talk-card__time` |
 | `.program-grid__talk-cell` | блок во всю ширину, паддинг сетки снят |
 | `article.talk-card` | `block-size: auto`: карточка по контенту, минимум строки 460 px не действует |
 | `.talk-card__media` у карточки **с** баннером | скрыт целиком |
@@ -293,11 +303,14 @@ span.search-result__day + span.search-result__title + span.search-result__meta`;
 | `.talk-card__title-btn`, `.track-chip` | заголовок-кнопка — `min-block-size: 44px` (сенсорная цель, а не только визуальная высота), подписи не мельче 0.75 rem. Чип компактнее — `36px`: он в ряду фильтров, 44 px на каждом давали три строки тулбара; 36 ≥ 24 px (WCAG 2.5.8 AA) с запасом на палец |
 | `.talk-card__favorite`, `.talk-card__toggle-btn`, `.talk-modal__close` | целевой размер 44 px даёт псевдоэлемент (`::after`/`::before`), глиф остаётся прежнего размера |
 | `header.nav-mobile` | `backdrop-filter: none`: блюр на каждой прокрутке дороже, чем даёт, а фон `color-mix(… 97%)` и так почти непрозрачен |
+| `header.nav-mobile a.nav-lang` | `display: none`: место в полосе занимает кнопка треков, а ссылка на язык остаётся в `.drawer-foot` (глобус + код цели) |
 | `nav.day-tabs` | липкие под шапкой, `flex-wrap: nowrap`; подпись вкладки без даты (`.day-tab__date` скрыт), поэтому три вкладки встают в строку даже на 320 px. Горизонтальный скролл остаётся страховкой, а не основным способом добраться до третьего дня |
 
-Липкая цепочка сверху вниз: `header.nav-mobile` → `nav.day-tabs` →
-`.program-grid__time-cell`. Смещение каждой ступени — сумма высот предыдущих
-(токены `--nav-mobile-h` и `--mm-day-tabs-h`); разделитель не заезжает под табы дня.
+Липкая цепочка — две ступени: `header.nav-mobile` → `nav.day-tabs`. Смещение второй —
+высота первой (токен `--nav-mobile-h`), поэтому табы не заезжают под шапку. Третьей ступени
+(разделителя времени) нет: полоса в 44–48 px висела над карточками ради одной подписи и
+перекрывала доклады внутри длинной группы, а время при каждом докладе и так показывает чип
+`.talk-card__time`.
 
 Кнопка закрытия модалки — `position: sticky` внутри `div.talk-modal__dialog`, `inset-block-start: 0`
 (не `var(--space-3)`: 12 px складывались с 16 px паддинга и вешали кнопку в 29 px от края) и
@@ -325,6 +338,14 @@ span.search-result__day + span.search-result__title + span.search-result__meta`;
    `aria-pressed`): это переключатель, а не «показать», поэтому повторный клик возвращает
    список; клик из шапки или панели досматривает сетку (прокрутка к ней), если её верх не в
    кадре, а клик по чипу — нет, чип стоит прямо над списком.
+   У фильтра трека своя кнопка в шапке (`button[data-track-header]`) — раскрывает меню из
+   тех же 12 пунктов: «Все треки» + 11 треков. Выбор пункта идёт через тот же
+   `setActiveTrack`, что и у чипов, поэтому список, `?track=`, чипы, телефонный `select`
+   и пункты меню не могут разойтись. Пункты несут `aria-pressed` (выбран ровно один),
+   у кнопки `aria-expanded` и `data-active` (заливка акцентом, когда трек выбран).
+   Панель не модальная: закрывается по Esc (фокус возвращается на кнопку), клику мимо и
+   выбору; фокус-трапа нет. Ниже 480 px шапка показывает её вместо ссылки на язык —
+   полоса в 320 px вмещает ровно пять кнопок, а язык остаётся в `.drawer-foot`.
    На телефоне (≤ 767.98 px) чипы треков скрыты, а тот же `activeTrack` выбирается
    нативным `select[data-track-select]` внутри `label.track-select`: 12 подписей — 2147 px,
    в строку 358 px они не влезают, а перенос даёт 8 строк / 252 px над карточками.
@@ -337,7 +358,7 @@ span.search-result__day + span.search-result__title + span.search-result__meta`;
    Число в чипе — размер избранного, обновляется вместе с `[data-favorites-count]`;
    снятие звезды при включённом фильтре немедленно убирает карточку из списка.
    В режиме списка (≤767.98 px) у группы не остаётся видимых докладов → её
-   `.program-grid__time-cell` тоже получает `hidden` (липкий заголовок без содержимого —
+   `.program-grid__time-cell` тоже получает `hidden` (заголовок группы без содержимого —
    мусор). В режиме сетки разделители времени не скрываются: иначе рвётся колонка времени.
    Текст `[data-empty]` различается: пусто из-за фильтра избранного — «В избранном пока нет
    докладов этого дня», пусто из-за трека — прежняя формулировка.
@@ -468,4 +489,6 @@ span.search-result__day + span.search-result__title + span.search-result__meta`;
 Фиксируются в `README.md` и `docs/DECISIONS.md`: палитра и шрифты дизайн-системы портфолио,
 шапка вместо левой app-панели, день как URL, баннер на всю ширину карточки и более высокая
 строка сетки. Нет авторизации, кабинета, чата, плеера и оплаты. Медиа — hotlink с CDN
-первоисточника. Счётчик — доклады, не «онлайн».
+первоисточника, кроме аватарок: они ресемплируются в 144×144 на `prebuild`
+(`scripts/optimize-photos.ts`, карта `src/data/photos.json`) — оригиналы весят 300–1200 КБ
+при 36 px в CSS. Счётчик — доклады, не «онлайн».

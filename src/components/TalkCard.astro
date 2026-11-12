@@ -5,6 +5,7 @@
  */
 import { t, type Lang } from "../i18n/ui";
 import { STAR } from "../lib/icons";
+import { bannerSources, photoSources } from "../lib/images";
 import { hallLabel, trackLabel } from "../lib/localize";
 import { firstParagraph, formatRange, imageUrl, type Talk } from "../lib/program";
 import { SOCIAL_LABELS } from "../lib/socials";
@@ -23,6 +24,14 @@ const { talk, trackKey, lang, priority = false } = Astro.props;
 // Баннер и аватар — только с трёх CDN первоисточника (`imageUrl`):
 // `https:` без проверки хоста пускал бы данные на любой сервер.
 const image = imageUrl(talk.image);
+// Баннер получает варианты, если хост умеет их отдавать (`lib/images.ts`).
+const banner = bannerSources(image);
+/**
+ * Аватарка: локальный вариант 144×144 (`lib/images.ts`, `scripts/optimize-photos.ts`),
+ * иначе — оригинал. Оригиналы весят 300–1200 КБ при 36 px в CSS, поэтому
+ * локальный вариант — норма, а фолбэк — страховка на случай, если карта
+ * `photos.json` есть, а файлов на диске ещё нет.
+ */
 const lectors = talk.lectors
   .filter((lector) => lector.name.trim() !== "")
   .map((lector) => ({ ...lector, socials: lector.socials ?? [] }));
@@ -88,10 +97,12 @@ const initials = (name: string): string =>
 
     <div class="talk-card__media">
       {
-        image ? (
+        banner ? (
           <img
             class="talk-card__banner-img"
-            src={image}
+            src={banner?.src}
+            srcset={banner?.srcset}
+            sizes={banner?.sizes}
             alt=""
             width="1200"
             height="900"
@@ -132,10 +143,10 @@ const initials = (name: string): string =>
         <div class="talk-card__speakers">
           {lectors.map((lector) => (
             <div class="talk-card__speaker">
-              {imageUrl(lector.photo) ? (
+              {photoSources(imageUrl(lector.photo)) ? (
                 <img
                   class="talk-card__speaker-photo"
-                  src={imageUrl(lector.photo) as string}
+                  src={photoSources(imageUrl(lector.photo)) as string}
                   alt=""
                   width="36"
                   height="36"

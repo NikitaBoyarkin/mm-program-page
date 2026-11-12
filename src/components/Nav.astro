@@ -6,9 +6,9 @@
 import { dayLabel } from "../i18n/format";
 import { dayHrefFor, switchLangHref } from "../i18n/paths";
 import { otherLang, t, type Lang } from "../i18n/ui";
-import { STAR } from "../lib/icons";
-import { dayNameLabel } from "../lib/localize";
-import { days } from "../lib/program";
+import { STAR, TAG } from "../lib/icons";
+import { dayNameLabel, trackLabel } from "../lib/localize";
+import { days, tracksOfProgram } from "../lib/program";
 import { THEME_PATHS } from "../lib/theme";
 
 interface Props {
@@ -19,9 +19,11 @@ interface Props {
   search?: boolean;
   /** Строка «Избранное»: тот же фильтр, что у чипа, значит нужен тот же скрипт. */
   favorites?: boolean;
+  /** Кнопка «Все треки»: сбрасывает фильтр трека, значит нужен тот же скрипт. */
+  tracks?: boolean;
 }
 
-const { ordinal, lang, search = false, favorites = false } = Astro.props;
+const { ordinal, lang, search = false, favorites = false, tracks = false } = Astro.props;
 const portfolio = "https://nikitaboyarkin.github.io";
 
 // Переход на портфолио размечен: без UTM визит, начавшийся в новой сессии,
@@ -49,6 +51,10 @@ const siteLinks = [
 const talksHref = portfolioHref(lang === "en" ? "/en/talks/" : "/talks/", "nav-talks");
 
 // Переключатель уводит на тот же день другой локали: подпись — код цели.
+// Пункты меню «Все треки»: сброс + те же 11 треков, что у чипов под вкладками
+// дня. Считаются на билде, как и сами чипы, поэтому список один.
+const trackOptions = tracksOfProgram().map((name) => ({ name, label: trackLabel(lang, name) }));
+
 const targetLang = otherLang(lang);
 const langHref = switchLangHref(lang, ordinal ?? 1);
 const langCode = targetLang.toUpperCase();
@@ -105,6 +111,67 @@ const langCode = targetLang.toUpperCase();
         <span class="visually-hidden">{t(lang, "navFavorites")}</span>
         <span class="nav-fav__count" data-favorites-count>0</span>
       </button>
+    )}
+
+    {/* «Все треки» — раскрывающийся список, а не сброс. Первая версия кнопки
+        снимала фильтр, и при полном списке клик не делал ничего: со стороны это
+        «кнопка не работает». Здесь кнопка открывает те же 12 пунктов, что и
+        чипы под вкладками дня (сброс + 11 треков), поэтому выбор трека из шапки
+        — один тап, а не прогулка к тулбару. */}
+    {tracks && (
+      <div class="nav-tracks">
+        <button
+          class="nav-icon-btn nav-tracks__trigger"
+          type="button"
+          data-track-header
+          aria-expanded="false"
+          aria-controls="track-menu"
+          aria-haspopup="true"
+          title={t(lang, "allTracks")}
+        >
+          <svg
+            viewBox="0 0 24 24"
+            width="18"
+            height="18"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="1.8"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            aria-hidden="true"
+            focusable="false"
+          >
+            <path d={TAG}></path>
+          </svg>
+          <span class="visually-hidden">{t(lang, "allTracks")}</span>
+        </button>
+
+        <div
+          class="track-menu"
+          id="track-menu"
+          role="group"
+          aria-label={t(lang, "trackFiltersLabel")}
+          data-track-menu
+          hidden
+        >
+          {/* Сброс первым и с тем же `aria-pressed`, что у чипов: состояние у
+              группы одно, и «Все треки» — его член, а не отдельная команда. */}
+          <button class="track-menu__item" type="button" data-track-option data-track="" aria-pressed="true">
+            {t(lang, "allTracks")}
+          </button>
+          {trackOptions.map((option) => (
+            <button
+              class="track-menu__item"
+              type="button"
+              data-track-option
+              data-track={option.name}
+              aria-pressed="false"
+            >
+              {option.label}
+            </button>
+          ))}
+        </div>
+      </div>
     )}
 
     {
@@ -348,131 +415,3 @@ const langCode = targetLang.toUpperCase();
   </div>
 </nav>
 
-<style>
-  /* Кнопки справа в шапке: тема + меню. Группа забирает `margin-inline-start:
-     auto` у тумблера, иначе два auto-отступа делят свободное место и кнопки
-     разъезжаются от края. */
-  .nav-top-actions {
-    display: flex;
-    flex: none;
-    align-items: center;
-    gap: var(--space-2);
-    margin-inline-start: auto;
-  }
-
-  .nav-top-actions > .nav-toggle {
-    margin-inline-start: 0;
-  }
-
-  /* Тема доступна из шапки, не открывая drawer: на странице программы тема —
-     частая операция, а меню на мобиле ещё и перекрывает контент.
-     Стиль повторяет `.nav-toggle`, но отдельным классом: `.nav-toggle` в
-     `site.css` занят меню и гасится на печати. */
-  .nav-icon-btn {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    inline-size: 44px;
-    block-size: 44px;
-    padding: 0;
-    /* Литералы, а не `--button-*`: в киберпанке те токены красят кнопку в
-       розовый. Пара #171717 / #f8f2da — контраст 15.7:1 в любой теме. */
-    border: 1px solid var(--control-border);
-    border-radius: var(--radius-full);
-    background: #171717;
-    color: #f8f2da;
-    line-height: 1;
-    cursor: pointer;
-    transition:
-      transform 0.2s ease,
-      border-color 0.2s ease,
-      color 0.2s ease;
-  }
-
-  @media (hover: hover) and (pointer: fine) {
-    .nav-icon-btn:hover {
-      border-color: var(--border-active);
-      background: #2e2e2e;
-      color: #f8f2da;
-    }
-  }
-
-  /* «Избранное»: звезда + число в том же круге 44 px, что и прочие кнопки —
-     круг один, содержимое разное. Число моноширинными цифрами, иначе на смене
-     9 → 10 подпись сдвигается вместе со звездой. */
-  .nav-fav {
-    gap: 0.15em;
-    padding-inline: 0;
-    font-size: 0.75rem;
-    font-variant-numeric: tabular-nums;
-  }
-
-  /* Нажатое состояние — заливка акцентом с `--accent-ink`: ровно как у
-     выбранного чипа трека (`program.css`, `.track-chip[aria-pressed="true"]`).
-     Это один и тот же фильтр, и в двух местах он не должен выглядеть двумя
-     разными состояниями. */
-  .nav-fav[aria-pressed="true"] {
-    border-color: var(--text-accent);
-    background: var(--text-accent);
-    color: var(--accent-ink);
-  }
-
-  @media (hover: hover) and (pointer: fine) {
-    .nav-fav[aria-pressed="true"]:hover {
-      border-color: var(--text-accent-hover);
-      background: var(--text-accent-hover);
-      color: var(--accent-ink);
-    }
-  }
-
-  .nav-icon-btn:active {
-    transform: scale(0.95);
-  }
-
-  .nav-icon-btn:focus-visible {
-    outline: 2px solid var(--text-accent);
-    outline-offset: 2px;
-  }
-
-  @media (prefers-reduced-motion: reduce) {
-    .nav-icon-btn {
-      transition: none;
-    }
-
-    .nav-icon-btn:active {
-      transform: none;
-    }
-  }
-
-  @media print {
-    .nav-top-actions {
-      display: none;
-    }
-  }
-
-  /* Переключатель языка — глобус + код цели: «EN»/«RU» читается сразу, а
-     глобус отделяет его от кнопок-иконок. Ширина по содержимому, иначе код
-     не влезает в круг 44 px. */
-  .nav-lang {
-    inline-size: auto;
-    gap: 0.3em;
-    padding-inline: var(--space-2);
-    font-size: 0.85rem;
-    text-decoration: none;
-    text-transform: uppercase;
-    letter-spacing: 0.04em;
-  }
-
-  /* На узком экране код языка уступает место имени: глобус остаётся, подпись
-     уходит в `aria-label`. Иначе от «Никита Бояркин» остаётся «Н…». */
-  @media (max-width: 767.98px) {
-    .nav-lang {
-      inline-size: 44px;
-      padding-inline: 0;
-    }
-
-    .nav-lang span {
-      display: none;
-    }
-  }
-</style>

@@ -1,0 +1,241 @@
+/* ==========================================================================
+   nav.css — шапка и её меню: группа кнопок справа, звезда избранного, меню
+   треков, переключатель языка.
+
+   Вынесено из `Nav.astro` (компонент перевалил за бюджет 20 КБ на файл).
+   Правила были scoped, но все селекторы и так привязаны к `.nav-*`/`.track-menu*`,
+   которые встречаются только в этом компоненте, поэтому глобальный файл ничего
+   не задевает. Порядок важен: `.nav-icon-btn` объявляет геометрию круга, а
+   `.nav-fav`/`.nav-tracks`/`.nav-lang` её только правят.
+   ========================================================================== */
+
+  /* Кнопки справа в шапке: тема + меню. Группа забирает `margin-inline-start:
+     auto` у тумблера, иначе два auto-отступа делят свободное место и кнопки
+     разъезжаются от края. */
+  .nav-top-actions {
+    display: flex;
+    flex: none;
+    align-items: center;
+    gap: var(--space-2);
+    margin-inline-start: auto;
+  }
+
+  .nav-top-actions > .nav-toggle {
+    margin-inline-start: 0;
+  }
+
+  /* Тема доступна из шапки, не открывая drawer: на странице программы тема —
+     частая операция, а меню на мобиле ещё и перекрывает контент.
+     Стиль повторяет `.nav-toggle`, но отдельным классом: `.nav-toggle` в
+     `site.css` занят меню и гасится на печати. */
+  .nav-icon-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    inline-size: 44px;
+    block-size: 44px;
+    padding: 0;
+    /* Литералы, а не `--button-*`: в киберпанке те токены красят кнопку в
+       розовый. Пара #171717 / #f8f2da — контраст 15.7:1 в любой теме. */
+    border: 1px solid var(--control-border);
+    border-radius: var(--radius-full);
+    background: #171717;
+    color: #f8f2da;
+    line-height: 1;
+    cursor: pointer;
+    transition:
+      transform 0.2s ease,
+      border-color 0.2s ease,
+      color 0.2s ease;
+  }
+
+  @media (hover: hover) and (pointer: fine) {
+    .nav-icon-btn:hover {
+      border-color: var(--border-active);
+      background: #2e2e2e;
+      color: #f8f2da;
+    }
+  }
+
+  /* «Избранное»: звезда + число в том же круге 44 px, что и прочие кнопки —
+     круг один, содержимое разное. Число моноширинными цифрами, иначе на смене
+     9 → 10 подпись сдвигается вместе со звездой. */
+  .nav-fav {
+    gap: 0.15em;
+    padding-inline: 0;
+    font-size: 0.75rem;
+    font-variant-numeric: tabular-nums;
+  }
+
+  /* Нажатое состояние — заливка акцентом с `--accent-ink`: ровно как у
+     выбранного чипа трека (`program.css`, `.track-chip[aria-pressed="true"]`).
+     Это один и тот же фильтр, и в двух местах он не должен выглядеть двумя
+     разными состояниями. */
+  .nav-fav[aria-pressed="true"] {
+    border-color: var(--text-accent);
+    background: var(--text-accent);
+    color: var(--accent-ink);
+  }
+
+  @media (hover: hover) and (pointer: fine) {
+    .nav-fav[aria-pressed="true"]:hover {
+      border-color: var(--text-accent-hover);
+      background: var(--text-accent-hover);
+      color: var(--accent-ink);
+    }
+  }
+
+  /* «Все треки» — обёртка, из которой свисает меню. `position: relative` нужна
+     панели: `absolute` считается от неё, а не от строки шапки. Кнопка — тот же
+     круг 44 px, что у соседей; заливка акцентом появляется, когда трек выбран,
+     — тогда шапка говорит «фильтр включён», как нажатый чип в тулбаре. */
+  .nav-tracks {
+    position: relative;
+    display: inline-flex;
+  }
+
+  .nav-tracks__trigger[data-active="true"] {
+    border-color: var(--text-accent);
+    background: var(--text-accent);
+    color: var(--accent-ink);
+  }
+
+  @media (hover: hover) and (pointer: fine) {
+    .nav-tracks__trigger[data-active="true"]:hover {
+      border-color: var(--text-accent-hover);
+      background: var(--text-accent-hover);
+      color: var(--accent-ink);
+    }
+  }
+
+  /* Панель свисает из-под кнопки и прижимается к правому краю группы, иначе на
+     телефоне она уехала бы за экран. Ширина — по содержимому, но не шире
+     вьюпорта; высота ограничена, чтобы 12 пунктов не превращались в простыню. */
+  .track-menu {
+    position: absolute;
+    inset-block-start: calc(100% + var(--space-2));
+    inset-inline-end: 0;
+    z-index: var(--z-float);
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    inline-size: max-content;
+    max-inline-size: min(320px, calc(100vw - 2 * var(--space-3)));
+    max-block-size: min(60vh, 420px);
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    padding: var(--space-2);
+    border: 1px solid var(--border-strong);
+    border-radius: var(--radius-lg);
+    background: var(--card-background);
+    box-shadow: 0 12px 32px var(--shadow-color);
+  }
+
+  .track-menu[hidden] {
+    display: none;
+  }
+
+  .track-menu__item {
+    padding: 0.55rem 0.75rem;
+    /* Выравнивание по левому краю: подписи треков разной длины, и «в центре»
+       они читаются как список, а не как кнопки. */
+    text-align: start;
+    border: 1px solid transparent;
+    border-radius: var(--radius-sm);
+    background: transparent;
+    color: var(--text-normal);
+    font-size: 0.875rem;
+    line-height: 1.3;
+    cursor: pointer;
+  }
+
+  /* Пункт — цель в 44 px по высоте: палец должен попадать без прицеливания. */
+  .track-menu__item {
+    min-block-size: 44px;
+  }
+
+  @media (hover: hover) and (pointer: fine) {
+    .track-menu__item:hover {
+      background: color-mix(in srgb, var(--text-normal) 9%, transparent);
+    }
+  }
+
+  .track-menu__item:focus-visible {
+    outline: 2px solid var(--text-accent);
+    outline-offset: -2px;
+  }
+
+  /* Выбранный пункт — заливка акцентом и чернила `--accent-ink`, как у нажатого
+     чипа и нажатой звезды: состояние фильтра обязано выглядеть одинаково везде. */
+  .track-menu__item[aria-pressed="true"] {
+    border-color: var(--text-accent);
+    background: var(--text-accent);
+    color: var(--accent-ink);
+    font-weight: 600;
+  }
+
+  /* На телефоне панель — лист под шапкой во всю ширину. От кнопки она свисала
+     бы за левый край: кнопка стоит в правой группе, а 320 px шире остатка
+     вьюпорта (замер: left = −98 при 390 px). `position: fixed` считается от
+     вьюпорта, поэтому лист встаёт ровно по полям страницы. */
+  @media (max-width: 767.98px) {
+    .track-menu {
+      position: fixed;
+      inset-block-start: calc(var(--nav-mobile-h) + var(--space-2));
+      inset-inline: var(--space-3);
+      inline-size: auto;
+      max-inline-size: none;
+    }
+  }
+
+  .nav-icon-btn:active {
+    transform: scale(0.95);
+  }
+
+  .nav-icon-btn:focus-visible {
+    outline: 2px solid var(--text-accent);
+    outline-offset: 2px;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .nav-icon-btn {
+      transition: none;
+    }
+
+    .nav-icon-btn:active {
+      transform: none;
+    }
+  }
+
+  @media print {
+    .nav-top-actions {
+      display: none;
+    }
+  }
+
+  /* Переключатель языка — глобус + код цели: «EN»/«RU» читается сразу, а
+     глобус отделяет его от кнопок-иконок. Ширина по содержимому, иначе код
+     не влезает в круг 44 px. */
+  .nav-lang {
+    inline-size: auto;
+    gap: 0.3em;
+    padding-inline: var(--space-2);
+    font-size: 0.85rem;
+    text-decoration: none;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+  }
+
+  /* На узком экране код языка уступает место имени: глобус остаётся, подпись
+     уходит в `aria-label`. На телефоне (≤ 479.98 px) ссылка скрыта совсем —
+     её место заняла кнопка треков, а язык остался в drawer'е (`site.css`). */
+  @media (max-width: 767.98px) {
+    .nav-lang {
+      inline-size: 44px;
+      padding-inline: 0;
+    }
+
+    .nav-lang span {
+      display: none;
+    }
+  }

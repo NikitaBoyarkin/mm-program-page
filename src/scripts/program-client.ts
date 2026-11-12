@@ -533,6 +533,14 @@ function setActiveTrack(track: string | null, updateUrl = true): void {
     chip.setAttribute("aria-pressed", String(pressed));
     chip.classList.toggle("track-chip--active", pressed);
   }
+  // Шапка — третья поверхность того же состояния: пункты меню получают
+  // `aria-pressed`, кнопка — заливку «фильтр включён». Пишется тем же проходом,
+  // что и чипы, иначе поверхности разошлись бы.
+  for (const option of $$<HTMLButtonElement>("button[data-track-option]")) {
+    option.setAttribute("aria-pressed", String((option.dataset.track ?? "") === (known ?? "")));
+  }
+  const headerButton = $<HTMLButtonElement>("button[data-track-header]");
+  if (headerButton) headerButton.dataset.active = String(known !== null);
   syncTrackSelect();
 
   applyFilter();
@@ -565,8 +573,12 @@ function initFilter(): void {
   } catch {
     raw = null;
   }
+  // Пустой `?track=` — тоже состояние. Выравниваем все три поверхности (чипы,
+  // меню в шапке, телефонный select) с фактическим фильтром сразу, а не ждём
+  // первого клика: иначе разметка меню («Все треки» нажата) остаётся
+  // единственным источником правды, и `data-active` у кнопки не появляется.
   if (!raw) {
-    // Ничего не применено — счётчик дня уже отрендерен, сетка целая.
+    setActiveTrack(null, false);
     return;
   }
 
@@ -578,7 +590,8 @@ function initFilter(): void {
   // ради одного сравнения. Плата: `?track=28` (по id) здесь не резолвится —
   // ссылки с чипов всегда несут имя трека.
   // Неизвестный трек в URL не применяем: чип не подсветить, фильтр врал бы.
-  if (chip) setActiveTrack(chip.dataset.track ?? null, false);
+  // `setActiveTrack(null)` выравнивает поверхности так же, как пустой query.
+  setActiveTrack(chip ? (chip.dataset.track ?? null) : null, false);
 }
 
 function setFavoritesOnly(next: boolean): void {
@@ -612,6 +625,15 @@ function initFavFilter(): void {
   setFavoritesOnly(favoritesOnly);
 }
 
+/** Высота всего, что липнет сверху: шапка + табы дня (на телефоне они sticky). */
+function stickyTop(): number {
+  const header = $("header.nav-mobile")?.getBoundingClientRect().height ?? 0;
+  const tabs = $<HTMLElement>("nav.day-tabs");
+  const tabsHeight =
+    tabs && getComputedStyle(tabs).position === "sticky" ? tabs.getBoundingClientRect().height : 0;
+  return header + tabsHeight;
+}
+
 /* Фильтр, включённый из шапки или панели, применяется мгновенно и с любого
    места страницы. Без прокрутки это выглядит как «ничего не произошло»: список
    живёт ниже шапки, вкладок дня и тулбара, а шапка липкая — нажатие на звезду
@@ -620,12 +642,14 @@ function initFavFilter(): void {
 function revealGrid(): void {
   const grid = $(".program-grid");
   if (!grid) return;
-  const navHeight = $("header.nav-mobile")?.getBoundingClientRect().height ?? 0;
+  // Смещение — по липкой цепочке, а не по одной шапке: на телефоне табы тоже
+  // липкие, и сетка, прокрученная под шапку, оказалась бы спрятанной за ними.
+  const offset = stickyTop();
   const box = grid.getBoundingClientRect();
-  if (box.top >= navHeight && box.top <= window.innerHeight) return;
+  if (box.top >= offset && box.top <= window.innerHeight) return;
   const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
   window.scrollTo({
-    top: box.top + window.scrollY - navHeight - 8,
+    top: box.top + window.scrollY - offset - 8,
     behavior: reduce ? "auto" : "smooth",
   });
 }
@@ -654,6 +678,52 @@ function initHeaderFavorites(): void {
   button.addEventListener("click", () => {
     setFavoritesOnly(!favoritesOnly);
     revealGrid();
+  });
+}
+
+/* «Все треки» в шапке — раскрывающийся список, а не сброс.
+   Первая версия кнопки снимала фильтр: при полном списке клик не делал ничего,
+   и со стороны это «кнопка не работает». Здесь она открывает 12 пунктов того же
+   фильтра, что чипы под вкладками дня, поэтому выбрать трек можно из шапки.
+   Панель — не модалка: без фокус-трапа, закрывается по Esc, клику мимо и выбору,
+   фокус возвращается на кнопку (она остаётся на месте, шапка липкая). */
+function trackMenu(): { trigger: HTMLButtonElement; panel: HTMLElement } | null {
+  const trigger = $<HTMLButtonElement>("button[data-track-header]");
+  const panel = $<HTMLElement>("[data-track-menu]");
+  return trigger && panel ? { trigger, panel } : null;
+}
+
+function setTrackMenuOpen(open: boolean): void {
+  const menu = trackMenu();
+  if (!menu) return;
+  menu.panel.hidden = !open;
+  menu.trigger.setAttribute("aria-expanded", String(open));
+}
+
+function initHeaderTracks(): void {
+  const menu = trackMenu();
+  if (!menu) return;
+
+  menu.trigger.addEventListener("click", () => setTrackMenuOpen(menu.panel.hidden));
+
+  for (const option of $$<HTMLButtonElement>("button[data-track-option]")) {
+    option.addEventListener("click", () => {
+      setActiveTrack(option.dataset.track || null);
+      setTrackMenuOpen(false);
+      // Фокус на кнопку, а не в список: панель закрылась, и следующий Tab должен
+      // идти дальше по шапке, а не в скрытые пункты.
+      menu.trigger.focus();
+      revealGrid();
+    });
+  }
+
+  // Клик мимо закрывает: панель не модальная и не должна переживать уход взгляда.
+  document.addEventListener("click", (event) => {
+    const target = event.target;
+    if (!(target instanceof Node)) return;
+    if (menu.panel.hidden) return;
+    if (menu.panel.contains(target) || menu.trigger.contains(target)) return;
+    setTrackMenuOpen(false);
   });
 }
 
@@ -1662,6 +1732,7 @@ export function init(): void {
   initTheme();
   initDrawer();
   initFilter();
+  initHeaderTracks();
   initFavorites();
   initFavFilter();
   initDrawerFavorites();
@@ -1680,6 +1751,14 @@ export function init(): void {
     if (event.key !== "Escape") return;
     // Поиск — верхний слой: Esc закрывает его первым, даже если снизу
     // открыта модалка.
+    // Меню треков живёт в шапке и перекрывает контент — оно верхний слой,
+    // когда открыто: Esc закрывает его первым.
+    const menu = trackMenu();
+    if (menu && !menu.panel.hidden) {
+      setTrackMenuOpen(false);
+      menu.trigger.focus();
+      return;
+    }
     if (isSearchOpen()) {
       closeSearch();
       return;
