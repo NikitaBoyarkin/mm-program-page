@@ -1,0 +1,20 @@
+flowchart LR
+    API["Публичный API<br/>event 6"]
+    RAW["Сырой слепок<br/>data/program.raw.json"]
+    NORM["normalize(): payload<br/>→ контракт Program"]
+    SNAP["Закоммиченный слепок<br/>src/data/program.json"]
+    GATE{"--check: побайтовый diff<br/>иначе exit 1"}
+    EN["EN-overlay<br/>program.en.json"]
+    BUILD["astro build<br/>HTML + два JSON"]
+    DIST["dist/"]
+    PAGES["GitHub Pages<br/>/mm-program-page/"]
+
+    API -->|"--fetch"| RAW
+    RAW --> NORM
+    NORM --> SNAP
+    RAW -.->|"пересборка"| GATE
+    SNAP -.->|"сравнение"| GATE
+    SNAP --> BUILD
+    EN --> BUILD
+    BUILD --> DIST
+    DIST --> PAGES

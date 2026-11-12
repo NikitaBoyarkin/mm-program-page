@@ -507,22 +507,6 @@ function syncDayTabTracks(): void {
   }
 }
 
-/**
- * Один и тот же `activeTrack` читают два вида управления: чипы (десктоп) и
- * нативный список (телефон, см. `.track-select`). Чипы переключает цикл выше,
- * список — здесь: значение и подпись видимой обёртки.
- */
-function syncTrackSelect(): void {
-  const select = $<HTMLSelectElement>("[data-track-select]");
-  const value = $<HTMLElement>("[data-track-select-value]");
-  if (!select) return;
-  select.value = activeTrack ?? "";
-  if (value) {
-    const option = select.selectedOptions[0] ?? select.options[select.selectedIndex];
-    value.textContent = (option?.textContent ?? t(LANG, "allTracks")).trim();
-  }
-}
-
 function setActiveTrack(track: string | null, updateUrl = true): void {
   const chips = trackChips();
   const known = track !== null && chips.some((chip) => chip.dataset.track === track) ? track : null;
@@ -533,7 +517,7 @@ function setActiveTrack(track: string | null, updateUrl = true): void {
     chip.setAttribute("aria-pressed", String(pressed));
     chip.classList.toggle("track-chip--active", pressed);
   }
-  // Шапка — третья поверхность того же состояния: пункты меню получают
+  // Шапка — вторая поверхность того же состояния: пункты меню получают
   // `aria-pressed`, кнопка — заливку «фильтр включён». Пишется тем же проходом,
   // что и чипы, иначе поверхности разошлись бы.
   for (const option of $$<HTMLButtonElement>("button[data-track-option]")) {
@@ -541,7 +525,6 @@ function setActiveTrack(track: string | null, updateUrl = true): void {
   }
   const headerButton = $<HTMLButtonElement>("button[data-track-header]");
   if (headerButton) headerButton.dataset.active = String(known !== null);
-  syncTrackSelect();
 
   applyFilter();
   syncDayTabTracks();
@@ -559,13 +542,9 @@ function initFilter(): void {
     });
   }
 
-  // Телефонный список открывает системный пикер; `change` приходит и без
-  // выбора (отмена) — тогда значение равно прежнему и фильтр не меняется.
-  const select = $<HTMLSelectElement>("[data-track-select]");
-  select?.addEventListener("change", () => {
-    setActiveTrack(select.value || null);
-  });
-  syncTrackSelect();
+  // Телефонного списка больше нет: на телефоне трек выбирается из меню в шапке
+  // (`button[data-track-option]`), которое обрабатывается `initHeaderTracks`.
+  // Чипы остаются списком допустимых треков даже когда CSS их скрывает.
 
   let raw: string | null = null;
   try {
@@ -573,10 +552,10 @@ function initFilter(): void {
   } catch {
     raw = null;
   }
-  // Пустой `?track=` — тоже состояние. Выравниваем все три поверхности (чипы,
-  // меню в шапке, телефонный select) с фактическим фильтром сразу, а не ждём
-  // первого клика: иначе разметка меню («Все треки» нажата) остаётся
-  // единственным источником правды, и `data-active` у кнопки не появляется.
+  // Пустой `?track=` — тоже состояние. Выравниваем обе поверхности (чипы и
+  // меню в шапке) с фактическим фильтром сразу, а не ждём первого клика:
+  // иначе разметка меню («Все треки» нажата) остаётся единственным источником
+  // правды, и `data-active` у кнопки не появляется.
   if (!raw) {
     setActiveTrack(null, false);
     return;

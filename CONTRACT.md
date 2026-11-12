@@ -7,8 +7,9 @@
 
 Программа конференции `https://lms.matemarketing.ru/events/all/6/program` (Матемаркетинг 2026),
 собранная как Astro-проект: три пререндеренных дня, сетка «время × залы», карточки докладов,
-фильтр по трекам, избранное, модалка, экспорт дня в `.ics`. Две локали (RU/EN) и клиентский
-поиск по всем трём дням.
+фильтр по трекам, избранное, модалка, экспорт дня в `.ics`. Две локали (RU/EN), клиентский
+поиск по всем трём дням и граф докладов (`/talks/`) — вторая проекция той же программы:
+треки, темы и связи между докладами на принципах Zettelkasten.
 
 Статический вывод (`output: "static"`), без адаптера и без бэкенда. `bun run build` → `dist/`,
 который живёт на любом статик-хостинге. `file://` не поддерживается: роутам и ассетам нужен
@@ -24,7 +25,7 @@
 | `src/data/copy.ru.json` | data | overlay текста карточки (`short`) по id доклада — редакция по стайлгайду Доки. Отдельный файл по той же причине, что `socials.json`: `data:fetch` пересобирает `program.json` побайтово. Нет ключа или пустое значение — остаётся текст слепка |
 | `src/i18n/ui.ts` | i18n | словарь оболочки RU/EN: шапка, табы, фильтры, модалка, поиск, подвал. `UiKey` выводится из русской ветки, поэтому пропуск в `en` — ошибка типов |
 | `src/i18n/format.ts` | i18n | подписи дат и числительных по языкам; русская ветка побайтово совпадает с замороженным ядром |
-| `src/i18n/paths.ts` | i18n | адреса от `BASE_URL` с префиксом языка: `/`, `/day/N/`, `/en/`, `/en/day/N/` |
+| `src/i18n/paths.ts` | i18n | адреса от `BASE_URL` с префиксом языка: `/`, `/day/N/`, `/en/`, `/en/day/N/`, `/talks/`, `/en/talks/` |
 | `src/data/program.en.json` | data | overlay перевода контента: `tracks`/`halls`/`days` + `talks` по id доклада. Отдельный файл: `data:fetch` пересобирает `program.json` побайтово и стёр бы переводы (та же причина, что у `socials.json`) |
 | `src/lib/localize.ts` | core | overlay → `Talk`/`Program`: `localizeTalk` переводит только текстовые поля, `localizeProgram` — ещё `track/hall/day` |
 | `src/lib/search.ts` | core | чистый поиск без DOM и `fetch`: нормализация, ранги, многословный режим (все слова важнее части), опечатки по Левенштейну только на пустой литеральной выдаче, дедупликация по id, лимит 12 |
@@ -45,19 +46,28 @@
 | `src/layouts/Base.astro` | view | `<head>`, тема до отрисовки, шапка, подвал; `og:image` — `src/assets/og/program-2026.png` (1200×630), пересборка `bun run og` |
 | `src/components/Nav.astro` | view | шапка, drawer (дни, «Граф докладов», ссылки портфолио), тумблер темы (луна в разметке), звезда «Избранное» со счётчиком (первая в группе действий, только на страницах дня), кнопка поиска и переключатель `.nav-lang` |
 | `src/components/ProgramPage.astro` | view | день: шапка, табы, чипы, тулбар, сетка, модалка |
+| `src/components/TalksPage.astro` | view | граф: шапка, figure с SVG, заметки по трекам, хабы тем, подвал |
+| `src/components/TalksGraph.astro` | view | SVG графа и пакер подписей: раскладка приходит готовой, интерактив — только ссылки-якоря |
+| `src/lib/talks-graph.ts` | core | Zettelkasten-модель, точка входа: атомарные заметки, хабы, рёбра `трек ↔ тема`, связанные доклады, обратные индексы по треку и теме. Реэкспортирует три части ниже, поэтому потребителю достаточно одного импорта |
+| `src/lib/talks-themes.ts` | core | словарь тем: стемы, классификатор текста, подписи RU/EN и короткие формы для кольца графа. Единственная часть модели, не знающая о докладах как об узлах |
+| `src/lib/talks-model.ts` | core | типы модели (`TalkNote`, `HubNode`, `GraphEdge`, `TalksGraph`) и ключ хаба трека: нужны и сборщику, и раскладке |
+| `src/lib/talks-layout.ts` | core | детерминированная раскладка колец: темы внутри, треки снаружи, заметки на дугах. На вход — готовый граф, на выходе — координаты |
 | `src/components/TalkCard.astro` | view | карточка доклада; звезда избранного (контур → заливка через `fill-opacity`) |
 | `src/components/TalkModal.astro` | view | оболочка диалога |
 | `src/pages/index.astro`, `src/pages/day/[n].astro` | view | три пререндеренных дня |
+| `src/pages/talks.astro`, `src/pages/en/talks.astro` | view | тонкие обёртки `TalksPage` для двух локалей |
 | `src/pages/program.json.ts` | data | `/program.json` — тот же слепок для клиента |
 | `src/scripts/program-client.ts` | client | единственный JS: тема (морф иконки), drawer, фильтр, избранное, модалка, `.ics`, поиск, `?talk=<id>` |
 | `src/styles/tokens.css` | design | токены трёх тем + шрифты + типографическая шкала (заморожено) + три слоя земли: ramp (`body::before`), свечение (`.ground-bloom`), соты (`body::after`), рампа и свечение едут двумя орбитами |
 | `src/styles/nav.css` | design | шапка и её меню: круг кнопок группы действий, звезда избранного, меню треков (триггер + панель 12 пунктов), переключатель языка. Глобальный файл, потому что правила были scoped в `Nav.astro`, а все селекторы и так из `.nav-*`/`.track-menu*`; вынесено, когда компонент перевалил за бюджет 20 КБ на файл |
 | `src/styles/site.css` | design | каркас страницы, шапка, подвал с контактами; геометрия иконок соцсетей — маски `--social-*` (нужны и карточкам, и подвалу, в том числе на `404`); иконки ссылок шапки — маски `--nav-*`; монограмма в шапке — маска `--brand-logo`: шестиугольник фавикона с вырезанными «NB» (`fill-rule: evenodd`, глифы Inter 800 путями) |
 | `src/styles/program.css` | design | сетка, карточка, модалка, печать; геометрия всех декоративных иконок — маски `--icon-*` |
+| `src/styles/talks.css` | design | граф и заметки: SVG, списки заметок, хабы тем. Отдельный файл: страница не грузит сетку, карточки и модалку |
 | `src/styles/search.css` | design | диалог поиска; файл глобальный, потому что результаты вставляет клиент уже после отрисовки и узлы `.search-result` не получают scope-атрибут Astro |
-| `tests/lib/*.test.ts` | verify | 161 юнит-тест ядра, i18n, поиска, земли и картинок (`bun test tests/lib`, 8 файлов) |
-| `tests/built/program.spec.ts` | verify | 30 браузерных тестов сборки (Playwright) |
-| `tests/built/i18n-search.spec.ts` | verify | 8 тестов EN-маршрутов, переключателя языка и поиска; вместе 38 тестов × 3 проекта = 114 прогонов |
+| `tests/lib/*.test.ts` | verify | 186 юнит-тестов ядра, i18n, поиска, земли, картинок и графа (`bun test tests/lib`, 9 файлов) |
+| `tests/built/program.spec.ts` | verify | 31 браузерный тест сборки (Playwright) |
+| `tests/built/i18n-search.spec.ts` | verify | 8 тестов EN-маршрутов, переключателя языка и поиска |
+| `tests/built/talks.spec.ts` | verify | 10 тестов графа: заметки и якоря, SVG на билде, хабы тем, вход в шапке на трёх ширинах (включая 768 px — иконка), EN-копия, скролл только внутри графа; вместе 49 тестов × 3 проекта = 147 прогонов |
 | `package.json`, `bun.lock` | deps | версии сборки; `morphicons` запинен на `1.7.0` — иконки тем |
 
 Иконка темы живёт в двух видах: луна в разметке (`.astro` не знает о `localStorage`) и
@@ -71,8 +81,8 @@
 `--icon-star`/`--icon-star-filled`, `--icon-download`, `--icon-ticket`, `--icon-chevron`,
 `--icon-tag`, `--icon-expand`). Разметка остаётся текстовой, поэтому селекторы Playwright и порядок узлов не
 меняются. Точки: `dt` фактов (класс `facts__item--*`), `.day-tab` (скрыт ≤ 767.98 px — иначе
-полоса табов переполняет 320 px), чипы избранного и треков (на телефоне вместо чипов
-треков — `label.track-select` с нативным `select`), экспорт `.ics`, бейджи времени и
+полоса табов переполняет 320 px), чипы избранного и треков (на телефоне вся полоса чипов
+скрыта, а трек выбирается из меню в шапке — `div.track-menu`), экспорт `.ics`, бейджи времени и
 зала, «Подробнее» (шеврон переворачивается по `aria-expanded`), мета-кейсы, «Купить» и
 «Избранное» в модалке. Новая иконка = `--icon-*` + селектор в общем рецепте.
 
@@ -131,6 +141,7 @@ site`. Ссылка принимается только при подтверж�
 | --- | --- |
 | `/`, `/day/N/` | страница дня на русском |
 | `/en/`, `/en/day/N/` | та же страница на английском |
+| `/talks/`, `/en/talks/` | граф докладов: темы, треки, заметки с обратными ссылками |
 | `/program.json` | русский слепок для клиента |
 | `/en/program.json` | тот же слепок с переведёнными текстами, собранный на билде |
 
@@ -138,7 +149,8 @@ site`. Ссылка принимается только при подтверж�
   читает клиент (`LANG` в `program-client.ts`), чтобы запросить свою версию JSON.
 - `hreflang`: у каждой страницы дня, включая корень локали (`/` ↔ `/en/`),
   `<link rel="alternate" hreflang="ru|en">` и `hreflang="x-default"` → русская версия
-  (первична). У 404 `dayOrdinal` нет, поэтому атрибутов там нет.
+  (первична). У графа пара приходит путём (`alternatePath` в `Base.astro`), потому что дня
+  у него нет. У 404 нет ни дня, ни пары, поэтому атрибутов там нет.
 - Оболочка (кнопки, табы, фильтры, подвал, поиск) — словарь `src/i18n/ui.ts`. Контент
   (заголовки, описания, роли) — overlay `src/data/program.en.json`: `tracks`, `halls`, `days`
   и `talks` по id доклада с полями `title/short/description/lectorRoles`. Файл отдельный,
@@ -211,10 +223,14 @@ html[data-theme=dark|light|cyberpunk][data-lang=ru|en][data-day-id][data-day-dat
 (внутри тоже `[data-favorites-count]`; только на страницах дня, иначе кнопка-фильтр мертва)
 и второй `a.nav-lang` живут в `.drawer-foot` внутри `nav#site-nav`, где также
 `ul.drawer-links > a.drawer-link`; класс-модификатор `drawer-link--day|home|projects|contacts|talks`
-даёт пункту иконку маской (`::before`). «Граф докладов» (`drawer-link--talks`) стоит сразу после
-дней и ведёт в портфолио (`/talks/`, EN — `/en/talks/`), а не в инлайновую полосу шапки: та
-рассчитана ровно на три ссылки портфолио. Оба тумблера темы несут `data-theme-toggle` и
-обрабатываются делегированным слушателем. Ещё: `div.nav-scrim[data-nav-close]`, `body.nav-open`.
+даёт пункту иконку маской (`::before`). «Граф докладов» — **пункт этого сайта, а не ссылка
+портфолио**, и живёт на трёх поверхностях, ни на одной не дублируясь:
+`header.nav-mobile ul.nav-inline > li > a.nav-link--talks[href][aria-current=page]` (≥ 1024 px,
+иконка `--nav-talks`), `header.nav-mobile div.nav-top-actions > a.nav-icon-btn.nav-graph`
+(480–1023.98 px, `aria-current=page`) и `a.drawer-link.drawer-link--talks` в панели (всегда).
+Ниже 480 px кнопки нет: пять целей по 44 px занимают 285 px из 296 возможных на 320 px.
+Оба тумблера темы несут `data-theme-toggle` и обрабатываются делегированным слушателем.
+Ещё: `div.nav-scrim[data-nav-close]`, `body.nav-open`.
 
 Программа:
 
@@ -223,26 +239,24 @@ header.page-head > p.eyebrow + h1.page-title + p.page-intro
   dl.facts > div.facts__item.facts__item--<duration|talks|tracks|halls> > dt + dd
 nav.day-tabs > a.day-tab[href][aria-current=page] > span.day-tab__num + span.day-tab__date
 div.program-toolbar
-  div.track-chips[data-track-chips]
+  div.track-chips[data-track-chips]                        ← ≤ 767.98 px скрыт целиком (display: none)
     button.track-chip[data-fav-filter][aria-pressed]        ← всегда первый чип, без data-track
-    button.track-chip[data-track][aria-pressed] × N          ← чипы треков из чипов
-    label.track-select                                      ← телефонный выбор трека (≤ 767.98 px)
-      span.track-select__value[data-track-select-value]
-      select.track-select__control[data-track-select] > option[value] × N+1
+    button.track-chip[data-track][aria-pressed] × N          ← чипы треков; они же список
+                                                               допустимых значений для клиента
   p.talk-count > span[data-talk-count] + span[data-talk-count-label]
   button.button[data-export-ics]
 section.program-grid[data-grid][style=--mm-hall-count:N]
   div.program-grid__halls-header > div.program-grid__time-label + div.program-grid__hall-name × N
   div.program-grid__content
     div.program-grid__time-cell[style="grid-area:R / 1"]
-    div.program-grid__talk-cell[data-track][data-span][style="grid-area:R / C / span N"]
+    div.program-grid__talk-cell#t<id>[data-track][data-span][style="grid-area:R / C / span N"]
       article.talk-card[data-talk-id][data-track]
         div.talk-card__top
           div.talk-card__header > span.talk-card__time + span.talk-card__hall + span.talk-card__track + button.talk-card__favorite[data-fav][data-talk-id][aria-pressed]
           div.talk-card__media > img.talk-card__banner-img | div.talk-card__media-text > h3 > button.talk-card__title-btn[data-talk-open]
         div.talk-card__bottom
           div.talk-card__speakers > div.talk-card__speaker > img.talk-card__speaker-photo | span.talk-card__speaker-initials + div.talk-card__speaker-info > span.talk-card__speaker-name + span.talk-card__speaker-desc + span.social-links > a.social-link.social-link--<network>[href^=https][target=_blank][rel="noopener noreferrer nofollow"][aria-label]
-          div.talk-card__content > h3.talk-card__content-title > button.talk-card__title-btn + div.talk-card__theses > p + button.talk-card__toggle-btn[data-more][aria-expanded]
+          div.talk-card__content > h3.talk-card__content-title > button.talk-card__title-btn + div.talk-card__theses > p + button.talk-card__toggle-btn[data-more][aria-expanded] + p.talk-card__related > span.talk-card__related-label + a.talk-card__related-link[href] × 1..3
 p.program-empty[data-empty][hidden]
 div.talk-modal[data-modal][hidden]
   div.talk-modal__backdrop[data-modal-backdrop]
@@ -278,6 +292,73 @@ span.search-result__day + span.search-result__title + span.search-result__meta`;
 Значения при 1440 px: время 100 px, зал 420 px → карточка 391 px. Уже 1280 px: 70 px / 310–390 px,
 горизонтальный скролл внутри сетки, время и шапка залов sticky.
 
+## Граф докладов (`/talks/`, `/en/talks/`)
+
+Вторая проекция той же программы: не «время × залы», а «трек ↔ тема ↔ доклад». Страница
+собрана на принципах Zettelkasten, и это не метафора, а четыре проверяемых свойства модели
+(`src/lib/talks-graph.ts`):
+
+1. **Атомарность.** Единица — один доклад. У него постоянный ключ `t<id>`: он же `id`
+   ячейки на странице дня (`#t309`), он же якорь заметки на странице графа, он же параметр
+   `?talk=309` у модалки. Один идентификатор на одну сущность.
+2. **Связи вместо иерархии.** Ребро `трек ↔ тема` весит столько докладов, сколько их реально
+   несут оба. Рёбер «доклад ↔ доклад» в графе нет намеренно: 91 узел в force-раскладке
+   слипается (проверено в портфолио), а смысловая связь читается по общим темам.
+3. **Обратные ссылки.** Хаб темы перечисляет все заметки, которые на него ссылаются, включая
+   чужие треки. У каждой заметки — до четырёх «связанных» (общие темы с IDF-весом, тот же
+   трек, соседство в зале) и минимум одна: изолированный узел — дырка в сети, а не связь.
+4. **Хабы.** Событие → треки → темы. «Без трека» — тоже хаб: 27 докладов третьего дня иначе
+   остались бы без родителя.
+
+```
+main#main.page
+  header.page-head > p.eyebrow + h1.page-title + p.page-intro
+    dl.facts > div.facts__item × 4 > dt + dd
+  section.talks-section
+    h2.talks-section__title
+    figure.talks-graph
+      div.talks-graph__canvas > svg.talks-graph__svg[role=group][aria-label]
+        g.talks-graph__spokes > line × 91            ← членство: хаб ↔ заметка
+        g.talks-graph__edges > line.talks-graph__edge--core|topic
+        g.talks-graph__hubs > circle.talks-graph__hub--event|theme|track + text.talks-graph__label
+        g.talks-graph__notes > a.talks-graph__note[href=#t<id>] > circle + circle.talks-graph__note-hit + title
+                                                             ← 91 ссылка; роль `group`, а не `img`:
+                                                                `img` сделал бы поддерево презентационным
+      figcaption.talks-graph__caption
+  section.talks-section
+    section.track-group#track-<n> > h3.track-group__title
+      ol.note-list > li.talk-note#t<id>
+        p.talk-note__meta > a.talk-note__where[href=/day/N/#t<id>]
+        p.talk-note__title
+        p.talk-note__themes > a.talk-note__theme[href=#theme-<id>] × n
+        p.talk-note__related > a.talk-note__link[href=#t<id>] × 1..4
+  section.talks-section
+    section.theme-group#theme-<id> > ul.theme-group__list > a.theme-group__link[href=#t<id>]
+  footer.talks-footer > a.talks-footer__link
+```
+
+Инварианты, которые держат тесты (`tests/lib/talks-graph.test.ts`, `tests/built/talks.spec.ts`):
+
+- раскладка **детерминирована**: один и тот же слепок даёт побайтово тот же SVG, поэтому
+  `git diff` не шумит геометрией;
+- темы считаются по русскому тексту всегда — даже на `/en/` (`data-track` и словарь тем);
+  подпись темы переводится, классификатор один;
+- клиентского скрипта у страницы **нет**: `figure` и списки приходят в HTML, интерактив —
+  обычные ссылки-якоря; без JS страница читается целиком;
+- все внутренние ссылки (`#t<id>`, `#theme-<id>`, `#track-<n>`) разрешаются в существующие
+  `id` — проверяется обходом DOM, а не доверием;
+- на 320 px вбок скроллится только `.talks-graph__canvas`, документ стоит: ось подписей
+  сохраняется, страница не «уезжает»;
+- подписи на кольцах: у темы — **короткая форма** (`themeShortLabel`: «AI», «A/B», «BI»,
+  «Приватность»), потому что 11 полных названий (~190 px каждое) физически не влезают на
+  окружность внутреннего кольца (~800 px); полное имя остаётся в `<title>` узла и в заголовке
+  хаба темы ниже. Обе группы подписей проходят через один пакер: подпись садится на первый
+  свободный радиус, иначе соседние треки сажали подписи друг на друга у полюсов.
+
+Внешняя ссылка «Полная версия графа — в портфолио» размечена UTM
+(`utm_content=talks-footer`) — это по-прежнему единственный внешний переход со страницы
+графа, внутренние (дни, заметки, темы) UTM не носят.
+
 ## Мобильная модель (≤ 767.98 px)
 
 Мобильный вид — не сжатая сетка, а **хронологический список**. Модель переключается
@@ -301,6 +382,7 @@ span.search-result__day + span.search-result__title + span.search-result__meta`;
 | `.talk-card__track` | виден только здесь: в сетке трек задан колонкой, на десктопе `display: none`. Две строки клампа — одна обрезала бы имя наполовину |
 | `.talk-card__media-meta` | скрыт: трек и зал уже в шапке, дубль не нужен |
 | `.talk-card__title-btn`, `.track-chip` | заголовок-кнопка — `min-block-size: 44px` (сенсорная цель, а не только визуальная высота), подписи не мельче 0.75 rem. Чип компактнее — `36px`: он в ряду фильтров, 44 px на каждом давали три строки тулбара; 36 ≥ 24 px (WCAG 2.5.8 AA) с запасом на палец |
+| `div.track-chips` | `display: none` (было `flex`, чипы треков по одному). Тулбар сокращается до счётчика и экспорта: «Избранное» и «Все треки» живут в шапке, и вторая поверхность того же состояния только дублировала выбор. Узлы остаются в DOM: `[data-fav-filter]` владеет состоянием фильтра, `button[data-track]` — списком допустимых треков для клиента |
 | `.talk-card__favorite`, `.talk-card__toggle-btn`, `.talk-modal__close` | целевой размер 44 px даёт псевдоэлемент (`::after`/`::before`), глиф остаётся прежнего размера |
 | `header.nav-mobile` | `backdrop-filter: none`: блюр на каждой прокрутке дороже, чем даёт, а фон `color-mix(… 97%)` и так почти непрозрачен |
 | `header.nav-mobile a.nav-lang` | `display: none`: место в полосе занимает кнопка треков, а ссылка на язык остаётся в `.drawer-foot` (глобус + код цели) |
@@ -319,6 +401,29 @@ span.search-result__day + span.search-result__title + span.search-result__meta`;
 `button.talk-modal__close[data-modal-close]` остаётся прямым ребёнком диалога.
 
 
+## «Связанные» в карточке
+
+Сеть заметок графа (`/talks/`) доходит до расписания: у каждой карточки в
+`div.talk-card__related` стоит 1–2 ссылки на доклады, связанные по модели
+(`lib/talks-graph.ts`: общие темы с IDF-весом, тот же трек, соседство в зале). Это не
+рубрика и не рекомендация редактора — тот же расчёт, что на странице графа, поэтому
+карточка и заметка не могут показать разные связи.
+
+- **Адрес ссылки — постоянный якорь заметки** (`/day/2/#t344`), а не `?talk=<id>`: у одного
+  доклада не должно быть двух адресов, а ссылка обязана работать без JS. Внутри дня это
+  переход по якорю (`.page :target` даёт отступ под липкую шапку), в другой день — обычный
+  переход на страницу этого дня.
+- **Две ссылки, по одной в строке, с многоточием.** В сетке карточка ~254 px шириной:
+  полное название занимает 3–4 строки, поэтому общий кламп на две строки показал бы одну
+  ссылку из трёх, а остальные оставил бы в DOM невидимыми (фокус уходил бы в обрезанный
+  текст). Строка на ссылку держит блок в ~50 px, и каждая ссылка видна; полное название —
+  в `title` ссылки и в карточке-цели.
+- **Блок не создаёт интерактива сверх ссылок**: `article.talk-card` не обрабатывает клики
+  (модалку открывает только `button.talk-card__title-btn`), поэтому ссылка внутри карточки
+  не конфликтует с её собственным действием.
+- **Текст ссылки переведён**, адрес — нет: заголовок берётся из overlay'я
+  (`localizeTalk`), `id` и `href` остаются исходными.
+
 ## Поведение (`src/scripts/program-client.ts`)
 
 1. **Тема**: `dark → light → cyberpunk → dark`, `localStorage['theme']`, обновление
@@ -333,26 +438,29 @@ span.search-result__day + span.search-result__title + span.search-result__meta`;
    в `?track=` (`history.replaceState`), при 0 докладов показывается `[data-empty]`.
    Второй, независимый переключатель — «Избранное»: `button.track-chip[data-fav-filter]`,
    первый в `.track-chips`, **без `data-track`**, поэтому селектор чипов трека
-   (`[data-track-chips] > button.track-chip[data-track]`) его не подхватывает.
+   (`[data-track-chips] > button.track-chip[data-track]`) его не подхватывает ничего.
+   На телефоне полоса скрыта, и этот чип остаётся в DOM только как владелец состояния:
+   `initFavFilter` возвращается раньше, если узла нет, — поэтому чип нельзя удалять из
+   разметки, не переписав восстановление фильтра из `sessionStorage`.
    Тот же фильтр висит на звезде в шапке (`button[data-fav-header]`, тоже
    `aria-pressed`): это переключатель, а не «показать», поэтому повторный клик возвращает
    список; клик из шапки или панели досматривает сетку (прокрутка к ней), если её верх не в
    кадре, а клик по чипу — нет, чип стоит прямо над списком.
    У фильтра трека своя кнопка в шапке (`button[data-track-header]`) — раскрывает меню из
    тех же 12 пунктов: «Все треки» + 11 треков. Выбор пункта идёт через тот же
-   `setActiveTrack`, что и у чипов, поэтому список, `?track=`, чипы, телефонный `select`
-   и пункты меню не могут разойтись. Пункты несут `aria-pressed` (выбран ровно один),
+   `setActiveTrack`, что и у чипов, поэтому список, `?track=`, чипы и пункты меню не могут
+   разойтись. Нативного `<select>` в тулбаре больше нет (`DECISIONS §21`): на телефоне
+   трек выбирается из этого меню, и третьей поверхности у одного состояния нет. Пункты несут `aria-pressed` (выбран ровно один),
    у кнопки `aria-expanded` и `data-active` (заливка акцентом, когда трек выбран).
    Панель не модальная: закрывается по Esc (фокус возвращается на кнопку), клику мимо и
    выбору; фокус-трапа нет. Ниже 480 px шапка показывает её вместо ссылки на язык —
    полоса в 320 px вмещает ровно пять кнопок, а язык остаётся в `.drawer-foot`.
-   На телефоне (≤ 767.98 px) чипы треков скрыты, а тот же `activeTrack` выбирается
-   нативным `select[data-track-select]` внутри `label.track-select`: 12 подписей — 2147 px,
-   в строку 358 px они не влезают, а перенос даёт 8 строк / 252 px над карточками.
-   Обёртка выглядит чипом, сам `select` прозрачен и лежит поверх — тап открывает системный
-   список. Оба вида читают и пишут одно состояние: чипы продолжают получать `aria-pressed`
-   и остаются в DOM (селекторы тестов не зависят от ширины), `change` списка зовёт тот же
-   `setActiveTrack`.
+   На телефоне (≤ 767.98 px) полоса чипов скрыта целиком, а тот же `activeTrack`
+   выбирается из меню в шапке (`button[data-track-header]` → `button[data-track-option]`,
+   §17): 12 подписей занимают 2147 px и в строку 358 px не влезают, а перенос давал 8 строк
+   над карточками. Нативного `<select>` в тулбаре больше нет (`DECISIONS §21`): это была
+   третья поверхность одного состояния. Чипы остаются в DOM и продолжают получать
+   `aria-pressed` — по ним клиент проверяет `?track=`, а CSS их только скрывает.
    Условия складываются по «И»: видима ячейка, у которой (трек не выбран или совпал)
    И (избранное выключено или доклад в избранном); в URL попадает только `?track=`.
    Число в чипе — размер избранного, обновляется вместе с `[data-favorites-count]`;

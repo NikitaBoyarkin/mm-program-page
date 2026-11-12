@@ -13,6 +13,7 @@
 
 **Живая версия:** https://nikitaboyarkin.github.io/mm-program-page/
 
+**▶ [Схема: mm-program-page — от API до деплоя](docs/diagrams/mm-program-page.svg)** — открывается в браузере, без установки и сборки
 ## Содержание
 
 - [Что даёт переписывание](#что-даёт-переписывание)
@@ -31,11 +32,11 @@
 
 | Было (v1) | Стало (v2) |
 | --- | --- |
-| `index.html` и 3 файла, запуск двойным кликом по `file://` | Astro: 6 страниц дней (3 RU + 3 EN), 404 и два JSON-эндпоинта; `bun run build` |
+| `index.html` и 3 файла, запуск двойным кликом по `file://` | Astro: 9 страниц — три дня × две локали, граф докладов (`/talks/`, `/en/talks/`), 404 и два JSON-эндпоинта; `bun run build` |
 | Браузер рисует сетку из `window.MM_PROGRAM` | Сетка **лежит в HTML**: три страницы по 39 / 37 / 15 карточек, у каждого дня свой URL |
 | День переключается на клиенте, состояние живёт в памяти | День — это адрес: `/`, `/day/2/`, `/day/3/` (в EN — `/en/`, `/en/day/2/`, `/en/day/3/`) — ссылки, история, шаринг |
-| `app.js` — IIFE на 780 строк без типов | `src/lib/program.ts` и `src/lib/ics.ts` — типизированное ядро и 161 юнит-тест без браузера |
-| Тесты — Python и headless Chrome | `bun test` (161 тест) и Playwright на собранной странице, включая прогон с выключенным JS |
+| `app.js` — IIFE на 780 строк без типов | `src/lib/program.ts` и `src/lib/ics.ts` — типизированное ядро и 186 юнит-тестов без браузера |
+| Тесты — Python и headless Chrome | `bun test` (186 тестов) и Playwright на собранной странице, включая прогон с выключенным JS |
 | Только русский интерфейс, нет поиска | Словарь RU/EN + overlay перевода контента; поиск по названию, спикеру, треку и залу |
 | Свой CSS на 2381 строку с фиолетовым брендом | Токены портфельной дизайн-системы: три темы, Inter и Cormorant, кремовые баннеры |
 
@@ -91,8 +92,9 @@ Overlay перевода `src/data/program.en.json` весит **146 379 бай�
 двух ступеней — шапка и табы дня; липкую ленту со временем сняли (§18), потому что она
 занимала 44–48 px ради одной подписи. Фильтр трека доступен из шапки меню на 12 пунктов
 (§17): на телефоне его кнопка занимает место ссылки на язык, которая живёт в drawer'е.
-Фильтр по треку на телефоне — нативный список в одну строку вместо ряда чипов: 12 подписей
-занимают 2147 px и в 358 px не влезают (`CONTRACT.md`, «Поведение», п. 4).
+Фильтр по треку на телефоне — меню в шапке вместо ряда чипов: 12 подписей занимают
+2147 px и в 358 px не влезают, а сам ряд ещё и занимал три строки над карточками
+(`CONTRACT.md`, «Поведение», п. 4; `DECISIONS.md` §21).
 
 ## Структура
 
@@ -112,31 +114,41 @@ src/
   lib/theme.ts               три темы, meta theme-color
   lib/localize.ts            overlay → Talk/Program
   lib/search.ts              чистый поиск по программе
+  lib/talks-graph.ts         граф докладов: заметки, хабы, связи (Zettelkasten)
+  lib/talks-themes.ts        словарь тем: стемы, классификация, подписи
+  lib/talks-model.ts         типы модели графа
+  lib/talks-layout.ts        детерминированная раскладка колец
   layouts/Base.astro         <head>, тема, hreflang, шапка, подвал
   components/ProgramPage.astro  день: шапка, сетка, модалка, поиск
   components/TalkCard.astro  карточка доклада
   components/TalkModal.astro модалка доклада
   components/SearchDialog.astro  каркас диалога поиска
   components/Analytics.astro ленивый init PostHog, outbound_click
-  components/Nav.astro       шапка, меню, дни, тема, язык
+  components/Nav.astro       шапка, меню, дни, тема, язык, вход в граф
+  components/TalksPage.astro граф: шапка, SVG, заметки по трекам, хабы тем
+  components/TalksGraph.astro  SVG графа и пакер подписей
   pages/index.astro          день 1 → /
   pages/day/[n].astro        дни 2..N → /day/2/
   pages/en/index.astro       день 1 → /en/
   pages/en/day/[n].astro     дни 2..N → /en/day/2/
   pages/program.json.ts      /program.json для клиента
   pages/en/program.json.ts   /en/program.json с переводом
+  pages/talks.astro          граф докладов → /talks/
+  pages/en/talks.astro       граф докладов → /en/talks/
   pages/404.astro            404
   scripts/program-client.ts  клиентский JS: тема, фильтр, поиск
   styles/tokens.css          токены тем, Inter и Cormorant
   assets/fonts/*.woff2       восемь подмножеств
   styles/site.css            каркас: шапка, drawer, подвал
   styles/program.css         сетка, карточка, модалка, печать
+  styles/talks.css           граф и заметки
   styles/search.css          диалог поиска
 data/program.raw.json        сырой ответ API
 scripts/fetch-program.ts     загрузка, --check / --dry-run
-tests/lib/*.test.ts          161 юнит-тест (bun test, 8 файлов)
+tests/lib/*.test.ts          186 юнит-тестов (bun test, 9 файлов)
 tests/built/program.spec.ts  браузерные (Playwright)
 tests/built/i18n-search.spec.ts  EN и поиск (Playwright)
+tests/built/talks.spec.ts    граф докладов (Playwright)
 docs/reference/*.png         скриншоты оригинала
 docs/screenshots/*.png       скриншоты сборки
 CONTRACT.md                  контракт: данные, DOM, поведение
@@ -152,8 +164,8 @@ bun run build              # статика в dist/
 bun run preview            # посмотреть сборку
 
 bun run check              # типы в .astro и .ts
-bun test                   # 161 юнит-тест
-bun run test:built         # браузерные тесты: 38 тестов × 3 проекта
+bun test                   # 186 юнит-тестов
+bun run test:built         # браузерные тесты: 49 тестов × 3 проекта
 
 bun run data:fetch         # перекачать API
 bun run data:check         # сверить со слепком
@@ -201,8 +213,8 @@ GET https://lms.matemarketing.ru/api/event-program/event/6/
 ## Проверка
 
 ```bash
-bun test                  # 161 pass
-bun run test:built        # 38 тестов × 3 проекта = 114 прогонов
+bun test                  # 186 pass
+bun run test:built        # 49 тестов × 3 проекта = 147 прогонов
 ```
 
 `tests/lib` проверяет инварианты слепка: 91 доклад, 3 дня, формат времени, отсутствие HTML
@@ -224,6 +236,17 @@ drawer на 390 и 1440,
 с `javaScriptEnabled: false`**. `tests/built/i18n-search.spec.ts` добавляет `/en/` и
 `/en/day/N/`, переключатель языка (ведёт на тот же день), `hreflang`, поиск (открытие,
 фильтрация, `Esc`, переход по результату с `?talk=`) и `/en/program.json`.
+
+`tests/built/talks.spec.ts` проверяет граф: 91 заметка с постоянными адресами `#t<id>`,
+SVG отрендерен на билде и все внутренние ссылки находят свои якоря, 11 хабов тем с
+обратными ссылками, у каждой заметки 1–4 связанных доклада, вход в граф на трёх ширинах
+(полоса шапки / иконка / меню), EN-копия с `hreflang`, а на 320 px вбок скроллится только
+рамка графа, а не документ. Отдельный тест фиксирует, что тело программы на телефоне
+больше не дублирует фильтры: полоса чипов скрыта, нативного списка трека нет, а звезда и
+меню треков в шапке работают.
+
+«Связанные» доклады видны не только на графе, но и в самой карточке расписания: две ссылки
+с постоянными адресами `/day/N/#t<id>`, тот же расчёт, что на `/talks/` (`DECISIONS.md` §22).
 
 ## Что осталось 1:1, а что изменилось
 
@@ -248,6 +271,8 @@ drawer на 390 и 1440,
 ## Чего нет
 
 Авторизации, личного кабинета, серверного избранного, чата, плеера и оплаты — это статика.
+Живого force-графа с перетаскиванием узлов тоже нет: раскладка считается на билде, и это
+осознанный выбор (`docs/DECISIONS.md` §20) — страница читается без JS.
 Баннеры и фото спикеров подтягиваются с CDN первоисточника, в репозитории их нет — кроме
 аватарок: они ресемплируются в 144×144 на `prebuild` (`bun run photos`), потому что оригиналы
 весят 300–1200 КБ при 36 px в CSS. Счётчик

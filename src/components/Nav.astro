@@ -4,7 +4,7 @@
  * навигация одинаково нужна сетке, дням и 404.
  */
 import { dayLabel } from "../i18n/format";
-import { dayHrefFor, switchLangHref } from "../i18n/paths";
+import { dayHrefFor, switchLangHref, talksHrefFor } from "../i18n/paths";
 import { otherLang, t, type Lang } from "../i18n/ui";
 import { STAR, TAG } from "../lib/icons";
 import { dayNameLabel, trackLabel } from "../lib/localize";
@@ -21,9 +21,11 @@ interface Props {
   favorites?: boolean;
   /** Кнопка «Все треки»: сбрасывает фильтр трека, значит нужен тот же скрипт. */
   tracks?: boolean;
+  /** Какая это страница: у графа свой адрес и свой пункт «текущая страница». */
+  page?: "day" | "talks";
 }
 
-const { ordinal, lang, search = false, favorites = false, tracks = false } = Astro.props;
+const { ordinal, lang, search = false, favorites = false, tracks = false, page = "day" } = Astro.props;
 const portfolio = "https://nikitaboyarkin.github.io";
 
 // Переход на портфолио размечен: без UTM визит, начавшийся в новой сессии,
@@ -44,11 +46,12 @@ const siteLinks = [
   { href: portfolioHref("/contact/", "nav-contacts"), label: t(lang, "navContacts"), icon: "contacts" },
 ];
 
-// «Граф докладов» живёт в портфолио, но описывает те же 91 доклад: это
-// продолжение дней программы, а не общая ссылка сайта. Поэтому пункт стоит
-// сразу после дней и только в drawer'е — инлайновая полоса шапки рассчитана
-// ровно на три ссылки портфолио.
-const talksHref = portfolioHref(lang === "en" ? "/en/talks/" : "/talks/", "nav-talks");
+// «Граф докладов» — своя страница этого сайта, а не ссылка портфолио: та же
+// программа, вторая проекция (треки, темы, связи). Живёт в трёх местах по
+// ширине: текстовый пункт в инлайновой полосе (≥ 1024 px), иконка в группе
+// действий (480–1023.98 px) и пункт в панели меню (всегда). Одна запись не
+// может стоять сразу в двух местах полосы — поэтому правила медиаскрытия.
+const talksHref = talksHrefFor(lang);
 
 // Переключатель уводит на тот же день другой локали: подпись — код цели.
 // Пункты меню «Все треки»: сброс + те же 11 треков, что у чипов под вкладками
@@ -56,7 +59,9 @@ const talksHref = portfolioHref(lang === "en" ? "/en/talks/" : "/talks/", "nav-t
 const trackOptions = tracksOfProgram().map((name) => ({ name, label: trackLabel(lang, name) }));
 
 const targetLang = otherLang(lang);
-const langHref = switchLangHref(lang, ordinal ?? 1);
+// С страницы графа язык переключается на граф, а не на первый день: иначе
+// переключатель уводил бы читателя с той страницы, которую он читает.
+const langHref = page === "talks" ? talksHrefFor(targetLang) : switchLangHref(lang, ordinal ?? 1);
 const langCode = targetLang.toUpperCase();
 ---
 
@@ -70,6 +75,18 @@ const langCode = targetLang.toUpperCase();
   </a>
 
   <ul class="nav-inline">
+    {/* Свой пункт сайта идёт первым: он про эту программу, а три ссылки ниже —
+        про сайт-портфолио. Инлайновая полоса видна только ≥ 1024 px; ниже
+        «Граф докладов» даёт иконка в группе действий. */}
+    <li>
+      <a
+        class="nav-link--talks"
+        href={talksHref}
+        aria-current={page === "talks" ? "page" : undefined}
+      >
+        {t(lang, "navTalks")}
+      </a>
+    </li>
     {
       siteLinks.map((link) => (
         <li>
@@ -173,6 +190,37 @@ const langCode = targetLang.toUpperCase();
         </div>
       </div>
     )}
+
+    {/* 480–1023.98 px: текстовой полосы нет (она уходит в drawer), но место под
+        шестую иконку есть. Ниже 480 px кнопка скрыта: пять целей по 44 px уже
+        занимают 285 px из 296 возможных, шестая не влезает физически — там
+        граф доступен из панели меню. Выше 1024 px пункт живёт текстом в
+        `.nav-inline`, поэтому иконка скрыта, чтобы не дублировать вход. */}
+    <a
+      class="nav-icon-btn nav-graph"
+      href={talksHref}
+      aria-label={t(lang, "navTalks")}
+      title={t(lang, "navTalks")}
+      aria-current={page === "talks" ? "page" : undefined}
+    >
+      <svg
+        viewBox="0 0 24 24"
+        width="18"
+        height="18"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="1.8"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+        aria-hidden="true"
+        focusable="false"
+      >
+        <circle cx="18" cy="5" r="3"></circle>
+        <circle cx="6" cy="12" r="3"></circle>
+        <circle cx="18" cy="19" r="3"></circle>
+        <path d="M8.59 13.51l6.83 3.98M15.41 6.51L8.59 10.49"></path>
+      </svg>
+    </a>
 
     {
       search && (
@@ -324,7 +372,13 @@ const langCode = targetLang.toUpperCase();
       ))
     }
     <li>
-      <a class="drawer-link drawer-link--talks" href={talksHref} rel="noopener">{t(lang, "navTalks")}</a>
+      <a
+        class="drawer-link drawer-link--talks"
+        href={talksHref}
+        aria-current={page === "talks" ? "page" : undefined}
+      >
+        {t(lang, "navTalks")}
+      </a>
     </li>
     {
       siteLinks.map((link) => (

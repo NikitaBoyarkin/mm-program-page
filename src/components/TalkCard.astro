@@ -9,6 +9,7 @@ import { bannerSources, photoSources } from "../lib/images";
 import { hallLabel, trackLabel } from "../lib/localize";
 import { firstParagraph, formatRange, imageUrl, type Talk } from "../lib/program";
 import { SOCIAL_LABELS } from "../lib/socials";
+import type { RelatedNote } from "../lib/talks-graph";
 
 interface Props {
   talk: Talk;
@@ -17,9 +18,13 @@ interface Props {
   lang: Lang;
   /** Первый баннер в вьюпорте: грузим сразу и с высоким приоритетом (это LCP). */
   priority?: boolean;
+  /** Связанные доклады — те же ссылки, что на странице графа: заметка
+   *  существует в двух местах, но адрес у неё один (`/day/N/#t<id>`). */
+  related?: RelatedNote[];
 }
 
-const { talk, trackKey, lang, priority = false } = Astro.props;
+const { talk, trackKey, lang, priority = false, related = [] } = Astro.props;
+const relatedLinks = related.slice(0, 2);
 
 // Баннер и аватар — только с трёх CDN первоисточника (`imageUrl`):
 // `https:` без проверки хоста пускал бы данные на любой сервер.
@@ -215,6 +220,22 @@ const initials = (name: string): string =>
           <button class="talk-card__toggle-btn" type="button" data-more aria-expanded="false">
             {t(lang, "more")}
           </button>
+        )
+      }
+      {/* Связанные доклады — тот же список, что на странице графа, но здесь он
+          не эссе. Каждая ссылка — своя строка с многоточием: в карточке 254 px
+          шириной полное название занимает 3–4 строки, и в общий кламп влезала
+          бы одна ссылка из трёх, а остальные оставались в DOM невидимыми.
+          Ссылки настоящие, без JS: адрес заметки (`/day/N/#t<id>`) работает
+          и без клиентского скрипта, и на другой день ведёт на другой день. */}
+      {
+        relatedLinks.length > 0 && (
+          <div class="talk-card__related">
+            <span class="talk-card__related-label">{t(lang, "talksRelated")}</span>
+            {relatedLinks.map((link) => (
+              <a class="talk-card__related-link" href={link.href} title={link.title}>{link.title}</a>
+            ))}
+          </div>
         )
       }
     </div>

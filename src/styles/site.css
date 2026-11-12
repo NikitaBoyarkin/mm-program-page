@@ -405,6 +405,10 @@ ul.nav-inline {
   --nav-icon: var(--nav-contact);
 }
 
+.nav-link--talks {
+  --nav-icon: var(--nav-talks);
+}
+
 .nav-toggle {
   display: inline-flex;
   align-items: center;

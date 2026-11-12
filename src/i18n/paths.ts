@@ -19,3 +19,8 @@ export function dayHrefFor(lang: Lang, ordinal: number): string {
 export function switchLangHref(lang: Lang, ordinal: number): string {
   return dayHrefFor(lang === "en" ? "ru" : "en", ordinal);
 }
+
+/** Граф докладов: своя пара маршрутов `/talks/` и `/en/talks/`. */
+export function talksHrefFor(lang: Lang): string {
+  return `${BASE_URL}${langPrefix(lang)}talks/`;
+}

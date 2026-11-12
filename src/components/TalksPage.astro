@@ -1,0 +1,185 @@
+---
+/**
+ * Страница графа докладов: одна проекция программы, собранная на принципах
+ * Zettelkasten. Всё считается на билде — HTML остаётся читаемым без JS, а
+ * клиентский чанк здесь не нужен вовсе.
+ *
+ * Устройство: хаб-граф (темы ↔ треки) отвечает на вопрос «где треки
+ * пересекаются по смыслу», список заметок — на вопрос «что это за доклад и с
+ * чем он связан», хаб темы — на вопрос «кто ещё ссылается на эту тему».
+ */
+import TalksGraph from "./TalksGraph.astro";
+import { dayHrefFor } from "../i18n/paths";
+import { t, type Lang } from "../i18n/ui";
+import { hallLabel, localizeTalk, trackLabel } from "../lib/localize";
+import { PROGRAM, days } from "../lib/program";
+import {
+  buildGraph,
+  buildNotes,
+  layoutGraph,
+  notesByTheme,
+  notesByTrack,
+  relatedNotes,
+  themeLabel,
+} from "../lib/talks-graph";
+import "../styles/talks.css";
+
+interface Props {
+  lang: Lang;
+}
+
+const { lang } = Astro.props;
+
+// Номер дня берётся из порядка программы, а не из `dayId`: идентификаторы
+// приходят из API и не совпадают с нумерацией маршрутов.
+const dayOrdinal = new Map(days().map((day, index) => [day.id, index + 1]));
+
+const notes = buildNotes(PROGRAM.talks, {
+  dayOrdinal,
+  hrefOf: (ordinal, id) => `${dayHrefFor(lang, ordinal)}#t${id}`,
+});
+const graph = buildGraph(notes, PROGRAM.event.name);
+const layout = layoutGraph(graph);
+const related = relatedNotes(notes);
+
+// Заголовки на языке страницы: темы считаются по русскому тексту (словарь
+// один), но показываются переведёнными.
+const titles = new Map(
+  PROGRAM.talks.map((talk) => [talk.id, localizeTalk(lang, talk).title] as const),
+);
+const titleOf = (note: { id: number; title: string }) => titles.get(note.id) ?? note.title;
+
+const trackGroups = notesByTrack(graph);
+const themeGroups = notesByTheme(graph);
+const themeEdges = graph.edges.filter((edge) => edge.kind === "topic").length;
+
+const portfolioHref =
+  "https://nikitaboyarkin.github.io" +
+  (lang === "en" ? "/en/talks/" : "/talks/") +
+  "?utm_source=mm-program-page&utm_medium=referral&utm_campaign=mm_program_to_portfolio&utm_content=talks-footer";
+---
+
+<header class="page-head">
+  <p class="eyebrow">{t(lang, "brandEvent")} · {t(lang, "talksTitle")}</p>
+  <h1 class="page-title">{t(lang, "talksTitle")}</h1>
+  <p class="page-intro">{t(lang, "talksIntro")}</p>
+  <dl class="facts">
+    <div class="facts__item">
+      <dt>{t(lang, "factsTalks")}</dt>
+      <dd>{notes.length}</dd>
+    </div>
+    <div class="facts__item">
+      <dt>{t(lang, "factsTracks")}</dt>
+      <dd>{trackGroups.length}</dd>
+    </div>
+    <div class="facts__item">
+      <dt>{t(lang, "factsThemes")}</dt>
+      <dd>{themeGroups.length}</dd>
+    </div>
+    <div class="facts__item">
+      <dt>{t(lang, "factsLinks")}</dt>
+      <dd>{themeEdges}</dd>
+    </div>
+  </dl>
+</header>
+
+<section class="talks-section" aria-labelledby="talks-graph-title">
+  <h2 class="talks-section__title" id="talks-graph-title">{t(lang, "talksGraphTitle")}</h2>
+  <TalksGraph layout={layout} lang={lang} titles={titles} />
+</section>
+
+<section class="talks-section" aria-labelledby="talks-notes-title">
+  <h2 class="talks-section__title" id="talks-notes-title">{t(lang, "talksNotesTitle")}</h2>
+  <p class="talks-section__intro">{t(lang, "talksNotesIntro")}</p>
+
+  {
+    trackGroups.map((group, index) => (
+      <section class="track-group" id={`track-${index + 1}`} aria-labelledby={`track-${index + 1}-title`}>
+        <h3 class="track-group__title" id={`track-${index + 1}-title`}>
+          <span class="track-group__name">
+            {trackLabel(lang, group.hub.label === "Без трека" ? "" : group.hub.label)}
+          </span>
+          <span class="track-group__count">{group.notes.length}</span>
+        </h3>
+
+        <ol class="note-list">
+          {group.notes.map((note) => {
+            const links = (related.get(note.id) ?? []).slice(0, 4);
+            const themes = note.themes.map((id) => themeLabel(id, lang));
+            return (
+              <li class="talk-note" id={note.anchor}>
+                <p class="talk-note__meta">
+                  <a class="talk-note__where" href={note.href}>
+                    {t(lang, "talksDay", { n: note.dayOrdinal })} · {note.start}–{note.end} · {hallLabel(lang, note.hall)}
+                  </a>
+                </p>
+                <p class="talk-note__title">{titleOf(note)}</p>
+                <p class="talk-note__themes">
+                  {
+                    note.themes.length > 0 ? (
+                      note.themes.map((id, themeIndex) => (
+                        <>
+                          {themeIndex > 0 && <span class="talk-note__sep">·</span>}
+                          <a class="talk-note__theme" href={`#theme-${id}`}>{themes[themeIndex]}</a>
+                        </>
+                      ))
+                    ) : (
+                      <span class="talk-note__muted">{t(lang, "talksNoThemes")}</span>
+                    )
+                  }
+                </p>
+                {links.length > 0 && (
+                  <p class="talk-note__related">
+                    <span class="talk-note__related-label">{t(lang, "talksRelated")}:</span>
+                    {links.map((link, linkIndex) => (
+                      <>
+                        {linkIndex > 0 && <span class="talk-note__sep">·</span>}
+                        <a class="talk-note__link" href={`#${link.anchor}`}>{titleOf(link)}</a>
+                      </>
+                    ))}
+                  </p>
+                )}
+              </li>
+            );
+          })}
+        </ol>
+      </section>
+    ))
+  }
+</section>
+
+<section class="talks-section" aria-labelledby="talks-themes-title">
+  <h2 class="talks-section__title" id="talks-themes-title">{t(lang, "talksThemesTitle")}</h2>
+  <p class="talks-section__intro">{t(lang, "talksThemesIntro")}</p>
+
+  {
+    themeGroups.map((group) => (
+      <section class="theme-group" id={`theme-${group.theme.id}`} aria-labelledby={`theme-${group.theme.id}-title`}>
+        <h3 class="theme-group__title" id={`theme-${group.theme.id}-title`}>
+          <span class="theme-group__name">{themeLabel(group.theme.id, lang)}</span>
+          <span class="theme-group__count">{group.notes.length}</span>
+        </h3>
+        <ul class="theme-group__list">
+          {group.notes.map((note) => (
+            <li>
+              <a class="theme-group__link" href={`#${note.anchor}`}>
+                {titleOf(note)}
+                <span class="theme-group__track">
+                  {trackLabel(lang, note.track === "Без трека" ? "" : note.track)}
+                </span>
+              </a>
+            </li>
+          ))}
+        </ul>
+      </section>
+    ))
+  }
+</section>
+
+<footer class="talks-footer">
+  <p class="talks-footer__note">{t(lang, "talksPortfolioNote")}</p>
+  <p class="talks-footer__links">
+    <a class="talks-footer__link" href={portfolioHref} rel="noopener">{t(lang, "talksPortfolio")}</a>
+    <a class="talks-footer__link" href={dayHrefFor(lang, 1)}>{t(lang, "talksToProgram")}</a>
+  </p>
+</footer>

@@ -86,20 +86,15 @@ nav.day-tabs {
 }
 
 /* Чипы переносятся, а не скроллятся: тринадцать треков в строку не влезают ни
-   на одной ширине (натуральная ширина ~2,1k px). На телефоне перенос дал бы
-   8 строк над карточками, поэтому там чипы треков заменены нативным списком
-   (`.track-select`, см. медиаблок ниже) — см. `CONTRACT.md`. */
+   на одной ширине (натуральная ширина ~2,1k px). На телефоне полоса скрыта
+   целиком: трек и избранное выбираются в шапке, а не над карточками — см.
+   медиаблок ниже и `CONTRACT.md`. */
 .track-chips {
   display: flex;
   flex: 1 1 auto;
   flex-wrap: wrap;
   gap: 0.375rem;
   min-inline-size: 0;
-}
-
-/* Мобильный выбор трека живёт только в медиаблоке: на десктопе это чипы. */
-.track-select {
-  display: none;
 }
 
 .track-chip {
@@ -650,6 +645,61 @@ nav.day-tabs {
 
 .talk-card__theses p + p {
   margin-block-start: var(--space-2);
+}
+
+/* Связанные доклады — две строки, по одной ссылке в каждой.
+   Почему не общий кламп: карточка в сетке ~254 px шириной, полное название
+   занимает 3–4 строки, и в кламп на две строки влезала одна ссылка — вторая
+   оставалась в DOM, но невидимой (фокус уходил в обрезанный текст). Поэтому
+   каждая ссылка — блочная строка с многоточием: что видно, то и есть, полное
+   название — в `title` и в карточке-цели. */
+.talk-card__related {
+  display: flex;
+  /* Ширина обязательна: `.talk-card__content` — flex с `align-items: flex-start`,
+     иначе блок ужался бы до самой длинной неразрывной строки. */
+  flex-direction: column;
+  inline-size: 100%;
+  max-inline-size: 100%;
+  gap: 0.1em;
+  margin: 0;
+  color: var(--text-muted);
+  font-size: 0.75rem;
+  line-height: 1.35;
+}
+
+.talk-card__related-label {
+  font-size: 0.68rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+/* Ссылка в тексте: подчёркивание, а не рамка; цвет — обычный текст, потому что
+   акцент в карточке уже занят звездой и заголовком-кнопкой. */
+.talk-card__related-link {
+  overflow: hidden;
+  color: var(--text-normal);
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-decoration-color: color-mix(in srgb, var(--text-accent) 55%, transparent);
+  text-underline-offset: 0.18em;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .talk-card__related-link:hover {
+    color: var(--text-accent-hover);
+    text-decoration-color: currentColor;
+  }
+}
+
+.talk-card__related-link:active {
+  color: var(--text-accent);
+}
+
+.talk-card__related-link:focus-visible {
+  outline: 2px solid var(--border-active);
+  outline-offset: 2px;
 }
 
 /* Развёрнутое состояние снимает clamp. Карточка перестаёт быть фиксированной
@@ -1332,91 +1382,13 @@ html:has(body.is-search-open) {
     margin-inline-end: 0.4em;
   }
 
-  /* 12 чипов занимают 2147px — в строку 358px они не влезают, а перенос даёт
-     8 строк / 252px над карточками. Поэтому на телефоне трек выбирает нативный
-     список ОС в одну строку (`.track-select`), а чипы треков остаются на
-     десктопе. «Избранное» — независимый фильтр, оно остаётся чипом. */
-  .track-chip[data-track] {
-    display: none;
-  }
-
+  /* На телефоне полосы чипов нет вовсе: и «Избранное», и «Все треки» живут в
+     шапке (звезда и меню из 12 пунктов). В тулбаре остаются счётчик и экспорт,
+     то есть над карточками одна строка вместо трёх. Узлы не удалены из DOM:
+     `[data-fav-filter]` владеет состоянием фильтра, а `button[data-track]`
+     служит клиенту списком допустимых треков — их только скрывает CSS. */
   .track-chips {
-    flex-basis: 100%;
-    flex-wrap: nowrap;
-    overflow-x: auto;
-    overscroll-behavior-inline: contain;
-    scrollbar-width: thin;
-  }
-
-  /* Обёртка — визуальный чип: настоящий `<select>` лежит поверх прозрачным
-     слоем, поэтому тап открывает системный список, а не нашу выпадашку. */
-  .track-select {
-    position: relative;
-    display: inline-flex;
-    /* Строка не должна скроллиться: «Избранное» фиксирован по контенту, список
-       забирает остаток и ужимает подпись — самый длинный трек иначе шире 320px. */
-    flex: 1 1 auto;
-    align-items: center;
-    gap: 0.4em;
-    min-inline-size: 0;
-    max-inline-size: 100%;
-    min-block-size: 36px;
-    padding: 0.25rem 0.5rem;
-    border: 1px solid var(--control-border);
-    border-radius: var(--radius-full);
-    background: #171717;
-    color: #f8f2da;
-    font-family: var(--font-mono);
-    font-size: 0.75rem;
-    line-height: 1.2;
-    letter-spacing: 0.02em;
-    white-space: nowrap;
-    cursor: pointer;
-  }
-
-  .track-select::after {
-    content: "";
-    display: inline-block;
-    flex: none;
-    inline-size: 12px;
-    block-size: 12px;
-    background-color: currentColor;
-    -webkit-mask: var(--icon-chevron) center / contain no-repeat;
-    mask: var(--icon-chevron) center / contain no-repeat;
-    opacity: 0.7;
-  }
-
-  /* Самый длинный трек («Семантический слой и аналитические агенты») шире
-     строки: подпись режется, счётчик внутри списка остаётся целым. */
-  .track-select__value {
-    flex: 1 1 auto;
-    min-inline-size: 0;
-    overflow: hidden;
-    text-overflow: ellipsis;
-  }
-
-  /* 16px обязательны: на iOS поле мельче 16px вызывает авто-зум при фокусе.
-     Слой прозрачный — размер нужен только ради этого. */
-  .track-select__control {
-    position: absolute;
-    inset: 0;
-    inline-size: 100%;
-    block-size: 100%;
-    margin: 0;
-    padding: 0;
-    border: 0;
-    appearance: none;
-    background: transparent;
-    font-size: 16px;
-    color: transparent;
-    cursor: pointer;
-    opacity: 0;
-  }
-
-  /* Фокус-ринг рисует видимый слой: сам `<select>` прозрачный. */
-  .track-select:has(.track-select__control:focus-visible) {
-    outline: 2px solid var(--border-active);
-    outline-offset: 2px;
+    display: none;
   }
 
   .talk-count {

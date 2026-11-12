@@ -1,0 +1,365 @@
+/* ==========================================================================
+   Граф докладов: figure с SVG, список заметок, хабы тем.
+   Файл отдельный от program.css: страница не грузит сетку, карточки и модалку,
+   поэтому и токены читает только через tokens.css + site.css.
+   Ни одного литерала цвета — только var(--token).
+   ========================================================================== */
+
+/* ── Секции страницы ──────────────────────────────────────────────────────── */
+.talks-section {
+  margin-block-start: var(--space-12);
+}
+
+.talks-section__title {
+  margin: 0 0 var(--space-3);
+  font-family: var(--font-display);
+  font-size: var(--type-section-h2);
+  font-weight: 600;
+  line-height: 1.1;
+  letter-spacing: -0.01em;
+  color: var(--text-normal);
+}
+
+.talks-section__intro {
+  margin: 0 0 var(--space-6);
+  max-inline-size: var(--prose-measure);
+  line-height: var(--prose-lh);
+  color: var(--text-muted);
+}
+
+/* ── Граф ─────────────────────────────────────────────────────────────────── */
+.talks-graph {
+  margin: 0;
+}
+
+.talks-graph__canvas {
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-xl);
+  background: var(--card-background);
+  box-shadow: 0 24px 60px -40px var(--shadow-color);
+  overflow: hidden;
+}
+
+.talks-graph__svg {
+  display: block;
+  inline-size: 100%;
+  block-size: auto;
+}
+
+/* Спица — членство в хабе, а не смысловая связь: она не должна спорить с
+   рёбрами за внимание. Отсюда opacity ниже, а ширина фиксирована. */
+.talks-graph__spokes line {
+  stroke: var(--text-normal);
+  stroke-width: 0.4;
+  opacity: 0.14;
+}
+
+.talks-graph__edge {
+  stroke-width: var(--edge-width, 1);
+  stroke-linecap: round;
+}
+
+.talks-graph__edge--core {
+  stroke: var(--text-muted);
+  opacity: 0.3;
+}
+
+.talks-graph__edge--topic {
+  stroke: var(--text-accent);
+  opacity: 0.38;
+}
+
+.talks-graph__hub--event {
+  fill: var(--text-accent);
+  opacity: 0.9;
+}
+
+.talks-graph__hub--theme {
+  fill: var(--card-background);
+  stroke: var(--text-accent);
+  stroke-width: 1.4;
+  opacity: 0.95;
+}
+
+.talks-graph__hub--track {
+  fill: color-mix(in srgb, var(--text-normal) 12%, transparent);
+  stroke: var(--text-normal);
+  stroke-width: 1;
+  opacity: 0.8;
+}
+
+.talks-graph__label {
+  font-family: var(--font-sans);
+  paint-order: stroke;
+  stroke: var(--card-background);
+  stroke-width: 3px;
+  stroke-linejoin: round;
+}
+
+.talks-graph__label--theme {
+  font-size: 11px;
+  fill: var(--text-accent);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.talks-graph__label--track {
+  font-size: 12px;
+  font-weight: 600;
+  fill: var(--text-normal);
+}
+
+/* Точка заметки — ссылка. Видимая точка и хит-зона разделены: 4.5 px в SVG
+   масштабируются вниз на телефоне. Селектор хит-зоны включает класс узла:
+   без него `(0,1,0)` против `(0,1,1)` у `circle` проигрывал по специфичности,
+   и «прозрачный» круг рисовался — точки выходили вдвое крупнее задуманного.
+   Радиус 13 даёт ~17 px диаметра на 640 px-холсте; 24 px по WCAG 2.5.8 здесь
+   недостижимы без слияния точек, но у каждой ссылки есть эквивалент рядом —
+   та же заметка в списке ниже. */
+.talks-graph__note circle {
+  fill: var(--text-normal);
+  opacity: 0.55;
+  transition:
+    fill 0.15s ease,
+    opacity 0.15s ease;
+}
+
+.talks-graph__note .talks-graph__note-hit {
+  fill: transparent;
+  opacity: 0;
+}
+
+.talks-graph__note:focus-visible {
+  /* Тот же приём, что у остальных целей проекта: `outline: 2px` вокруг узла,
+     а не только смена заливки. Точка 9 px — не единственный сигнал фокуса. */
+  outline: 2px solid var(--text-accent);
+  outline-offset: 2px;
+  border-radius: var(--radius-full);
+}
+
+.talks-graph__note:focus-visible circle:first-child,
+.talks-graph__note:active circle:first-child {
+  fill: var(--text-accent);
+  opacity: 1;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .talks-graph__note:hover circle:first-child {
+    fill: var(--text-accent);
+    opacity: 1;
+  }
+}
+
+.talks-graph__caption {
+  margin-block-start: var(--space-3);
+  max-inline-size: var(--prose-measure);
+  font-size: 0.9rem;
+  line-height: var(--prose-lh);
+  color: var(--text-muted);
+}
+
+/* ── Хабы треков и заметки ────────────────────────────────────────────────── */
+.track-group {
+  margin-block-start: var(--space-8);
+  padding-block-start: var(--space-5);
+  border-block-start: 1px solid var(--border-color);
+}
+
+.track-group__title,
+.theme-group__title {
+  display: flex;
+  align-items: baseline;
+  gap: var(--space-3);
+  margin: 0 0 var(--space-4);
+  font-family: var(--font-sans);
+  font-size: 1rem;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--text-normal);
+}
+
+.track-group__count,
+.theme-group__count {
+  font-family: var(--font-mono);
+  font-size: 0.85rem;
+  font-weight: 500;
+  color: var(--text-accent);
+}
+
+.note-list {
+  display: grid;
+  gap: var(--space-5);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+/* Заметка — карточка без рамки: рамка у 91 заметки превратила бы страницу в
+   сетку коробок, а тут нужен текстовый поток с якорями. */
+.talk-note {
+  display: grid;
+  gap: var(--space-1);
+  padding-block-end: var(--space-5);
+  border-block-end: 1px solid color-mix(in srgb, var(--border-color) 45%, transparent);
+  scroll-margin-block-start: calc(var(--nav-mobile-h) + var(--space-6));
+}
+
+.talk-note__meta {
+  margin: 0;
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  letter-spacing: 0.02em;
+  color: var(--text-muted);
+}
+
+.talk-note__where {
+  color: inherit;
+  text-decoration-color: color-mix(in srgb, var(--text-accent) 50%, transparent);
+  text-underline-offset: 0.18em;
+}
+
+.talk-note__title {
+  margin: 0;
+  font-size: 1.05rem;
+  font-weight: 500;
+  line-height: 1.35;
+  text-wrap: pretty;
+  color: var(--text-normal);
+}
+
+.talk-note__themes,
+.talk-note__related {
+  margin: 0;
+  font-size: 0.88rem;
+  line-height: 1.5;
+  color: var(--text-muted);
+}
+
+.talk-note__related {
+  margin-block-start: var(--space-1);
+}
+
+.talk-note__theme,
+.talk-note__link,
+.theme-group__link,
+.talks-footer__link {
+  color: var(--text-normal);
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-decoration-color: color-mix(in srgb, var(--text-accent) 50%, transparent);
+  text-underline-offset: 0.18em;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .talk-note__theme:hover,
+  .talk-note__link:hover,
+  .theme-group__link:hover,
+  .talks-footer__link:hover {
+    color: var(--text-accent-hover);
+  }
+}
+
+.talk-note__theme:active,
+.talk-note__link:active,
+.theme-group__link:active,
+.talks-footer__link:active {
+  color: var(--text-accent);
+}
+
+.talk-note__related-label,
+.talk-note__muted {
+  color: var(--text-muted);
+}
+
+.talk-note__sep {
+  margin-inline: 0.4em;
+  opacity: 0.5;
+}
+
+/* ── Хабы тем: обратные ссылки ────────────────────────────────────────────── */
+.theme-group {
+  margin-block-start: var(--space-8);
+  scroll-margin-block-start: calc(var(--nav-mobile-h) + var(--space-6));
+}
+
+.theme-group__list {
+  display: grid;
+  gap: var(--space-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.theme-group__link {
+  display: block;
+  padding-block: var(--space-1);
+  font-size: 0.95rem;
+  line-height: 1.4;
+  text-decoration: none;
+  border-block-end: 1px solid color-mix(in srgb, var(--border-color) 35%, transparent);
+}
+
+.theme-group__track {
+  display: block;
+  font-family: var(--font-mono);
+  font-size: 0.7rem;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+/* ── Подвал страницы ──────────────────────────────────────────────────────── */
+.talks-footer {
+  margin-block: var(--space-12) var(--space-8);
+  padding-block-start: var(--space-5);
+  border-block-start: 1px solid var(--border-color);
+}
+
+.talks-footer__note {
+  margin: 0 0 var(--space-2);
+  font-size: 0.9rem;
+  color: var(--text-muted);
+}
+
+.talks-footer__links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2) var(--space-5);
+  margin: 0;
+}
+
+.talks-footer__link {
+  font-size: 0.95rem;
+}
+
+/* ── Телефон ──────────────────────────────────────────────────────────────── */
+@media (max-width: 767.98px) {
+  /* Граф на телефоне: кольца остаются читаемыми только в полную ширину, а
+     подписи тем на 320 px мельчают до 8 px. Поэтому граф скроллится по
+     горизонтали в собственной рамке — фиксированная минимальная ширина держит
+     подписи, а `overflow` не даёт странице получить горизонтальный скролл. */
+  .talks-graph__canvas {
+    overflow-x: auto;
+    overscroll-behavior-inline: contain;
+  }
+
+  .talks-graph__svg {
+    inline-size: 640px;
+    max-inline-size: none;
+  }
+
+  .talks-graph__label--theme {
+    font-size: 13px;
+  }
+
+  .talks-graph__label--track {
+    font-size: 14px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .talks-graph__note circle {
+    transition: none;
+  }
+}

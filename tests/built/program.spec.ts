@@ -82,14 +82,30 @@ async function talkTitles(request: APIRequestContext): Promise<Map<number, strin
  */
 /**
  * Выбирает трек тем управлением, которое видно на текущей ширине: чип
- * (десктоп) или нативный список в `label.track-select` (≤ 767.98 px, CONTRACT §4).
+ * (десктоп, ≥ 768 px) или меню в шапке (`button[data-track-header]`, телефон).
  * `value === ""` снимает фильтр. `aria-pressed` у чипа проверяется отдельно —
  * клиент обновляет его и у скрытого чипа, поэтому состояние одно.
  */
 async function chooseTrack(page: Page, chip: Locator, value: string): Promise<void> {
-  const select = page.locator("[data-track-select]");
-  if (await select.isVisible()) await select.selectOption(value);
-  else await chip.click();
+  if (await chip.isVisible()) {
+    await chip.click();
+    return;
+  }
+  // Телефонного `<select>` в тулбаре больше нет: трек выбирается из меню в
+  // шапке, а сброс — пункт «Все треки» с пустым `data-track`.
+  await page.locator("button[data-track-header]").click();
+  await page.locator(`button[data-track-option][data-track="${value}"]`).click();
+}
+
+/**
+ * Видимый переключатель «Избранное»: чип в полосе треков на десктопе или звезда
+ * в шапке на телефоне (≤ 767.98 px полоса скрыта). Оба узла несут одно
+ * состояние, поэтому тесту достаточно одной ссылки на управление.
+ */
+async function favoritesControl(page: Page): Promise<Locator> {
+  const chip = page.locator("button.track-chip[data-fav-filter]");
+  if (await chip.isVisible()) return chip;
+  return page.locator("header.nav-mobile button[data-fav-header]");
 }
 
 async function assertTitleButtons(page: Page, request: APIRequestContext): Promise<void> {
@@ -204,14 +220,10 @@ test("05 · фильтр по треку: aria-pressed, одинаковый dat
 
   const chip = chips.nth(index);
 
-  // На телефоне (≤ 767.98 px) чипы треков скрыты, и тот же фильтр выбирается
-  // нативным списком внутри `label.track-select` (CONTRACT §4).
+  // На телефоне (≤ 767.98 px) полоса чипов скрыта, и тот же фильтр выбирается
+  // из меню в шапке — `chooseTrack` берёт видимое управление (CONTRACT §4).
   await chooseTrack(page, chip, track);
   await expect(chip).toHaveAttribute("aria-pressed", "true");
-  if (await page.locator("[data-track-select]").isVisible()) {
-    await expect(page.locator("[data-track-select]")).toHaveValue(track);
-    await expect(page.locator("[data-track-select-value]")).toContainText("·");
-  }
 
   const tracks = await page
     .locator("div.program-grid__talk-cell[data-track]:visible")
@@ -226,9 +238,6 @@ test("05 · фильтр по треку: aria-pressed, одинаковый dat
 
   await chooseTrack(page, chip, "");
   await expect(chip).toHaveAttribute("aria-pressed", "false");
-  if (await page.locator("[data-track-select]").isVisible()) {
-    await expect(page.locator("[data-track-select-value]")).toHaveText(/Все треки|All tracks/);
-  }
   await expect(page.locator("[data-talk-count]")).toHaveText(String(DAY1_TALKS));
   expect(page.url()).not.toContain("track=");
 });
@@ -576,7 +585,7 @@ test.describe("мобильный 390×844", () => {
   }) => {
     await open(page, "/");
 
-    const chip = page.locator("button.track-chip[data-fav-filter]");
+    const chip = await favoritesControl(page);
     await expect(chip).toBeVisible();
     await expect(chip).toHaveAttribute("aria-pressed", "false");
     await expect(page.locator("[data-fav-filter-count]")).toHaveText("0");
@@ -647,7 +656,7 @@ test.describe("мобильный 390×844", () => {
       .locator("button[data-fav]")
       .click();
 
-    const favChip = page.locator("button.track-chip[data-fav-filter]");
+    const favChip = await favoritesControl(page);
     await favChip.click();
     await expect(favChip).toHaveAttribute("aria-pressed", "true");
     await expect(trackChip).toHaveAttribute("aria-pressed", "true");
@@ -1254,3 +1263,60 @@ test("30 · «Все треки» в шапке: меню из 12 пунктов
   );
 });
 
+
+/**
+ * «Связанные» в карточке — та же сеть заметок, что на странице графа, но
+ * внутри расписания. Проверяется три вещи, которые нельзя увидеть глазами на
+ * одном экране: блок есть у каждой карточки, он не обрезан `overflow: hidden`
+ * самой карточки, и адрес ссылки — постоянный якорь заметки, а не заглушка.
+ */
+test("40 · связанные доклады в карточке: 1–2 ссылки, адрес — якорь заметки, блок не обрезан", async ({
+  page,
+}) => {
+  await open(page, "/");
+
+  await expect(page.locator("article.talk-card")).toHaveCount(DAY1_TALKS);
+  await expect(page.locator("article.talk-card .talk-card__related")).toHaveCount(DAY1_TALKS);
+
+  const cards = await page.locator("article.talk-card").evaluateAll((nodes) =>
+    nodes.map((node) => {
+      const card = node as HTMLElement;
+      const block = card.querySelector<HTMLElement>(".talk-card__related");
+      const cardRect = card.getBoundingClientRect();
+      const blockRect = block?.getBoundingClientRect();
+      return {
+        id: Number(card.dataset.talkId),
+        title: card.querySelector(".talk-card__title-btn")?.textContent?.trim() ?? "",
+        clippedByCard: blockRect ? blockRect.bottom > cardRect.bottom + 1 : false,
+        links: [...(block?.querySelectorAll<HTMLAnchorElement>("a") ?? [])].map((link) => ({
+          href: link.getAttribute("href") ?? "",
+          text: (link.textContent ?? "").trim(),
+        })),
+      };
+    }),
+  );
+
+  const anchorsOnPage = new Set(cards.map((card) => `t${card.id}`));
+
+  for (const card of cards) {
+    expect(card.links.length, `у карточки ${card.id} нет связанных`).toBeGreaterThanOrEqual(1);
+    expect(card.links.length, `у карточки ${card.id} больше двух связанных`).toBeLessThanOrEqual(2);
+    expect(card.clippedByCard, `блок связанных обрезан в карточке ${card.id}`).toBe(false);
+
+    for (const link of card.links) {
+      expect(link.text, "ссылка без подписи").not.toBe("");
+      expect(link.text, "доклад ссылается на себя").not.toBe(card.title);
+
+      const [path, hash = ""] = link.href.split("#");
+      expect(hash, `битый адрес: ${link.href}`).toMatch(/^t\d+$/);
+
+      if (path === `${BASE}/` || path === "") {
+        // Свой день: якорь обязан существовать на этой странице.
+        expect(anchorsOnPage.has(hash), `нет якоря ${hash} на странице`).toBe(true);
+      } else {
+        // Чужой день: адрес — страница дня плюс тот же постоянный якорь.
+        expect(path).toMatch(/\/day\/\d+\/$/);
+      }
+    }
+  }
+});

@@ -1,0 +1,19 @@
+---
+/** EN-пара русского `/talks/`: тот же компонент, другой `lang`. */
+import Base from "../../layouts/Base.astro";
+import TalksPage from "../../components/TalksPage.astro";
+import { t, type Lang } from "../../i18n/ui";
+
+const lang: Lang = "en";
+const title = `${t(lang, "talksTitle")} ${t(lang, "brandEvent")}`;
+---
+
+<Base
+  title={title}
+  description={t(lang, "metaTalks")}
+  lang={lang}
+  page="talks"
+  alternatePath="talks/"
+>
+  <TalksPage lang={lang} />
+</Base>

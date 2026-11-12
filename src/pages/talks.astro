@@ -1,0 +1,22 @@
+---
+/**
+ * Тонкая обёртка: сама страница языка не знает (`components/TalksPage.astro`),
+ * поэтому RU и EN — один набор разметки, который не может разъехаться.
+ */
+import Base from "../layouts/Base.astro";
+import TalksPage from "../components/TalksPage.astro";
+import { t, type Lang } from "../i18n/ui";
+
+const lang: Lang = "ru";
+const title = `${t(lang, "talksTitle")} ${t(lang, "brandEvent")}`;
+---
+
+<Base
+  title={title}
+  description={t(lang, "metaTalks")}
+  lang={lang}
+  page="talks"
+  alternatePath="en/talks/"
+>
+  <TalksPage lang={lang} />
+</Base>

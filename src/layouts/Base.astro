@@ -43,6 +43,11 @@ interface Props {
    *  предзагрузка обязана просить ровно тот вариант, который выберет `srcset`,
    *  иначе браузер качает два файла. */
   preloadBanner?: BannerSources | null;
+  /** Какая это поверхность: у графа свой адрес и свой пункт в шапке. */
+  page?: "day" | "talks";
+  /** Путь пары в другом языке (`en/talks/`) для страниц, у которых нет дня:
+   *  у дней пара считается из `dayOrdinal`, у графа — только отсюда. */
+  alternatePath?: string;
 }
 
 const {
@@ -53,6 +58,8 @@ const {
   dayDate,
   dayOrdinal,
   preloadBanner = null,
+  page = "day",
+  alternatePath,
 } = Astro.props;
 
 // Канонический адрес — только путь: `?track=` и прочие UTM-хвосты не должны
@@ -73,16 +80,22 @@ const ogImageAlt =
     ? "Программа конференции Матемаркетинг 2026 — расписание докладов"
     : "Matemarketing 2026 conference program — talk schedule";
 
-// `hreflang` только у страниц дня: 404 и корень локали не имеют пары «тот же
-// день в другом языке». `x-default` указывает на русскую версию — она первична.
+// `hreflang` у страниц дня считается из номера дня; у графа дня нет, поэтому
+// пара приходит путём (`alternatePath`). `x-default` указывает на русскую
+// версию — она первична.
 const origin = Astro.site ?? Astro.url;
 const alternates =
-  dayOrdinal == null
-    ? []
-    : (["ru", "en"] as const).map((code) => ({
+  dayOrdinal != null
+    ? (["ru", "en"] as const).map((code) => ({
         hreflang: code,
         href: new URL(dayHrefFor(code, dayOrdinal), origin).href,
-      }));
+      }))
+    : alternatePath
+      ? [
+          { hreflang: lang, href: canonicalHref },
+          { hreflang: lang === "ru" ? "en" : "ru", href: new URL(`${BASE_URL}${alternatePath}`, origin).href },
+        ]
+      : [];
 const defaultAlternate = alternates.find((alternate) => alternate.hreflang === "ru");
 
 // Подвал собирается из шаблона с маркером `{link}`: перевод остаётся строкой,
@@ -253,6 +266,7 @@ const [ticketsBefore, ticketsAfter = ""] = t(lang, "footerTickets").split("{link
       search={Boolean(dayOrdinal)}
       favorites={Boolean(dayOrdinal)}
       tracks={Boolean(dayOrdinal)}
+      page={page}
     />
 
     <main id="main" class="page" tabindex="-1">
