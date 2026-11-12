@@ -46,11 +46,11 @@
 | `src/pages/index.astro`, `src/pages/day/[n].astro` | view | три пререндеренных дня |
 | `src/pages/program.json.ts` | data | `/program.json` — тот же слепок для клиента |
 | `src/scripts/program-client.ts` | client | единственный JS: тема (морф иконки), drawer, фильтр, избранное, модалка, `.ics`, поиск, `?talk=<id>` |
-| `src/styles/tokens.css` | design | токены трёх тем + шрифты + типографическая шкала (заморожено) |
+| `src/styles/tokens.css` | design | токены трёх тем + шрифты + типографическая шкала (заморожено) + три слоя земли: ramp (`body::before`), свечение (`.ground-bloom`), соты (`body::after`), рампа и свечение едут двумя орбитами |
 | `src/styles/site.css` | design | каркас страницы, шапка, подвал с контактами; геометрия иконок соцсетей — маски `--social-*` (нужны и карточкам, и подвалу, в том числе на `404`); иконки ссылок шапки — маски `--nav-*`; монограмма в шапке — маска `--brand-logo`: шестиугольник фавикона с вырезанными «NB» (`fill-rule: evenodd`, глифы Inter 800 путями) |
 | `src/styles/program.css` | design | сетка, карточка, модалка, печать; геометрия всех декоративных иконок — маски `--icon-*` |
 | `src/styles/search.css` | design | диалог поиска; файл глобальный, потому что результаты вставляет клиент уже после отрисовки и узлы `.search-result` не получают scope-атрибут Astro |
-| `tests/lib/*.test.ts` | verify | 148 юнит-тестов ядра, i18n, поиска и фона (`bun test tests/lib`, 7 файлов) |
+| `tests/lib/*.test.ts` | verify | 151 юнит-тест ядра, i18n, поиска и земли (`bun test tests/lib`, 7 файлов) |
 | `tests/built/program.spec.ts` | verify | 28 браузерных тестов сборки (Playwright) |
 | `tests/built/i18n-search.spec.ts` | verify | 8 тестов EN-маршрутов, переключателя языка и поиска; вместе 36 тестов × 3 проекта = 108 прогонов |
 | `package.json`, `bun.lock` | deps | версии сборки; `morphicons` запинен на `1.7.0` — иконки тем |
