@@ -55,7 +55,7 @@ const related = (relatedById.get(talk.id) ?? [])
   .filter((note) => note.id !== talk.id)
   .map((note) => ({ ...note, title: talkTitles.get(note.id) ?? note.title }));
 const themes = themesOf(anchor).map((id) => ({ id, label: themeLabel(id, lang) }));
-const description = t(lang, "talkMetaDescription", {
+const description = t(lang, talk.track ? "talkMetaDescription" : "talkMetaDescriptionNoTrack", {
   title: talk.title,
   track: talk.track,
   day: `${dayNameLabel(lang, meta.day.name)} ${dayLabel(meta.day.date, lang)}`,

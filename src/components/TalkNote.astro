@@ -48,7 +48,7 @@ const time = `${talk.start}–${talk.end}`;
       </span>
     </p>
     <h1 class="talk-note__title">{talk.title}</h1>
-    <p class="talk-note__track">{talk.track}</p>
+    {talk.track && <p class="talk-note__track">{talk.track}</p>}
   </header>
 
   {talk.lectors.length > 0 && (

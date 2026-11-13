@@ -15,9 +15,12 @@
  * 3. Перетекание земли: две замкнутые орбиты в противофазе, обе внутри
  *    оверскана. Орбита, вышедшая за запас, показывает край слоя — и вместо
  *    течения видно ползущую картинку; разомкнутый цикл даёт рывок на стыке.
- * 4. Свечение не съедает читаемость: на его пике `--text-muted` держит 4.5:1
- *    в каждой теме. Сила слоя — единственное число, которое двигает этот
- *    порог, поэтому она и проверяется расчётом, а не на глаз.
+ * 4. Свечение и обои не съедают читаемость: на пике пятна `--text-muted`,
+ *    `--text-accent` и `--text-accent-hover` держат 4.5:1 в каждой теме. Оба
+ *    слоя полупрозрачны и лежат над землёй, а штрих узора занимает лишь часть
+ *    площади, поэтому худший реальный пиксель — это стоп рампы → пик пятна,
+ *    причём и под штрихом обоев, и между штрихами. Проверяется расчётом, а не
+ *    на глаз.
  *
  * Разбор CSS: комментарии вырезаются до разбора, поэтому закомментированная
  * строка не может удовлетворить проверку. Правила ищутся по ВСЕМУ файлу, а не
@@ -91,6 +94,19 @@ function translations(frames: Record<string, string>): number[] {
 /** Значение `#rrggbb` токена внутри блока правил; `undefined` — токен не объявлен. */
 function hex(css: string, name: string): string | undefined {
   return css.match(new RegExp(`${name}:\\s*(#[0-9a-fA-F]{6})`))?.[1];
+}
+
+/** Полупрозрачный токен `rgba(r, g, b, a)`: штрих обоев композитится поверх
+ *  свечения, поэтому его цвет и альфа входят в худший пиксель. */
+function rgba(css: string, name: string): { rgb: [number, number, number]; alpha: number } | undefined {
+  const match = css.match(
+    new RegExp(`${name}:\\s*rgba\\(\\s*(\\d+)\\s*,\\s*(\\d+)\\s*,\\s*(\\d+)\\s*,\\s*([\\d.]+)\\s*\\)`),
+  );
+  if (!match) return undefined;
+  return {
+    rgb: [Number(match[1]), Number(match[2]), Number(match[3])],
+    alpha: Number(match[4]),
+  };
 }
 
 const parse = (value: string): [number, number, number] => {
@@ -220,13 +236,22 @@ test("свечение стоит между рампой и сотами, а п
 });
 
 /**
- * Свет — полупрозрачный акцент поверх земли, то есть он поднимает или опускает
- * яркость под текстом. Пик пятна — ровно `opacity` слоя, поэтому сила слоя
- * выбирается по контрасту `--text-muted` на самом светлом (dark, cyberpunk) и
- * самом тёмном (light) стопе рампы, а не на глаз. Числа в комментариях
+ * Свет и обои полупрозрачны и лежат над рампой, поэтому оба входят в один и тот
+ * же пиксель под глифом: свет поднимает (dark, cyberpunk) или опускает (light)
+ * яркость земли, а штрих узора — ещё раз, потому что `body::after` рисуется
+ * ПОВЕРХ `.ground-bloom`. Пик пятна — ровно `opacity` слоя, поэтому худший
+ * реальный пиксель страницы — это худший стоп рампы под пятном. Меряются оба
+ * варианта такого пикселя: на штрихе обоев и между штрихами (плитка 42×24
+ * занимает линией лишь часть площади, глиф может лечь мимо). Цвета текста и сила
+ * свечения выбираются по минимуму, а не на глаз. Числа в комментариях
  * `tokens.css` — те же, что считает этот тест: соврать в прозе он не даст.
+ *
+ * Меряется не только `--text-muted`: ссылка (`--text-accent`) стоит на земле
+ * тем же 16px обычным начертанием, а в тёмных темах ещё и красит само пятно,
+ * поэтому она — самый узкий случай. `--text-normal` и ховер добавлены, чтобы
+ * правка их тоже не уронила.
  */
-test("на пике свечения --text-muted держит 4.5:1 во всех трёх темах", () => {
+test("на пике свечения текстовые токены держат 4.5:1 поверх обоев во всех трёх темах", () => {
   const themes = {
     dark: { root: ":root", selector: ".ground-bloom" },
     light: { root: '[data-theme="light"]', selector: '[data-theme="light"] .ground-bloom' },
@@ -236,24 +261,44 @@ test("на пике свечения --text-muted держит 4.5:1 во все
     },
   } as const;
 
+  const foregrounds = [
+    "--text-muted",
+    "--text-accent",
+    "--text-accent-hover",
+    "--text-normal",
+  ] as const;
+
   for (const [theme, { root, selector }] of Object.entries(themes)) {
     // `:root` держит базовые токены, темы переопределяют только часть — поэтому
     // фолбэк на базовый блок, как это делает каскад.
     const base = body(tokens, ":root");
     const own = body(tokens, root);
     const token = (name: string) => hex(own, name) ?? hex(base, name);
+    const rgbaToken = (name: string) => rgba(own, name) ?? rgba(base, name);
 
-    const muted = parse(token("--text-muted")!);
     const accent = parse(token("--text-accent")!);
     const opacity = Number(body(tokens, selector).match(/opacity:\s*([\d.]+)/)?.[1]);
     expect(opacity, `${theme}: у слоя нет силы`).toBeGreaterThan(0);
 
-    // Худший стоп рампы: тот, что даёт меньший контраст после засветки.
-    const worst = ["--background-primary", "--background-secondary", "--card-background"]
-      .map((name) => contrast(muted, mix(accent, parse(token(name)!), opacity)))
-      .reduce((min, value) => Math.min(min, value));
+    const wallpaper = rgbaToken("--wallpaper-line");
+    expect(wallpaper, `${theme}: нет цвета обоев --wallpaper-line`).toBeDefined();
 
-    expect(worst, `${theme}: --text-muted на пике свечения`).toBeGreaterThanOrEqual(4.5);
+    for (const name of foregrounds) {
+      const ink = parse(token(name)!);
+      // Худший стоп рампы, и на нём — оба реальных пикселя: под штрихом узора и
+      // между штрихами. Штрих занимает часть площади, поэтому глиф может лечь и
+      // мимо него; брать только «с обоями» нельзя — если линия темнее земли,
+      // она контраст поднимает, и модель перестала бы видеть провал.
+      const worst = ["--background-primary", "--background-secondary", "--card-background"]
+        .map((surface) => {
+          const glow = mix(accent, parse(token(surface)!), opacity);
+          const striped = mix(wallpaper!.rgb, glow, wallpaper!.alpha);
+          return Math.min(contrast(ink, glow), contrast(ink, striped));
+        })
+        .reduce((min, value) => Math.min(min, value));
+
+      expect(worst, `${theme}: ${name} на пике свечения`).toBeGreaterThanOrEqual(4.5);
+    }
   }
 });
 

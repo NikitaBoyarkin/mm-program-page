@@ -168,7 +168,7 @@ bun run preview            # посмотреть сборку
 
 bun run check              # типы в .astro и .ts
 bun test                   # 197 юнит-тестов
-bun run test:built         # браузерные тесты: 59 тестов × 3 проекта
+bun run test:built         # браузерные тесты: 65 тестов × 3 проекта
 
 bun run data:fetch         # перекачать API
 bun run data:check         # сверить со слепком
@@ -217,7 +217,7 @@ GET https://lms.matemarketing.ru/api/event-program/event/6/
 
 ```bash
 bun test                  # 197 pass
-bun run test:built        # 59 тестов × 3 проекта = 177 прогонов
+bun run test:built        # 65 тестов × 3 проекта = 195 прогонов
 ```
 
 `tests/lib` проверяет инварианты слепка: 91 доклад, 3 дня, формат времени, отсутствие HTML
@@ -325,7 +325,7 @@ origin (`https://nikitaboyarkin.github.io`), поэтому файл — заг�
 
 Деплой (`.github/workflows/deploy.yml`) не проходит с красным тестом: после `talks:check`
 и `build` идут `bun run test` (197 юнит-тестов), установка Chromium и WebKit и
-`bun run test:built` (59 тестов × 3 проекта = 177 прогонов); только затем `dist/` уходит
+`bun run test:built` (65 тестов × 3 проекта = 195 прогонов); только затем `dist/` уходит
 в Pages.
 
 ### Аналитика

@@ -61,6 +61,7 @@ const RU = {
   talkSpeakers: "Спикеры",
   talkHall: "Зал",
   talkMetaDescription: "{title} — {track}, {day}, {start}–{end}, {hall}.",
+  talkMetaDescriptionNoTrack: "{title} — {day}, {start}–{end}, {hall}.",
   metaTalks:
     "91 доклад, 11 треков и 11 тем Матемаркетинг 2026: граф связей, заметки с постоянными адресами и обратные ссылки.",
   dayTabsLabel: "Дни программы",
@@ -154,6 +155,7 @@ const EN: Record<keyof typeof RU, string> = {
   talkSpeakers: "Speakers",
   talkHall: "Hall",
   talkMetaDescription: "{title} — {track}, {day}, {start}–{end}, {hall}.",
+  talkMetaDescriptionNoTrack: "{title} — {day}, {start}–{end}, {hall}.",
   metaTalks:
     "91 talks, 11 tracks and 11 themes of Matemarketing 2026: a relation graph, notes with permanent addresses and backlinks.",
   dayTabsLabel: "Program days",

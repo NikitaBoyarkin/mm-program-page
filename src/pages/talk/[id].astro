@@ -49,7 +49,7 @@ const { Content } = await render(entry);
 const hasBody = (entry.body ?? "").trim() !== "";
 const related = (relatedById.get(talk.id) ?? []).filter((note) => note.id !== talk.id);
 const themes = themesOf(talk).map((id) => ({ id, label: themeLabel(id, lang) }));
-const description = t(lang, "talkMetaDescription", {
+const description = t(lang, talk.track ? "talkMetaDescription" : "talkMetaDescriptionNoTrack", {
   title: talk.title,
   track: talk.track,
   day: `${dayNameLabel(lang, meta.day.name)} ${dayLabel(meta.day.date, lang)}`,
