@@ -41,8 +41,9 @@
 | `src/data/photos.json` | data | производная карта «оригинал аватарки → `/media/lectors/<hash>.webp`»; производится `bun run photos`, коммитится (по ней читают карточка и эндпоинт) |
 | `scripts/optimize-photos.ts` | data | `prebuild`: качает аватарки, режет до 144×144 WebP q72 в `public/media/lectors/` (каталог не коммитится), ошибка сети не валит сборку |
 | `src/lib/theme.ts` | core | три темы, цвета `theme-color`, `nextTheme` |
-| `src/lib/analytics.ts` | core | UTM-атрибуция и единственный канал в PostHog (`track`, супер-свойства) |
+| `src/lib/analytics.ts` | core | UTM-атрибуция, единственный канал в PostHog (`track`, супер-свойства) и карта событий `AnalyticsEvents` — тип, по которому компилятор и тест не дают имени разъехаться с портфолио |
 | `src/components/Analytics.astro` | view | ленивый `init` PostHog, `outbound_click` |
+| `src/components/CollabCta.astro` | view | авторский CTA на сотрудничество: одна строка в подвале всех страниц, крупного блока в теле дня нет намеренно; `cta_view` по IntersectionObserver 50 %, `cta_click` с поверхностью и целью |
 | `src/layouts/Base.astro` | view | `<head>`, тема до отрисовки, шапка, подвал; `og:image` — `src/assets/og/program-2026.png` (1200×630), пересборка `bun run og` |
 | `src/components/Nav.astro` | view | шапка, drawer (дни, «Граф докладов», ссылки портфолио), тумблер темы (луна в разметке), звезда «Избранное» со счётчиком (первая в группе действий, только на страницах дня), кнопка поиска и переключатель `.nav-lang` |
 | `src/components/ProgramPage.astro` | view | день: шапка, табы, чипы, тулбар, сетка, модалка |
@@ -64,7 +65,7 @@
 | `src/styles/program.css` | design | сетка, карточка, модалка, печать; геометрия всех декоративных иконок — маски `--icon-*` |
 | `src/styles/talks.css` | design | граф и заметки: SVG, списки заметок, хабы тем. Отдельный файл: страница не грузит сетку, карточки и модалку |
 | `src/styles/search.css` | design | диалог поиска; файл глобальный, потому что результаты вставляет клиент уже после отрисовки и узлы `.search-result` не получают scope-атрибут Astro |
-| `tests/lib/*.test.ts` | verify | 197 юнит-тестов ядра, i18n, поиска, земли, картинок, графа и заметок (`bun test tests/lib`, 10 файлов) |
+| `tests/lib/*.test.ts` | verify | 219 юнит-тестов ядра, i18n, поиска, земли, картинок, графа, заметок и аналитики (`bun test tests/lib`, 12 файлов) |
 | `tests/built/program.spec.ts` | verify | 31 браузерный тест сборки (Playwright) |
 | `tests/built/i18n-search.spec.ts` | verify | 8 тестов EN-маршрутов, переключателя языка и поиска |
 | `tests/built/talks.spec.ts` | verify | 10 тестов графа: заметки и якоря, SVG на билде, хабы тем, вход в шапке на трёх ширинах (включая 768 px — иконка), EN-копия, скролл только внутри графа |
@@ -372,8 +373,10 @@ main#main.page
   свободный радиус, иначе соседние треки сажали подписи друг на друга у полюсов.
 
 Внешняя ссылка «Полная версия графа — в портфолио» размечена UTM
-(`utm_content=talks-footer`) — это по-прежнему единственный внешний переход со страницы
-графа, внутренние (дни, заметки, темы) UTM не носят.
+(`utm_content=talks-footer`) — единственный внешний переход **внутри содержимого**
+страницы графа; внутренние ссылки (дни, заметки, темы) UTM не носят. Подвал сайта
+несёт авторский CTA (`CollabCta`, surface `footer`) на всех страницах, включая граф: это
+подвал, а не часть графа, и считать его ссылкой графа нельзя.
 
 ## Заметки докладов (`/talk/<id>/`, `/en/talk/<id>/`)
 
@@ -617,13 +620,40 @@ origin (`https://nikitaboyarkin.github.io`) — файл оставлен заг
 - Все свойства — супер-свойства, а не свойства `$pageview`: клик по билету обязан нести кампанию тоже.
 - SDK грузится только после первого взаимодействия и никогда на `localhost`/`127.0.0.1`.
 - Без `PUBLIC_POSTHOG_KEY` скрипт не рендерится; сборка и страница работают как раньше.
-- Сайт шлёт сам два события. `outbound_click {domain, url, surface, path, link, kind,
-  network, talk_id, speaker, label}` — клики по ссылкам наружу: `link` — стабильный слаг
-  (`social:<сеть>`, `portfolio:<utm_content>`, `ticket`, `source`, иначе `host/path`), по нему
-  группирует тайл «топ ссылок», а `talk_id` связывает клик с докладом, из которого ушли.
-  `talk_open {talk_id, talk_title, talk_track, talk_hall, talk_start, day_id, surface, path}` —
-  показ модалки доклада; `surface` = `card` (тип `TalkOpenSurface` сведён к одному значению —
-  deep-link `?talk=<id>` удалён). Остальное — автозахват.
+- Сайт шлёт сам шесть событий; имена и свойства описаны типом `AnalyticsEvents` в
+  `src/lib/analytics.ts`, а `tests/lib/analytics-contract.test.ts` держит код, карту и этот
+  раздел в согласии. Словарь общий с портфолио: по нему тайл «топ докладов» склеивает два
+  сайта, поэтому имя `talk_open` (а не `talk_opened`) и свойство `track` — не местная
+  вольность, а точка стыковки.
+  - `outbound_click {domain, url, surface, path, link, kind, network, talk_id, speaker, label}`
+    — клики по ссылкам за пределы base: `link` — стабильный слаг (`social:<сеть>`,
+    `portfolio:<utm_content>`, `cta:<utm_content>`, `ticket`, `source`, иначе `host/path`), по
+    нему группирует тайл «топ ссылок», а `talk_id` связывает клик с докладом, из которого ушли.
+  - `talk_open {talk_id, talk_title, track_id, track, hall, start, day_id, surface, position,
+    locale, path}` — показ модалки доклада; `surface` = `card` (deep-link `?talk=<id>` удалён).
+    `position` — 0-based индекс доклада по времени начала внутри своего дня, чтобы «интерес»
+    отличался от «первая карточка в списке». `track_id` — числовой id трека из фида: ключ,
+    общий с портфолио и не зависящий от языка, тогда как `track` — подпись и на EN-страницах
+    английская.
+  - `talk_dwell {talk_id, talk_title, track_id, track, day_id, surface, seconds, locale, path}` —
+    сколько модалка была открыта. Уходит на закрытии, на `Esc` и «Назад», при прямом переходе с
+    доклада на доклад и на `pagehide`; `visibilitychange` считает время сегментами — уход в
+    другую вкладку приостанавливает счётчик, а не обрывает его. `seconds` обрезан в 1…600,
+    чтобы забытая вкладка не перекашивала медиану.
+  - `talk_note_view {talk_id, talk_title, track_id, track, day_id, locale, path}` — заход на заметку
+    `/talk/<id>/`. Сюда приходят из поиска, и без отдельного события эти читатели невидимы:
+    `$pageview` не несёт `talk_id`.
+  - `cta_view {surface, locale, path}` / `cta_click {surface, target, locale, path}` — авторский
+    CTA на сотрудничество (`CollabCta.astro`): показ по IntersectionObserver 50 %, клик с
+    `target` ∈ `cal|telegram` и той же `surface`, которая ушла в `utm_content`.
+  Остальное — автозахват.
+- CTA на сотрудничество размечен UTM (`utm_medium=cta`, `utm_campaign=collab_slot`,
+  `utm_content` — поверхность) и отличается в `classifyLink` по `utm_medium`: без этой ветки
+  клик по кнопке «обсудить проект» попадал бы в тайл «переходы в портфолио» и завышал
+  единственную метрику, ради которой размечен весь остальной сайт.
+- `data-talk-id` стоит и на карточке, и на заметке (`TalkNote.astro`), поэтому `outbound_click`
+  по ссылке спикера со страницы заметки тоже несёт `talk_id`; без атрибута такие клики
+  приходили с `null` и разрывали связку «доклад → уход».
 - События, отправленные до загрузки SDK, копятся (до 25 штук) и улетают после `register`:
   первый клик одновременно стартует SDK и шлёт событие, когда `register` ещё не выполнен, —
   без очереди такой клик не попадал бы в отчёт вовсе.

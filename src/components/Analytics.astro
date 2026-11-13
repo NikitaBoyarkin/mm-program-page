@@ -69,7 +69,11 @@ const posthogKey = import.meta.env.PUBLIC_POSTHOG_KEY;
         const sameHost = window.location.hostname;
         // Портфолио живёт на том же хосте, но вне base этого сайта, поэтому
         // «выход наружу» определяется по base, а не только по смене хоста.
-        const appBase = "/mm-program-page";
+        // Значение приходит из `base` в `astro.config.mjs` через Vite: второй
+        // литерал тут — это вторая правда о деплое, которая молча отстаёт.
+        // Vite отдаёт base со слэшем на конце, а `pathname` для корня — без;
+        // один срез делает оба варианта равными.
+        const appBase = (import.meta.env.BASE_URL || "/").replace(/\/$/, "");
 
         // Из query оставляем только UTM: остальное — чужие токены и сессии.
         const utmSuffix = (url: URL): string => {
@@ -93,7 +97,15 @@ const posthogKey = import.meta.env.PUBLIC_POSTHOG_KEY;
             return;
           }
           if (url.protocol !== "http:" && url.protocol !== "https:") return;
-          const leavesApp = !url.pathname.startsWith(appBase);
+          // Сравнение с base как с префиксом пути, а не строкой: посторонний
+          // путь с тем же началом не должен считаться «внутри приложения».
+          // Корневой деплой (`base: "/"`) вырождает base в пустую строку, и тогда
+        // «внутри приложения» — это весь хост. Сравнение по хосту остаётся
+        // единственным различителем: иначе переход в портфолио на том же
+        // домене молча считался бы внутренним.
+        const leavesApp = appBase
+          ? !(url.pathname === appBase || url.pathname.startsWith(`${appBase}/`))
+          : url.hostname !== sameHost;
           if (url.hostname === sameHost && !leavesApp) return;
 
           const linkTarget = classifyLink({
@@ -101,6 +113,8 @@ const posthogKey = import.meta.env.PUBLIC_POSTHOG_KEY;
             hostname: url.hostname,
             pathname: url.pathname,
             utmContent: url.searchParams.get("utm_content"),
+            utmMedium: url.searchParams.get("utm_medium"),
+            ctaTarget: anchor.dataset.ctaTarget ?? null,
           });
           const holder = anchor.closest("[data-talk-id]");
           const talkId = holder?.getAttribute("data-talk-id") ?? null;
@@ -133,6 +147,21 @@ const posthogKey = import.meta.env.PUBLIC_POSTHOG_KEY;
 
       for (const type of TRIGGERS) {
         window.addEventListener(type, onFirstInteraction, { passive: true });
+      }
+
+      // Страница заметки доклада — единственное место, где пассивный читатель
+      // и есть целевая аудитория: пришёл из поиска, прочитал, ушёл, ничего не
+      // тронув. `talk_note_view` уже лежит в очереди, но очередь разбирается
+      // только после `init` — без этой ветки событие не уходило бы никогда.
+      // Узкое исключение, а не общий `requestIdleCallback`: остальные страницы
+      // по-прежнему не грузят 115 КБ тому, кто просто открыл вкладку.
+      if (document.querySelector("[data-talk-note]")) {
+        const wake = () => void start();
+        if ("requestIdleCallback" in window) {
+          window.requestIdleCallback(wake, { timeout: 3000 });
+        } else {
+          setTimeout(wake, 1500);
+        }
       }
       // Пассивного посетителя не инструментируем вовсе: контракт обещает
       // «SDK грузится только после первого взаимодействия», а `scroll` уже

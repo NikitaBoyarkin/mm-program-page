@@ -5,6 +5,7 @@
  * а не этот layout: `404` не должна тянуть 90 КБ данных.
  */
 import Analytics from "../components/Analytics.astro";
+import CollabCta from "../components/CollabCta.astro";
 import Nav from "../components/Nav.astro";
 import { dayHrefFor } from "../i18n/paths";
 import { t, type Lang } from "../i18n/ui";
@@ -275,6 +276,9 @@ const [ticketsBefore, ticketsAfter = ""] = t(lang, "footerTickets").split("{link
     </main>
 
     <footer class="site-footer">
+      {/* Записка автора стоит первой строкой подвала: дальше идут контакты и
+          правовая сноска, и предложение не должно читаться их продолжением. */}
+      <CollabCta lang={lang} />
       <p class="site-footer__contacts">
         <a
           class="footer-contact social-link--telegram"

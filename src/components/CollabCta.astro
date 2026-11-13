@@ -1,0 +1,175 @@
+---
+/**
+ * Авторская записка «поработать вместе» — одна строка в подвале.
+ *
+ * Подвал, а не карточка в конце дня: программу читают ради программы, а
+ * приглашение к разговору живёт на той же полке, что и остальные контакты.
+ * Вес намеренно низкий — строка и две ссылки, крупный блок на всю ширину
+ * превращал бы учебный разбор в лендинг.
+ *
+ * Ссылка на календарь несёт UTM: без `utm_content` бронь, начатая в новой
+ * сессии, читается как прямой заход, и воронка обрывается на самом дорогом
+ * шаге. `surface` один на три места — UTM, `data-cta-surface` и свойство
+ * события, — поэтому клик нельзя перепутать с другим блоком, если он появится.
+ */
+import { t, type Lang } from "../i18n/ui";
+
+interface Props {
+  lang: Lang;
+}
+
+const { lang } = Astro.props;
+
+/** Поверхность CTA: уходит и в UTM, и в `data-cta-surface`, и в событие. */
+const surface = "footer";
+const titleId = "collab-title";
+const bookingHref =
+  "https://cal.com/lofinibo/bored-call-me" +
+  "?utm_source=mm-program-page&utm_medium=cta&utm_campaign=collab_slot" +
+  `&utm_content=${surface}`;
+const telegramHref = "https://t.me/lofinibo";
+---
+
+<section class="collab" data-collab data-collab-surface={surface} aria-labelledby={titleId}>
+  {/* Заголовок только для дерева доступности: подвал не место для ещё одного
+      видимого h2, но имя региона обязано быть. */}
+  <h2 class="visually-hidden" id={titleId}>{t(lang, "collabStripTitle")}</h2>
+  <p class="collab__line">{t(lang, "collabStripLine")}</p>
+
+  <div class="collab__actions">
+    <a
+      class="button"
+      href={bookingHref}
+      target="_blank"
+      rel="noopener"
+      data-analytics="cta"
+      data-cta-surface={surface}
+      data-cta-target="cal">{t(lang, "collabPrimary")}</a
+    >
+    <a
+      class="collab__secondary"
+      href={telegramHref}
+      target="_blank"
+      rel="noopener"
+      data-analytics="cta"
+      data-cta-surface={surface}
+      data-cta-target="telegram">{t(lang, "collabSecondary")}</a
+    >
+  </div>
+</section>
+
+<script>
+  /**
+   * События записки. Скрипт в самом компоненте, а не в `Analytics.astro`:
+   * модуль Astro дедуплицируется, поэтому вторая копия блока не добавила бы
+   * второй глобальный слушатель кликов.
+   *
+   * Показ — только наблюдателем: разметка статична, поэтому CLS-источника
+   * здесь нет, а `cta_view` обязан означать «реально увидел», а не «загрузил».
+   */
+  import { track } from "../lib/analytics";
+  import { BASE_URL } from "../lib/program-core";
+
+  const path = window.location.pathname;
+  // Язык — из адреса, но base срезается: `/mm-program-page/en` (без слэша на
+  // конце) — та же EN-страница, что и `/mm-program-page/en/`, и `cta_*` не
+  // должен разъезжаться с `talk_*` на одном и том же документе.
+  const rest = path.startsWith(BASE_URL) ? path.slice(BASE_URL.length) : path;
+  const locale = rest === "en" || rest.startsWith("en/") ? ("en" as const) : ("ru" as const);
+
+  const seen = new Set<string>();
+
+  function emitView(surface: string | undefined): void {
+    if (!surface || seen.has(surface)) return;
+    seen.add(surface);
+    track("cta_view", { surface, locale, path });
+  }
+
+  const sections = Array.from(document.querySelectorAll<HTMLElement>("[data-collab]"));
+
+  if ("IntersectionObserver" in window) {
+    const observer = new IntersectionObserver(
+      (entries) => {
+        for (const entry of entries) {
+          // `threshold: 0.5` даёт колбэк и на пересечении с нулём: браузер
+          // сообщает о каждом пройденном пороге. Одного `isIntersecting` мало —
+          // он выстрелил бы от первого пикселя и превратил «увидел» в
+          // «страница загрузилась», завысив знаменатель CTR.
+          if (entry.intersectionRatio < 0.5) continue;
+          emitView((entry.target as HTMLElement).dataset.collabSurface);
+          // Одна поверхность — одно событие за загрузку: наблюдатель её
+          // отпускает, чтобы повторный скролл не накручивал показы.
+          observer.unobserve(entry.target);
+        }
+      },
+      { threshold: 0.5 },
+    );
+    for (const section of sections) observer.observe(section);
+  }
+
+  // Слушатели на самих ссылках, а не делегированные: ссылка открывается в
+  // новой вкладке, страница не уходит, поэтому обработчик успевает отправить
+  // событие до переключения фокуса.
+  for (const link of document.querySelectorAll<HTMLAnchorElement>("[data-cta-target]")) {
+    link.addEventListener("click", () => {
+      const surface = link.dataset.ctaSurface;
+      const target = link.dataset.ctaTarget;
+      if (!surface || !target) return;
+      track("cta_click", { surface, target, locale, path });
+    });
+  }
+</script>
+
+<style>
+  /* Подвал: тонкая линия сверху отделяет записку от контактов, высота
+     свободная — на узком экране действия переносятся, ничего не прыгает. */
+  .collab {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-3);
+    padding-block-end: var(--space-5);
+    margin-block-end: var(--space-5);
+    border-block-end: 1px solid color-mix(in srgb, var(--border-color) 40%, transparent);
+    color: var(--text-muted);
+    font-size: 0.875rem;
+    line-height: 1.6;
+  }
+
+  .collab__actions {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--space-3) var(--space-5);
+  }
+
+  /* Вторичная ссылка — не кнопка: акцент и подчёркивание приходят из общего
+     правила `a`, здесь только палец-совместимая высота. */
+  .collab__secondary {
+    display: inline-flex;
+    align-items: center;
+    min-block-size: 44px;
+    font-size: 0.9rem;
+    font-weight: 500;
+  }
+
+  /* Подвал красит все ссылки в акцент (`.site-footer a` — специфичность
+     (0,1,1) против (0,1,0) у `.button`), и чернила кнопки проигрывают ей.
+     В светлой теме коричневый акцент на чёрной заливке — 1.2:1, то есть
+     кнопка не читается. Возвращаем пару «заливка/чернила» явно. */
+  .collab .button {
+    color: var(--button-ink);
+  }
+
+  @media (hover: hover) and (pointer: fine) {
+    .collab .button:hover {
+      color: var(--button-ink);
+    }
+  }
+
+  /* Приглашение на бумаге бесполезно: в печати записка уходит. */
+  @media print {
+    .collab {
+      display: none;
+    }
+  }
+</style>

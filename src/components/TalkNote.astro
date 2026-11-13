@@ -34,7 +34,16 @@ const { talk, lang, dayName, dayDate, themes, related, backHref, hasBody = true 
 const time = `${talk.start}–${talk.end}`;
 ---
 
-<article class="talk-note">
+<article
+  class="talk-note"
+  data-talk-note
+  data-talk-id={talk.id}
+  data-talk-title={talk.title}
+  data-talk-track={talk.track}
+  data-talk-track-id={talk.trackId ?? ""}
+  data-talk-day-id={talk.dayId}
+  data-talk-locale={lang}
+>
   <a class="talk-note__back" href={backHref}>← {t(lang, "talksToProgram")}</a>
 
   <header class="talk-note__head">
@@ -112,3 +121,33 @@ const time = `${talk.start}–${talk.end}`;
     </section>
   )}
 </article>
+
+<script>
+  /**
+   * `talk_note_view` — одно событие на загрузку страницы заметки.
+   *
+   * Данные берутся из `data-*` самой статьи: их уже посчитал серверный рендер,
+   * второй поиск доклада в браузере разошёлся бы с фактами страницы. Скрипт
+   * живёт в компоненте, а не в двух страницах, по той же причине, что и тело:
+   * RU и EN не должны разъехаться. `track` копит событие в очереди, а очередь
+   * разбирается после `init` — на странице заметки `Analytics.astro` будит SDK
+   * по `requestIdleCallback`, потому что иначе читатель, пришедший из поиска и
+   * не тронувший ни мышь, ни скролл, не оставил бы вообще ничего.
+   */
+  import { track } from "../lib/analytics";
+
+  const root = document.querySelector<HTMLElement>("article.talk-note[data-talk-id]");
+  const talkId = Number(root?.dataset.talkId ?? "");
+  const dayId = Number(root?.dataset.talkDayId ?? "");
+  if (root && Number.isFinite(talkId) && Number.isFinite(dayId)) {
+    track("talk_note_view", {
+      talk_id: talkId,
+      talk_title: root.dataset.talkTitle ?? "",
+      track_id: Number(root.dataset.talkTrackId || "") || null,
+      track: root.dataset.talkTrack ?? "",
+      day_id: dayId,
+      locale: root.dataset.talkLocale === "en" ? "en" : "ru",
+      path: window.location.pathname,
+    });
+  }
+</script>

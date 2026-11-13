@@ -101,6 +101,10 @@ const RU = {
   footerRights:
     "Права на дизайн, тексты программы, названия докладов и изображения принадлежат Матемаркетингу и спикерам. Это неофициальная учебная копия, не связанная с организаторами.",
   footerNote: "Собрано как разбор интерфейса: вёрстка и логика — учебные.",
+  collabStripTitle: "Об авторе страницы",
+  collabStripLine: "Собрал Никита Бояркин, продуктовый аналитик.",
+  collabPrimary: "Обсудить ваш продукт",
+  collabSecondary: "Написать в Telegram",
   metaDescription:
     "91 доклад и 11 треков за три дня — 26 и 27 ноября плюс онлайн-день. Расписание по залам, поиск по спикеру, избранное и экспорт в календарь.",
 } as const;
@@ -193,6 +197,10 @@ const EN: Record<keyof typeof RU, string> = {
   footerRights:
     "Design, program texts, talk titles and images belong to Matemarketing and the speakers. This is an unofficial study copy, not affiliated with the organizers.",
   footerNote: "Built as an interface study: the layout and logic are for learning.",
+  collabStripTitle: "About the author",
+  collabStripLine: "Built by Nikita Boyarkin, product analyst.",
+  collabPrimary: "Discuss your product",
+  collabSecondary: "Message on Telegram",
   metaDescription:
     "91 talks across 11 tracks in three days — 26 and 27 November plus an online day. Schedule by hall, speaker search, favorites and calendar export.",
 };

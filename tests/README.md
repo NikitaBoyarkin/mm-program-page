@@ -3,7 +3,7 @@
 Два набора, оба на bun. Первый — без браузера и без сборки, второй — на собранной странице.
 
 ```bash
-bun test                # tests/lib — 161 юнит-тест ядра (8 файлов)
+bun test                # tests/lib — 219 юнит-тестов ядра (12 файлов)
 bun run test:built      # tests/built — браузерные тесты (Playwright + astro preview)
 ```
 
@@ -38,10 +38,19 @@ bun run test:built      # tests/built — браузерные тесты (Playw
 `SUMMARY`, `LOCATION`, `DESCRIPTION`, CRLF, число `VEVENT` = числу докладов), `calendarFilename`,
 уникальность `UID`.
 
-`analytics.test.ts` (14 тестов): `parseUtm` (пять параметров, мусор и чужие параметры
+`analytics.test.ts` (15 тестов): `parseUtm` (пять параметров, мусор и чужие параметры
 игнорируются, значение обрезается до 100 символов), `classifyReferrer` (`direct`, известные
 хосты, `other`, битый `referrer` не бросает), `computeFirstTouch` (класс, путь входа и UTM
-собираются вместе).
+собираются вместе), `classifyLink` (соцсеть из класса, портфолио и CTA по UTM, билеты,
+первоисточник, фолбэк на хост).
+
+`analytics-contract.test.ts` (5 тестов): каждое имя из карты `AnalyticsEvents` имеет
+эмиттер в `src/`, каждый литерал `track("…")` объявлен в карте, `data-talk-id` стоит на
+заметке доклада, а base берётся из конфига, а не литералом.
+
+`collab-cta.test.ts` (16 тестов): UTM-тройка и `utm_content` у обеих поверхностей,
+`data-cta-*`, события `cta_view`/`cta_click`, порог наблюдателя, монтирование строки в
+подвале и карточки на всех трёх днях, отсутствие жёстких цветов, тексты RU ≠ EN.
 
 `i18n.test.ts` (24 теста): совпадение ключей RU/EN, `t` с параметрами, `pluralTalks`/`pluralDays`
 в обоих языках, подписи дат, `BASE_URL` и адреса дней, `switchLangHref`, покрытие overlay'я

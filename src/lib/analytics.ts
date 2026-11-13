@@ -245,10 +245,108 @@ function flushQueue(): void {
   }
 }
 
+/**
+ * Контракт событий этого сайта.
+ *
+ * Имена и свойства — не локальная договорённость, а общий словарь с
+ * портфолио (`NikitaBoyarkin.github.io/src/lib/analytics.ts`): оба сайта
+ * пишут в один проект PostHog, и тайл «топ докладов» склеивает их по
+ * `talk_id` / `track`. Разъехавшееся имя (`talk_open` здесь против
+ * `talk_opened` там) молча даёт две половины одной метрики.
+ *
+ * Карта — единственное место, где имя события описано типом. Тест
+ * `tests/lib/analytics-contract.test.ts` держит её в согласии с `CONTRACT.md`.
+ */
+export type TalkSurface = "card";
+export type AnalyticsLocale = "ru" | "en";
+
+export interface AnalyticsEvents {
+  /**
+   * Клик по ссылке за пределы `/mm-program-page` — включая портфолио
+   * на том же хосте. `link` — стабильный слаг для разбивки, `talk_id`
+   * связывает уход с докладом, из которого ушли.
+   */
+  outbound_click: {
+    domain: string;
+    url: string;
+    surface: string;
+    path: string;
+    link: string;
+    kind: LinkKind;
+    network: string | null;
+    talk_id: number | null;
+    speaker: string | null;
+    label: string | null;
+  };
+  /**
+   * Показ модалки доклада. `position` — 0-based индекс доклада по времени начала
+   * внутри своего дня: отделяет «интерес» от «первая карточка в списке».
+   */
+  talk_open: {
+    talk_id: number;
+    talk_title: string;
+    /** Числовой id трека — единственный ключ, общий с портфолио и не зависящий от языка. */
+    track_id: number | null;
+    /** Подпись трека для чтения глазами; на EN-страницах она английская. */
+    track: string;
+    hall: string | null;
+    start: string;
+    day_id: number;
+    surface: TalkSurface;
+    position: number | null;
+    locale: AnalyticsLocale;
+    path: string;
+  };
+  /**
+   * Сколько человек продержал модалку открытой. Шлётся на закрытии и на
+   * `pagehide`; время считается сегментами — уход в другую вкладку
+   * приостанавливает счётчик, а не обрывает его. `seconds` обрезан сверху,
+   * чтобы забытая вкладка не перекосила медиану.
+   */
+  talk_dwell: {
+    talk_id: number;
+    talk_title: string;
+    track_id: number | null;
+    track: string;
+    day_id: number;
+    surface: TalkSurface;
+    seconds: number;
+    locale: AnalyticsLocale;
+    path: string;
+  };
+  /** Заход на страницу заметки доклада `/talk/<id>/` — сюда приходят из поиска. */
+  talk_note_view: {
+    talk_id: number;
+    talk_title: string;
+    track_id: number | null;
+    track: string;
+    day_id: number;
+    locale: AnalyticsLocale;
+    path: string;
+  };
+  /** CTA на сотрудничество попал в вьюпорт (IntersectionObserver 50%). */
+  cta_view: {
+    surface: string;
+    locale: AnalyticsLocale;
+    path: string;
+  };
+  /** Клик по CTA на сотрудничество. `target` — `cal` | `telegram` | `portfolio`. */
+  cta_click: {
+    surface: string;
+    target: string;
+    locale: AnalyticsLocale;
+    path: string;
+  };
+}
+
+export type AnalyticsEvent = keyof AnalyticsEvents;
+
 /** Событие в PostHog. Никогда не бросает: аналитика не ломает страницу. */
-export function track(event: string, props: Record<string, unknown> = {}): void {
+export function track<E extends AnalyticsEvent>(event: E, props: AnalyticsEvents[E]): void {
   if (!ph) {
-    if (queued.length < QUEUE_MAX) queued.push({ event, props });
+    if (queued.length < QUEUE_MAX) {
+      queued.push({ event, props: props as Record<string, unknown> });
+    }
     return;
   }
   try {
@@ -258,7 +356,7 @@ export function track(event: string, props: Record<string, unknown> = {}): void 
   }
 }
 
-export type LinkKind = "social" | "ticket" | "portfolio" | "source" | "other";
+export type LinkKind = "social" | "ticket" | "portfolio" | "source" | "cta" | "other";
 
 export interface LinkTarget {
   /** Стабильный слаг для разбивки: у одного спикера и один, и второй клик — та же строка. */
@@ -277,16 +375,34 @@ const SOCIAL_CLASS = /\bsocial-link--([a-z]+)\b/;
  *
  * `utm_content` проверяется раньше хоста: ссылки в портфолио живут на том же
  * домене, что и сайт, и по хосту неотличимы от внутренних.
+ *
+ * CTA на сотрудничество тоже размечен UTM — с `utm_content`, потому что без
+ * него бронь из новой сессии читается как прямой заход. Отличить его от
+ * перехода в портфолио можно только по `utm_medium=cta`; без этой ветки клик
+ * по кнопке «обсудить проект» попадал бы в тайл «переходы в портфолио» и
+ * завышал единственную метрику, ради которой размечен весь остальной сайт.
  */
 export function classifyLink(input: {
   className?: string;
   hostname: string;
   pathname: string;
   utmContent?: string | null;
+  utmMedium?: string | null;
+  /** `data-cta-target` самой ссылки: единственный признак, который есть у обеих кнопок CTA. */
+  ctaTarget?: string | null;
 }): LinkTarget {
   const social = SOCIAL_CLASS.exec(input.className ?? "");
   if (social) {
     return { link: `social:${social[1]}`, kind: "social", network: social[1] };
+  }
+  // Разметка CTA, а не URL: у кнопки Telegram нет UTM (query `t.me` уходит в
+  // текст сообщения), и без этой ветки она классифицировалась бы как `other`,
+  // а тайл «клики по CTA» считал бы только календарь.
+  if (input.ctaTarget) {
+    return { link: `cta:${input.utmContent || input.ctaTarget}`, kind: "cta", network: null };
+  }
+  if (input.utmMedium === "cta" && input.utmContent) {
+    return { link: `cta:${input.utmContent}`, kind: "cta", network: null };
   }
   if (input.utmContent) {
     return { link: `portfolio:${input.utmContent}`, kind: "portfolio", network: null };

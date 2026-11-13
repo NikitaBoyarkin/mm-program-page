@@ -39,4 +39,6 @@ const description =
   preloadBanner={bannerSources(banner?.url ?? null)}
 >
   <ProgramPage day={day} ordinal={ordinal} lang={lang} />
+  {/* Конец дня: посетитель пролистал сетку целиком — единственный момент,
+      когда предложение уместно. */}
 </Base>

@@ -101,6 +101,19 @@ describe("classifyLink", () => {
     ).toEqual({ link: "portfolio:nav-projects", kind: "portfolio", network: null });
   });
 
+  test("CTA на сотрудничество не притворяется переходом в портфолио", () => {
+    // Кнопка «обсудить проект» тоже несёт utm_content — иначе бронь из новой
+    // сессии нечем связать с CTA. Различает их только utm_medium.
+    expect(
+      classifyLink({
+        hostname: "cal.com",
+        pathname: "/lofinibo/bored-call-me",
+        utmContent: "footer",
+        utmMedium: "cta",
+      }),
+    ).toEqual({ link: "cta:footer", kind: "cta", network: null });
+  });
+
   test("билеты и первоисточник — свои слаги", () => {
     expect(classifyLink(base).link).toBe("ticket");
     expect(

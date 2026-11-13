@@ -35,8 +35,8 @@
 | `index.html` и 3 файла, запуск двойным кликом по `file://` | Astro: 191 страница = 190 `index.html` (три дня × две локали, два графа — `/talks/`, `/en/talks/`, заметка на каждый из 91 доклада — `/talk/<id>/`, `/en/talk/<id>/`) + `404.html`; JSON-эндпоинты (`/program.json`, `/en/program.json`) в счёт билда не входят; `bun run build` |
 | Браузер рисует сетку из `window.MM_PROGRAM` | Сетка **лежит в HTML**: три страницы по 39 / 37 / 15 карточек, у каждого дня свой URL |
 | День переключается на клиенте, состояние живёт в памяти | День — это адрес: `/`, `/day/2/`, `/day/3/` (в EN — `/en/`, `/en/day/2/`, `/en/day/3/`) — ссылки, история, шаринг |
-| `app.js` — IIFE на 780 строк без типов | `src/lib/program.ts` и `src/lib/ics.ts` — типизированное ядро и 197 юнит-тестов без браузера |
-| Тесты — Python и headless Chrome | `bun test` (197 тестов) и Playwright на собранной странице, включая прогон с выключенным JS |
+| `app.js` — IIFE на 780 строк без типов | `src/lib/program.ts` и `src/lib/ics.ts` — типизированное ядро и 219 юнит-тестов без браузера |
+| Тесты — Python и headless Chrome | `bun test` (219 тестов) и Playwright на собранной странице, включая прогон с выключенным JS |
 | Только русский интерфейс, нет поиска | Словарь RU/EN + overlay перевода контента; поиск по названию, спикеру, треку и залу |
 | Свой CSS на 2381 строку с фиолетовым брендом | Токены портфельной дизайн-системы: три темы, Inter и Cormorant, кремовые баннеры |
 
@@ -124,6 +124,7 @@ src/
   components/TalkModal.astro модалка доклада
   components/SearchDialog.astro  каркас диалога поиска
   components/Analytics.astro ленивый init PostHog, outbound_click
+  components/CollabCta.astro  авторский CTA: подвал и конец дня
   components/Nav.astro       шапка, меню, дни, тема, язык, вход в граф
   components/TalksPage.astro граф: шапка, SVG, заметки по трекам, хабы тем
   components/TalksGraph.astro  SVG графа и пакер подписей
@@ -147,7 +148,7 @@ src/
   styles/search.css          диалог поиска
 data/program.raw.json        сырой ответ API
 scripts/fetch-program.ts     загрузка, --check / --dry-run
-tests/lib/*.test.ts          197 юнит-тестов (bun test, 10 файлов)
+tests/lib/*.test.ts          219 юнит-тестов (bun test, 12 файлов)
 tests/built/program.spec.ts  браузерные (Playwright)
 tests/built/i18n-search.spec.ts  EN и поиск (Playwright)
 tests/built/talks.spec.ts    граф докладов (Playwright)
@@ -167,7 +168,7 @@ bun run build              # статика в dist/
 bun run preview            # посмотреть сборку
 
 bun run check              # типы в .astro и .ts
-bun test                   # 197 юнит-тестов
+bun test                   # 219 юнит-тестов
 bun run test:built         # браузерные тесты: 65 тестов × 3 проекта
 
 bun run data:fetch         # перекачать API
@@ -324,7 +325,7 @@ origin (`https://nikitaboyarkin.github.io`), поэтому файл — заг�
 когда корень отдаст проект; ссылку на карту из него краулер не увидит.
 
 Деплой (`.github/workflows/deploy.yml`) не проходит с красным тестом: после `talks:check`
-и `build` идут `bun run test` (197 юнит-тестов), установка Chromium и WebKit и
+и `build` идут `bun run test` (219 юнит-тестов), установка Chromium и WebKit и
 `bun run test:built` (65 тестов × 3 проекта = 195 прогонов); только затем `dist/` уходит
 в Pages.
 
@@ -343,3 +344,14 @@ bun run dev
 
 Схема свойств повторяет портфолио (`visit_utm_*`, `first_utm_*`, `initial_referrer_class`,
 `landing_path`) плюс `site: "mm-program-page"`. Подробности — `CONTRACT.md`, раздел «Аналитика».
+
+Сайт шлёт шесть событий, и все они описаны типом `AnalyticsEvents` в
+`src/lib/analytics.ts`: `talk_open` (открыли доклад), `talk_dwell` (сколько читали),
+`talk_note_view` (зашли на заметку `/talk/<id>/`), `outbound_click` (ушли по ссылке),
+`cta_view` / `cta_click` (авторский CTA на сотрудничество). Имена и свойство `track`
+общие с портфолио: без этого тайл «топ докладов» не склеил бы два сайта.
+
+CTA живёт в `src/components/CollabCta.astro` одной строкой в подвале всех страниц
+(`surface=footer`) и ведёт на
+календарь с UTM `utm_medium=cta&utm_campaign=collab_slot`, чтобы бронь из новой сессии
+читалась как пришедшая отсюда, а не как прямой заход.

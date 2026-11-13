@@ -20,6 +20,7 @@ import {
   formatRange,
   imageUrl,
   isTime,
+  minutes,
   type Day,
   type Program,
   type Talk,
@@ -950,6 +951,93 @@ let modalOpener: HTMLElement | null = null;
 const modalRoot = (): HTMLElement | null => $<HTMLElement>("div[data-modal]");
 const modalDialog = (): HTMLElement | null => $<HTMLElement>("div[data-modal-dialog]");
 
+/* ── Аналитика модалки: `talk_open` и `talk_dwell` ─────────────────── */
+
+/**
+ * Локаль для событий — по адресу страницы, а не по DOM: `path` и `locale`
+ * в одном событии обязаны сходиться, иначе тайл склеит русский заголовок
+ * с английской локалью.
+ */
+function localeOf(pathname: string): "ru" | "en" {
+  const rest = pathname.startsWith(BASE_URL) ? pathname.slice(BASE_URL.length) : pathname;
+  return rest === "en" || rest.startsWith("en/") ? "en" : "ru";
+}
+
+/**
+ * Индекс доклада внутри своего дня — 0-based, по времени начала.
+ *
+ * Источник — загруженная программа, а не DOM: сетка раскладывает карточки по
+ * «время × зал», и порядок узлов там ничего не говорит об интересе. Это индекс
+ * по времени начала, а НЕ позиция карточки в сетке: у параллельных докладов
+ * сетка сортирует ещё и по залу, поэтому числа могут расходиться. Глобального
+ * индекса на 91 доклад здесь нет намеренно: «пятый в дне» читается, «пятый из
+ * всех» — нет.
+ */
+function talkPosition(program: Program, talk: Talk): number | null {
+  const dayTalks = program.talks
+    .filter((item) => item.dayId === talk.dayId)
+    .sort((a, b) => (minutes(a.start) ?? 0) - (minutes(b.start) ?? 0));
+  const index = dayTalks.findIndex((item) => item.id === talk.id);
+  return index >= 0 ? index : null;
+}
+
+/**
+ * Открытая модалка, уже накопленное время и точка отсчёта текущего сегмента.
+ *
+ * Сегменты, а не один интервал: человек, который переключился на другую вкладку
+ * и вернулся, читал доклад всё это время, но `performance.now()` успел уйти
+ * вперёд. Один интервал от открытия до закрытия переоценил бы чтение, интервал
+ * «до первого переключения» — недооценил бы.
+ */
+let dwell: { talk: Talk; accumulated: number; startedAt: number } | null = null;
+
+/** Верхняя граница `seconds`: забытая вкладка не должна перекосить медиану. */
+const DWELL_MAX = 600;
+
+function startDwell(talk: Talk): void {
+  dwell = { talk, accumulated: 0, startedAt: performance.now() };
+}
+
+/** Вкладка ушла в фон: закрыть текущий сегмент, не отправляя событие. */
+function pauseDwell(): void {
+  if (!dwell) return;
+  dwell.accumulated += performance.now() - dwell.startedAt;
+  dwell.startedAt = Number.NaN;
+}
+
+/** Вкладка вернулась: открыть новый сегмент. */
+function resumeDwell(): void {
+  if (!dwell || !Number.isNaN(dwell.startedAt)) return;
+  dwell.startedAt = performance.now();
+}
+
+/**
+ * Отправить накопленный интервал и забыть его.
+ *
+ * Обнуление до `track` — и есть флаг «уже отправлено»: закрытие модалки,
+ * `Esc`, возврат по истории, `pagehide` и `visibilitychange` могут прийти
+ * одним и тем же жестом, а событие должно уйти ровно одно.
+ */
+function flushDwell(): void {
+  const current = dwell;
+  if (!current) return;
+  dwell = null;
+  const open = Number.isNaN(current.startedAt) ? 0 : performance.now() - current.startedAt;
+  const elapsed = current.accumulated + open;
+  const seconds = Math.max(1, Math.min(DWELL_MAX, Math.round(elapsed / 1000)));
+  track("talk_dwell", {
+    talk_id: current.talk.id,
+    talk_title: current.talk.title,
+    track_id: current.talk.trackId ?? null,
+    track: current.talk.track,
+    day_id: current.talk.dayId,
+    surface: "card",
+    seconds,
+    locale: localeOf(window.location.pathname),
+    path: window.location.pathname,
+  });
+}
+
 function focusable(root: ParentNode): HTMLElement[] {
   return $$<HTMLElement>(FOCUSABLE, root);
 }
@@ -1168,11 +1256,14 @@ function isModalOpen(): boolean {
   return !!modal && !modal.hidden;
 }
 
-function showModal(talk: Talk, surface: TalkOpenSurface): void {
+function showModal(talk: Talk, surface: TalkOpenSurface, program: Program): void {
   const modal = modalRoot();
   const dialog = modalDialog();
   if (!modal || !dialog) return;
 
+  // Прямой переход с доклада на доклад: прошлый интервал закрывается до старта
+  // нового, иначе он молча потерялся бы вместе с таймером.
+  flushDwell();
   modalTalk = talk;
   fillModal(talk);
   // Доклад на диалоге, а не только `modalTalk` в замыкании: по этому атрибуту
@@ -1181,13 +1272,17 @@ function showModal(talk: Talk, surface: TalkOpenSurface): void {
   track("talk_open", {
     talk_id: talk.id,
     talk_title: talk.title,
-    talk_track: talk.track,
-    talk_hall: talk.hall,
-    talk_start: talk.start,
+    track_id: talk.trackId ?? null,
+    track: talk.track,
+    hall: talk.hall || null,
+    start: talk.start,
     day_id: talk.dayId,
     surface,
+    position: talkPosition(program, talk),
+    locale: localeOf(window.location.pathname),
     path: window.location.pathname,
   });
+  startDwell(talk);
   // Запись в истории: системная «Назад» закрывает модалку, а не уводит со
   // страницы. `pushLayer` возвращает `""`, если History API недоступен —
   // тогда закрытие пойдёт напрямую.
@@ -1219,6 +1314,9 @@ function hideModal(): void {
   openRequestSeq += 1;
   const modal = modalRoot();
   if (!modal || modal.hidden) return;
+  // Единственное место, где модалка действительно исчезает: здесь же
+  // закрывается интервал показа — и на крестик, и на `Esc`, и на «Назад».
+  flushDwell();
   modal.hidden = true;
   document.body.classList.remove("is-modal-open");
   modalTalk = null;
@@ -1301,7 +1399,7 @@ function openTalk(
         toast(t(LANG, "toastTalkNotFound"));
         return;
       }
-      showModal(talk, surface);
+      showModal(talk, surface, program);
     })
     .catch(() => {
       if (seq !== openRequestSeq) return;
@@ -1363,6 +1461,21 @@ function initModal(): void {
     backdrop.addEventListener("click", () => closeModal());
   }
   dialog.addEventListener("keydown", (event) => trapTab(event, modalDialog()));
+
+  // Внешняя ссылка в модалке открывается в новой вкладке, страница не
+  // выгружается — здесь `pagehide` не придёт. Он нужен для другого: закрытая
+  // вкладка, «Назад» на другой документ, переход внутри сайта. Сама страница
+  // при этом не перезагружается, но JS-контекст умирает, и без слушателя
+  // накопленное чтение пропало бы. `flushDwell` обнуляет интервал до
+  // отправки, поэтому дубля не будет.
+  // Уход со страницы — окончательный: интервал отправляется.
+  window.addEventListener("pagehide", () => flushDwell());
+  // Уход в другую вкладку — не окончательный: считать «до первого alt-tab»
+  // значит занизить чтение именно у тех, кто читает вдумчиво.
+  document.addEventListener("visibilitychange", () => {
+    if (document.hidden) pauseDwell();
+    else resumeDwell();
+  });
 }
 
 /* ── 7. Экспорт .ics ───────────────────────────────────────────────── */
