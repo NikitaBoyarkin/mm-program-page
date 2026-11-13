@@ -246,7 +246,11 @@ test("36 · консоль чистая: ни console.error, ни pageerror на
 }) => {
   const problems: string[] = [];
   page.on("console", (message) => {
-    if (message.type() === "error") problems.push(`console.error: ${message.text()}`);
+    if (message.type() !== "error") return;
+    // То же, что в program.spec.ts: WebKit ругается на `interactive-widget`
+    // из Base.astro:113 — ключ для Chromium, не дефект страницы.
+    if (message.text().includes('Viewport argument key "interactive-widget"')) return;
+    problems.push(`console.error: ${message.text()}`);
   });
   page.on("pageerror", (error) => problems.push(`pageerror: ${error.message}`));
 

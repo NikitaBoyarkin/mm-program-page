@@ -185,7 +185,13 @@ test("03 · сумма уникальных data-talk-id по трём стра�
 test("04 · консоль чистая: ни console.error, ни pageerror на / и /day/2/", async ({ page }) => {
   const problems: string[] = [];
   page.on("console", (message) => {
-    if (message.type() === "error") problems.push(`console.error: ${message.text()}`);
+    if (message.type() !== "error") return;
+    // WebKit не знает ключ `interactive-widget` (Base.astro:113) и пишет об этом
+    // console.error на каждую загрузку. Ключ нужен Chromium: там он ужимает
+    // layout viewport под клавиатуру. Это предупреждение браузера о своей
+    // поддержке, а не ошибка страницы, — в список проблем не идёт.
+    if (message.text().includes('Viewport argument key "interactive-widget"')) return;
+    problems.push(`console.error: ${message.text()}`);
   });
   page.on("pageerror", (error) => problems.push(`pageerror: ${error.message}`));
 
