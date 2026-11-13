@@ -26,6 +26,7 @@ const dayOrdinal = new Map(days().map((day, index) => [day.id, index + 1] as con
 const notes = buildNotes(PROGRAM.talks, {
   dayOrdinal,
   hrefOf: (ordinal, id) => `/day/${ordinal}/#t${id}`,
+  talkHrefOf: (id) => `/talk/${id}/`,
 });
 const graph = buildGraph(notes, PROGRAM.event.name);
 const layout = layoutGraph(graph);
@@ -46,6 +47,7 @@ const note = (id: number, track: string, themes: string[], start = "10:00"): Tal
   anchor: `t${id}`,
   dayOrdinal: 1,
   href: `/day/1/#t${id}`,
+  hrefTalk: `/talk/${id}/`,
   lectors: [],
 });
 
@@ -89,14 +91,25 @@ describe("темы", () => {
 });
 
 describe("заметки", () => {
-  test("91 заметка, уникальные id и постоянные адреса", () => {
+  test("91 заметка, уникальные id и два адреса: локатор дня и канон /talk/", () => {
     expect(notes.length).toBe(PROGRAM.talks.length);
     expect(new Set(notes.map((item) => item.id)).size).toBe(notes.length);
     for (const item of notes) {
       expect(item.key).toBe(`t${item.id}`);
       expect(item.anchor).toBe(`t${item.id}`);
+      // Локатор: день + якорь. Подпись «День N · время · зал» описывает именно его.
       expect(item.href.endsWith(`#t${item.id}`)).toBe(true);
+      // Канон: одна сущность — один адрес, на него ведут «Связанные» и граф.
+      expect(item.hrefTalk).toBe(`/talk/${item.id}/`);
     }
+  });
+
+  test("без talkHrefOf канон совпадает с href: страница заметки не получает второй адрес", () => {
+    const bare = buildNotes(PROGRAM.talks, { dayOrdinal, hrefOf: (_ordinal, id) => `/talk/${id}/` });
+    for (const item of bare) expect(item.hrefTalk).toBe(item.href);
+
+    const defaults = buildNotes(PROGRAM.talks.slice(0, 3));
+    for (const item of defaults) expect(item.hrefTalk).toBe(item.href);
   });
 
   test("каждая заметка привязана к своему дню и треку", () => {
@@ -104,6 +117,8 @@ describe("заметки", () => {
       expect(item.dayOrdinal).toBe(dayOrdinal.get(item.dayId) as number);
       expect(item.track.length).toBeGreaterThan(0);
       expect(item.href).toContain(`/day/${item.dayOrdinal}/`);
+      // Канон от дня не зависит: `/talk/309/` один и на первом, и на третьем дне.
+      expect(item.hrefTalk).not.toContain("/day/");
     }
   });
 
@@ -185,8 +200,11 @@ describe("связанные заметки", () => {
   test("у каждой связи есть постоянный адрес заметки", () => {
     for (const links of related.values()) {
       for (const link of links) {
+        // Локатор остаётся: он ведёт в расписание и несёт номер дня.
         expect(link.href.endsWith(`#${link.anchor}`)).toBe(true);
         expect(link.href).toContain(`/day/${(notes.find((item) => item.id === link.id) as TalkNote).dayOrdinal}/`);
+        // «Связанные» рисуются по канону — одинаковому с любой поверхности.
+        expect(link.hrefTalk).toBe(`/talk/${link.id}/`);
       }
     }
   });

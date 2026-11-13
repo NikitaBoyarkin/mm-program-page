@@ -19,7 +19,7 @@ interface Props {
   /** Первый баннер в вьюпорте: грузим сразу и с высоким приоритетом (это LCP). */
   priority?: boolean;
   /** Связанные доклады — те же ссылки, что на странице графа: заметка
-   *  существует в двух местах, но адрес у неё один (`/day/N/#t<id>`). */
+   *  существует в двух местах, но канонический адрес у неё один (`/talk/<id>/`). */
   related?: RelatedNote[];
 }
 
@@ -226,14 +226,14 @@ const initials = (name: string): string =>
           не эссе. Каждая ссылка — своя строка с многоточием: в карточке 254 px
           шириной полное название занимает 3–4 строки, и в общий кламп влезала
           бы одна ссылка из трёх, а остальные оставались в DOM невидимыми.
-          Ссылки настоящие, без JS: адрес заметки (`/day/N/#t<id>`) работает
-          и без клиентского скрипта, и на другой день ведёт на другой день. */}
+          Ссылки настоящие, без JS: адрес заметки — канон `/talk/<id>/`, он
+          работает и без клиентского скрипта, и с любого дня ведёт в одно место. */}
       {
         relatedLinks.length > 0 && (
           <div class="talk-card__related">
             <span class="talk-card__related-label">{t(lang, "talksRelated")}</span>
             {relatedLinks.map((link) => (
-              <a class="talk-card__related-link" href={link.href} title={link.title}>{link.title}</a>
+              <a class="talk-card__related-link" href={link.hrefTalk} title={link.title}>{link.title}</a>
             ))}
           </div>
         )

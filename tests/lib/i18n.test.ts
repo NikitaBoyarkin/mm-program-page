@@ -13,7 +13,7 @@
 import { describe, expect, test } from "bun:test";
 import { LANGS, UI, otherLang, t } from "../../src/i18n/ui";
 import { dayLabel, dayLongLabel, pluralDays, pluralTalks } from "../../src/i18n/format";
-import { dayHrefFor, switchLangHref } from "../../src/i18n/paths";
+import { dayHrefFor, switchLangHref, talkHrefFor } from "../../src/i18n/paths";
 import {
   dayNameLabel,
   hallLabel,
@@ -165,6 +165,14 @@ describe("paths: адреса с учётом языка", () => {
     expect(switchLangHref("ru", 2)).toBe("/en/day/2/");
     expect(switchLangHref("en", 1)).toBe("/");
   });
+
+  test("talkHrefFor: пара /talk/<id>/ и /en/talk/<id>/", () => {
+    expect(talkHrefFor("ru", 309)).toBe("/talk/309/");
+    expect(talkHrefFor("en", 309)).toBe("/en/talk/309/");
+    // id приходит и строкой (из `href` и `data-talk-id`) — адрес тот же.
+    expect(talkHrefFor("ru", "309")).toBe("/talk/309/");
+    expect(talkHrefFor("en", "267")).toBe("/en/talk/267/");
+  });
 });
 
 describe("localize: overlay переводов контента", () => {
@@ -196,6 +204,19 @@ describe("localize: overlay переводов контента", () => {
       }
       expect(entry.short?.trim().length, `short доклада ${talk.id} пуст`).toBeGreaterThan(0);
     }
+  });
+
+  test("русское описание ⇒ непустое английское описание в overlay", () => {
+    // Инвариант, на который опирается генератор заметок: тело `.md` в
+    // `talks-en/` пишется из `localizeTalk("en").description`. Если overlay
+    // потеряет перевод, EN-заметка молча получит русское тело (или пустое).
+    const missing: string[] = [];
+    for (const talk of PROGRAM.talks) {
+      if (!talk.description.trim()) continue;
+      const entry = OVERLAY.talks[String(talk.id)];
+      if (!entry?.description?.trim()) missing.push(String(talk.id));
+    }
+    expect(missing).toEqual([]);
   });
 
   test("lectorRoles совпадает по длине со списком спикеров", () => {

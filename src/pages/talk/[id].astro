@@ -1,7 +1,7 @@
 ---
 /**
- * Заметка доклада: `/talk/<id>/`. Адрес постоянный и совпадает с якорем
- * `#t<id>` и параметром `?talk=<id>` — это одна сущность, а не три.
+ * Заметка доклада: `/talk/<id>/`. Адрес постоянный и единственный; якорь
+ * `#t<id>` на странице дня — только цель обратной ссылки, `?talk=<id>` удалён.
  *
  * Факты рендерятся из `PROGRAM` (слепок — единственный источник), тело — из
  * `.md` коллекции `talks`. Пара в другом языке существует только если
@@ -18,7 +18,12 @@ import { days, PROGRAM, talkById } from "../../lib/program";
 import { buildNotes, relatedNotes, themeLabel, themesOf } from "../../lib/talks-graph";
 
 const lang = "ru" as const;
-const relatedById = relatedNotes(buildNotes(PROGRAM.talks, { hrefOf: (_ordinal, id) => talkHrefFor(lang, id) }));
+const relatedById = relatedNotes(
+  buildNotes(PROGRAM.talks, {
+    hrefOf: (_ordinal, id) => talkHrefFor(lang, id),
+    talkHrefOf: (id) => talkHrefFor(lang, id),
+  }),
+);
 const dayOf = new Map(days().map((day, index) => [day.id, { day, ordinal: index + 1 }]));
 
 export async function getStaticPaths() {
@@ -39,6 +44,9 @@ if (!anchor) throw new Error(`заметка ${entry.id}: доклада ${entry
 const talk = localizeTalk(lang, anchor);
 const meta = dayOf.get(talk.dayId)!;
 const { Content } = await render(entry);
+// Тело пустое, если в `.md` только frontmatter (`entry.body` — markdown после
+// `---`). Тогда секция «О докладе» не рендерится: пустой h2 без текста.
+const hasBody = (entry.body ?? "").trim() !== "";
 const related = (relatedById.get(talk.id) ?? []).filter((note) => note.id !== talk.id);
 const themes = themesOf(talk).map((id) => ({ id, label: themeLabel(id, lang) }));
 const description = t(lang, "talkMetaDescription", {
@@ -66,6 +74,7 @@ const description = t(lang, "talkMetaDescription", {
     {themes}
     {related}
     backHref={`${dayHrefFor(lang, meta.ordinal)}#t${talk.id}`}
+    {hasBody}
   >
     <Content />
   </TalkNote>

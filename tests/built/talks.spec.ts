@@ -48,7 +48,8 @@ test("31 · /talks/ — 91 заметка с постоянными адреса
   await expect(page.locator("li.talk-note")).toHaveCount(TALKS);
 
   // Каждая заметка — атомарная единица с адресом `#t<id>`, и её день-ссылка
-  // ведёт на тот же якорь в расписании.
+  // ведёт на тот же якорь в расписании. День-ссылка — локатор: после разделения
+  // адресов она осталась на дне (`/day/N/#t<id>`), а канон живёт в hrefTalk.
   const anchors = await page.locator("li.talk-note").evaluateAll((nodes) =>
     nodes.map((node) => {
       const item = node as HTMLElement;
@@ -62,10 +63,12 @@ test("31 · /talks/ — 91 заметка с постоянными адреса
     expect(item.href).toContain(`#${item.id}`);
     // День 1 живёт на корне локали, остальные — в `day/N/`: обе формы валидны.
     expect(item.href).toMatch(/^.*(?:\/day\/\d+\/|\/)#t\d+$/);
+    // Подпись «День N · время · зал» описывает место — канон бы её обманул.
+    expect(item.href, `строка «где» должна вести на день: ${item.href}`).not.toContain("/talk/");
   }
 });
 
-test("32 · граф отрендерен на билде: SVG, 91 точка, все ссылки ведут на существующие якоря", async ({
+test("32 · граф отрендерен на билде: SVG, 91 точка, все точки ведут на канон /talk/<id>/", async ({
   page,
 }) => {
   await open(page, "/talks/");
@@ -79,6 +82,21 @@ test("32 · граф отрендерен на билде: SVG, 91 точка, �
 
   await expect(page.locator("a.talks-graph__note")).toHaveCount(TALKS);
 
+  // Точка — ссылка на доклад, а не якорь на этой странице: канон у заметки
+  // один (`/talk/<id>/`), и точка с карточкой расписания ведут в одно место.
+  const noteHrefs = await page.locator("a.talks-graph__note").evaluateAll((nodes) =>
+    nodes.map((node) => node.getAttribute("href") ?? ""),
+  );
+  for (const href of noteHrefs) {
+    expect(href, `точка графа должна вести на канон: ${href}`).toMatch(
+      /^\/mm-program-page\/(?:en\/)?talk\/\d+\/$/,
+    );
+  }
+  // 91 точка = 91 доклад: ни дублей, ни потерянных адресов.
+  expect(new Set(noteHrefs).size).toBe(TALKS);
+
+  // Оставшиеся `#`-ссылки страницы (хабы тем внутри текста заметок) по-прежнему
+  // обязаны находить свой якорь: разделение адресов их не отменяет.
   const broken = await page.evaluate(() => {
     const ids = new Set([...document.querySelectorAll("[id]")].map((node) => node.id));
     const targets = [...document.querySelectorAll<HTMLAnchorElement>('a[href^="#"]')];
@@ -94,7 +112,9 @@ test("32 · граф отрендерен на билде: SVG, 91 точка, �
   await expect(page.locator("text.talks-graph__label--theme")).toHaveCount(THEMES);
 });
 
-test("33 · темы — обратные ссылки: 11 хабов, каждый список ведёт к заметкам", async ({ page }) => {
+test("33 · темы — обратные ссылки: 11 хабов, каждый список ведёт к заметкам по канону", async ({
+  page,
+}) => {
   await open(page, "/talks/");
 
   const groups = page.locator("section.theme-group");
@@ -105,16 +125,25 @@ test("33 · темы — обратные ссылки: 11 хабов, кажд�
       id: node.id,
       links: node.querySelectorAll("a.theme-group__link").length,
       count: Number(node.querySelector(".theme-group__count")?.textContent?.trim() ?? "-1"),
+      hrefs: [...node.querySelectorAll<HTMLAnchorElement>("a.theme-group__link")].map(
+        (link) => link.getAttribute("href") ?? "",
+      ),
     })),
   );
   for (const group of rows) {
     expect(group.id).toMatch(/^theme-[a-z]+$/);
     expect(group.links).toBeGreaterThan(0);
     expect(group.count).toBe(group.links);
+    // Хаб темы ведёт к докладу, а не к якорю на этой же странице.
+    for (const href of group.hrefs) {
+      expect(href, `хаб темы должен вести на канон: ${href}`).toMatch(
+        /^\/mm-program-page\/(?:en\/)?talk\/\d+\/$/,
+      );
+    }
   }
 });
 
-test("34 · связанные доклады: у каждой заметки есть связи, и они читаются", async ({ page }) => {
+test("34 · связанные доклады: у каждой заметки есть связи, и они ведут на канон", async ({ page }) => {
   await open(page, "/talks/");
 
   const blocks = await page.locator("li.talk-note").evaluateAll((nodes) =>
@@ -126,6 +155,17 @@ test("34 · связанные доклады: у каждой заметки е
     expect(count).toBeLessThanOrEqual(4);
   }
   await expect(page.locator("li.talk-note a.talk-note__link").first()).toBeVisible();
+
+  // «Связанные» — про заметку, поэтому адрес канонический, а не якорь в списке.
+  const hrefs = await page.locator("li.talk-note a.talk-note__link").evaluateAll((nodes) =>
+    nodes.map((node) => node.getAttribute("href") ?? ""),
+  );
+  for (const href of hrefs) {
+    expect(href, `связанная заметка должна вести на канон: ${href}`).toMatch(
+      /^\/mm-program-page\/(?:en\/)?talk\/\d+\/$/,
+    );
+    expect(href).not.toContain("#");
+  }
 });
 
 test("35 · вход в граф: полоса шапки на десктопе, меню на телефоне, иконка в середине", async ({

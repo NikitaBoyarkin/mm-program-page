@@ -4,9 +4,8 @@
  * приходят из `layoutGraph` — детерминированной раскладки колец (см.
  * `lib/talks-graph.ts`), поэтому один слепок даёт один и тот же рисунок.
  *
- * Точка на дуге — это ссылка на заметку (`#t309`), а не декоративная точка:
- * единственный интерактив графа — переход к тексту, который всегда рядом.
- */
+ * Точка на дуге — это ссылка на заметку (`/talk/309/`), а не декоративная
+ * точка: единственный интерактив графа — переход к тексту доклада. */
 import { themeLabel, themeShortLabel, type GraphLayout } from "../lib/talks-graph";
 import { trackLabel } from "../lib/localize";
 import { t, type Lang } from "../i18n/ui";
@@ -246,7 +245,7 @@ const trackLabels = placeLabels(trackHubs, {
       <g class="talks-graph__notes">
         {
           layout.notes.map((note) => (
-            <a class="talks-graph__note" href={`#${note.anchor}`} aria-label={titles.get(note.id) ?? note.title}>
+            <a class="talks-graph__note" href={note.hrefTalk} aria-label={titles.get(note.id) ?? note.title}>
               <circle cx={note.x} cy={note.y} r="4.5" />
               <circle class="talks-graph__note-hit" cx={note.x} cy={note.y} r="13" />
               <title>{`${note.start} · ${titles.get(note.id) ?? note.title}`}</title>

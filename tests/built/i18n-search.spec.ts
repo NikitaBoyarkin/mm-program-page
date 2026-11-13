@@ -159,30 +159,6 @@ test("30 · переключатель языка: /day/2/ → /en/day/2/ и о�
   expect(new URL(page.url()).pathname).toBe(`${BASE}/`);
 });
 
-test("31 · поиск (RU): фрагмент названия → результат → ?talk= → модалка", async ({
-  page,
-  request,
-}) => {
-  const program = await readProgram(request, "/program.json");
-  const query = fragment(firstDayOneTalk(program).title);
-  expect(query.length).toBeGreaterThan(3);
-  expect(CYRILLIC.test(query), "фрагмент русского названия должен быть кириллицей").toBe(true);
-
-  await open(page, "/");
-  await openSearch(page);
-  await page.locator("[data-search-input]").fill(query);
-
-  const results = page.locator("[data-search-results] .search-result");
-  await expect(results.first()).toBeVisible();
-
-  await Promise.all([page.waitForURL(/[?&]talk=\d+/), results.first().click()]);
-
-  await expect.poll(() => isHidden(page, "[data-modal]")).toBe(false);
-  await expect
-    .poll(async () => (await page.locator("[data-modal-title]").innerText()).trim().length)
-    .toBeGreaterThan(0);
-});
-
 test("32 · поиск (EN): фрагмент английского названия → непустая выдача латиницей", async ({
   page,
   request,
@@ -280,4 +256,30 @@ test("36 · консоль чистая: ни console.error, ни pageerror на
   await page.waitForTimeout(300);
 
   expect(problems).toEqual([]);
+});
+
+test("37 · клик по результату поиска ведёт на постоянную страницу доклада", async ({
+  page,
+  request,
+}) => {
+  // Вход в модалку через `?talk=<id>` удалён: единственный адрес доклада —
+  // `/talk/<id>/`. Тест держит клиентскую ссылку `.search-result`, которую
+  // строит `talkHrefFor(LANG, talk.id)` (`program-client.ts:1590`).
+  const program = await readProgram(request, "/program.json");
+  const talk = firstDayOneTalk(program);
+  const query = fragment(talk.title, 12);
+  expect(query.length).toBeGreaterThan(3);
+
+  await open(page, "/");
+  await openSearch(page);
+  await page.locator("[data-search-input]").fill(query);
+
+  const first = page.locator("[data-search-results] .search-result").first();
+  await expect(first).toBeVisible();
+  await first.click();
+
+  await page.waitForURL(/\/mm-program-page\/talk\/\d+\/$/);
+  const title = page.locator("h1.talk-note__title");
+  await expect(title).toBeVisible();
+  expect((await title.innerText()).trim().length).toBeGreaterThan(0);
 });

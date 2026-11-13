@@ -1,9 +1,11 @@
 /**
  * Граф докладов на принципах Zettelkasten: заметки, хабы, связи.
  *
- * Программа — это 91 атомарная заметка: у каждой постоянный адрес (`t<id>`,
- * он же якорь `#t309` и параметр `?talk=309`), свой узел-хаб (трек), свои темы
- * и свои соседи. Связи не выдуманы ради картинки: ребро `трек ↔ тема` весит
+ * Программа — это 91 атомарная заметка: у каждой ключ `t<id>` и два адреса —
+ * `href`, локатор дня (`/day/N/#t<id>`, ведёт в расписание), и `hrefTalk`,
+ * канон заметки (`/talk/<id>/`, его несут «Связанные», темы и граф). Модалка —
+ * быстрый просмотр с карточки; отдельного адреса у неё нет. У заметки есть свой
+ * узел-хаб (трек), свои темы и свои соседи. Связи не выдуманы ради картинки: ребро `трек ↔ тема` весит
  * столько докладов, сколько их реально несут оба, а «связанные доклады» —
  * это посчитанное пересечение тем, а не соседство в вёрстке.
  *
@@ -37,6 +39,7 @@ export function buildNotes(talks: Talk[], options: BuildOptions = {}): TalkNote[
   return talks
     .map((talk) => {
       const dayOrdinal = ordinalOf.get(talk.dayId) ?? 1;
+      const href = hrefOf(dayOrdinal, talk.id);
       return {
         id: talk.id,
         key: `t${talk.id}`,
@@ -50,7 +53,8 @@ export function buildNotes(talks: Talk[], options: BuildOptions = {}): TalkNote[
         themes: themesOf(talk),
         anchor: `t${talk.id}`,
         dayOrdinal,
-        href: hrefOf(dayOrdinal, talk.id),
+        href,
+        hrefTalk: options.talkHrefOf?.(talk.id) ?? href,
         lectors: (talk.lectors ?? []).map((lector) => lector.name),
       } satisfies TalkNote;
     })
@@ -132,9 +136,10 @@ const RELATED_MIN = 1;
 export interface RelatedNote {
   id: number;
   anchor: string;
-  /** Постоянный адрес заметки в расписании (`/day/2/#t309`) — тот же, что на
-   *  странице графа: ссылка «Связанные» ведёт к заметке, а не в пустоту. */
+  /** Ссылка-локатор (`/day/2/#t309`): ведёт в расписание, подпись — координата. */
   href: string;
+  /** Канонический адрес заметки (`/talk/309/`) — его несут «Связанные». */
+  hrefTalk: string;
   title: string;
   track: string;
   score: number;
@@ -188,7 +193,7 @@ export function relatedNotes(notes: TalkNote[], k = RELATED_K): Map<number, Rela
 
     const weight = 4 * cosine + (sameTrack ? 1.6 : 0) + (adjacent ? 0.9 : 0) + (sameDay ? 0.2 : 0);
     if (weight < RELATED_THRESHOLD) return null;
-    return { id: b.id, anchor: b.anchor, href: b.href, title: b.title, track: b.track, score: weight, sharedThemes: shared, sameTrack, adjacent };
+    return { id: b.id, anchor: b.anchor, href: b.href, hrefTalk: b.hrefTalk, title: b.title, track: b.track, score: weight, sharedThemes: shared, sameTrack, adjacent };
   };
 
   const result = new Map<number, RelatedNote[]>();
@@ -217,7 +222,7 @@ export function relatedNotes(notes: TalkNote[], k = RELATED_K): Map<number, Rela
         for (const other of [...stage.pool].sort(byStart)) {
           if (scored.length >= RELATED_MIN) break;
           if (scored.some((item) => item.id === other.id)) continue;
-          scored.push({ id: other.id, anchor: other.anchor, href: other.href, title: other.title, track: other.track, score: 0, sharedThemes: [], sameTrack: stage.sameTrack, adjacent: stage.adjacent });
+          scored.push({ id: other.id, anchor: other.anchor, href: other.href, hrefTalk: other.hrefTalk, title: other.title, track: other.track, score: 0, sharedThemes: [], sameTrack: stage.sameTrack, adjacent: stage.adjacent });
         }
         if (scored.length >= RELATED_MIN) break;
       }
@@ -232,7 +237,7 @@ export function relatedNotes(notes: TalkNote[], k = RELATED_K): Map<number, Rela
       const back = result.get(relation.id);
       if (!back || back.some((item) => item.id === id)) continue;
       const note = byId.get(id);
-      if (note) back.push({ id: note.id, anchor: note.anchor, href: note.href, title: note.title, track: note.track, score: relation.score, sharedThemes: relation.sharedThemes, sameTrack: relation.sameTrack, adjacent: relation.adjacent });
+      if (note) back.push({ id: note.id, anchor: note.anchor, href: note.href, hrefTalk: note.hrefTalk, title: note.title, track: note.track, score: relation.score, sharedThemes: relation.sharedThemes, sameTrack: relation.sameTrack, adjacent: relation.adjacent });
     }
   }
 

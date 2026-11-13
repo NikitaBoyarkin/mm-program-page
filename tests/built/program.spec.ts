@@ -1268,10 +1268,12 @@ test("30 · «Все треки» в шапке: меню из 12 пунктов
  * «Связанные» в карточке — та же сеть заметок, что на странице графа, но
  * внутри расписания. Проверяется три вещи, которые нельзя увидеть глазами на
  * одном экране: блок есть у каждой карточки, он не обрезан `overflow: hidden`
- * самой карточки, и адрес ссылки — постоянный якорь заметки, а не заглушка.
+ * самой карточки, и адрес ссылки — канон доклада `/talk/<id>/`, а не якорь дня
+ * (якорь `#t<id>` остался целью обратной ссылки «← К расписанию»).
  */
-test("40 · связанные доклады в карточке: 1–2 ссылки, адрес — якорь заметки, блок не обрезан", async ({
+test("40 · связанные доклады в карточке: 1–2 ссылки, адрес — канон /talk/<id>/, блок не обрезан", async ({
   page,
+  request,
 }) => {
   await open(page, "/");
 
@@ -1296,7 +1298,7 @@ test("40 · связанные доклады в карточке: 1–2 ссы�
     }),
   );
 
-  const anchorsOnPage = new Set(cards.map((card) => `t${card.id}`));
+  const talkIds = new Set<string>();
 
   for (const card of cards) {
     expect(card.links.length, `у карточки ${card.id} нет связанных`).toBeGreaterThanOrEqual(1);
@@ -1307,16 +1309,21 @@ test("40 · связанные доклады в карточке: 1–2 ссы�
       expect(link.text, "ссылка без подписи").not.toBe("");
       expect(link.text, "доклад ссылается на себя").not.toBe(card.title);
 
-      const [path, hash = ""] = link.href.split("#");
-      expect(hash, `битый адрес: ${link.href}`).toMatch(/^t\d+$/);
+      // Канон: `/talk/<id>/` без хеша. День в адресе связанной заметки
+      // означал бы, что «Связанные» ведут в расписание, а не к докладу.
+      expect(link.href, `ссылка «Связанные» должна вести на канон: ${link.href}`).toMatch(
+        /^\/mm-program-page\/talk\/\d+\/$/,
+      );
+      expect(link.href, `канон не несёт хеша: ${link.href}`).not.toContain("#");
 
-      if (path === `${BASE}/` || path === "") {
-        // Свой день: якорь обязан существовать на этой странице.
-        expect(anchorsOnPage.has(hash), `нет якоря ${hash} на странице`).toBe(true);
-      } else {
-        // Чужой день: адрес — страница дня плюс тот же постоянный якорь.
-        expect(path).toMatch(/\/day\/\d+\/$/);
-      }
+      talkIds.add(link.href.split("/").filter(Boolean).at(-1) ?? "");
     }
+  }
+
+  // Адрес не просто правильной формы — страница по нему собрана.
+  expect(talkIds.size).toBeGreaterThan(0);
+  for (const id of talkIds) {
+    const response = await request.get(`${BASE}/talk/${id}/`);
+    expect(response.status(), `нет страницы ${BASE}/talk/${id}/`).toBe(200);
   }
 });

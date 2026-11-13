@@ -11,7 +11,7 @@
  * Промис мемоизирован, ошибка показывается тостом; в консоль не пишем ничего.
  */
 import { pluralTalks } from "../i18n/format";
-import { dayHrefFor, talkHrefFor } from "../i18n/paths";
+import { talkHrefFor } from "../i18n/paths";
 import { t, type Lang } from "../i18n/ui";
 import { buildCalendar, calendarFilename, downloadIcs } from "../lib/ics";
 import {
@@ -1353,10 +1353,10 @@ function setBusy(button: HTMLElement | null, busy: boolean): void {
   }
 }
 
-/** `card` — клик по карточке; `deeplink` — `?talk=<id>` из поиска/внешней ссылки. */
-type TalkOpenSurface = "card" | "deeplink";
+/** `card` — клик по карточке. Вход по `?talk=<id>` удалён: адрес доклада один. */
+type TalkOpenSurface = "card";
 
-/** `opener` пуст у deep-link: доклад может быть с другого дня. */
+/** `opener` — кнопка карточки, на неё возвращается фокус при закрытии модалки. */
 function openTalk(
   talkId: number,
   opener: HTMLElement | null,
@@ -1552,17 +1552,6 @@ function closeSearch(viaHistory = true): void {
   if (viaHistory && token && currentLayerToken() === token) window.history.back();
 }
 
-/**
- * Адрес страницы дня доклада: дни сортируются по `order`, первый живёт на
- * корне локали, остальные — в `day/<ordinal>/`.
- */
-function talkHref(program: Program, talk: Talk): string {
-  const ordered = [...program.days].sort((a, b) => a.order - b.order);
-  const index = ordered.findIndex((day) => day.id === talk.dayId);
-  const ordinal = index < 0 ? 1 : index + 1;
-  return `${dayHrefFor(LANG, ordinal)}?talk=${talk.id}`;
-}
-
 /** Пустой ввод — не «все доклады»: подсказка возвращается, список пуст. */
 function clearResults(): void {
   searchResults()?.replaceChildren();
@@ -1597,7 +1586,8 @@ function renderResults(program: Program, query: string): void {
     const item = document.createElement("li");
     const link = document.createElement("a");
     link.className = "search-result";
-    link.href = talkHref(program, talk);
+    // Единственный адрес доклада — постоянная страница, без `?talk=`.
+    link.href = talkHrefFor(LANG, talk.id);
 
     const day = document.createElement("span");
     day.className = "search-result__day";
@@ -1673,39 +1663,6 @@ function initSearch(): void {
   panel.addEventListener("keydown", (event) => trapTab(event, panel));
 }
 
-/**
- * `?talk=<id>` — ссылка из поиска на другой день: доклад открывается сразу,
- * как если бы пользователь нажал его карточку. `openTalk` сам дожидается
- * `loadProgram()`.
- */
-function initDeepLink(): void {
-  let raw: string | null = null;
-  try {
-    raw = new URLSearchParams(window.location.search).get("talk");
-  } catch {
-    raw = null;
-  }
-  // Только цифры: id уходит в CSS-селектор ниже.
-  if (!raw || !/^\d+$/.test(raw)) return;
-
-  const id = Number(raw);
-  if (!Number.isFinite(id)) return;
-
-  // `?talk=` — одноразовый вход: id уже прочитан, адрес чистим до `pushLayer`,
-  // иначе он остался бы в записи истории и после закрытия модалки: reload
-  // открывал бы её снова, а «Вперёд» вёл на запись без слоя.
-  try {
-    const url = new URL(window.location.href);
-    url.searchParams.delete("talk");
-    window.history.replaceState(window.history.state, "", url);
-  } catch {
-    /* History недоступен — адрес остаётся как есть */
-  }
-
-  const opener = $<HTMLButtonElement>(`button.talk-card__title-btn[data-talk-id="${id}"]`);
-  openTalk(id, opener, "deeplink");
-}
-
 /* ── 8–9. Запуск ───────────────────────────────────────────────────── */
 
 let started = false;
@@ -1755,9 +1712,6 @@ export function init(): void {
     }
     if (document.body.classList.contains("nav-open")) closeDrawer();
   });
-
-  // Deep-link последним: обработчики слоёв уже на месте.
-  initDeepLink();
 }
 
 if (document.readyState === "loading") {

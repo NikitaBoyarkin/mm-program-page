@@ -9,7 +9,7 @@
  * чем он связан», хаб темы — на вопрос «кто ещё ссылается на эту тему».
  */
 import TalksGraph from "./TalksGraph.astro";
-import { dayHrefFor } from "../i18n/paths";
+import { dayHrefFor, talkHrefFor } from "../i18n/paths";
 import { t, type Lang } from "../i18n/ui";
 import { hallLabel, localizeTalk, trackLabel } from "../lib/localize";
 import { PROGRAM, days } from "../lib/program";
@@ -37,6 +37,7 @@ const dayOrdinal = new Map(days().map((day, index) => [day.id, index + 1]));
 const notes = buildNotes(PROGRAM.talks, {
   dayOrdinal,
   hrefOf: (ordinal, id) => `${dayHrefFor(lang, ordinal)}#t${id}`,
+  talkHrefOf: (id) => talkHrefFor(lang, id),
 });
 const graph = buildGraph(notes, PROGRAM.event.name);
 const layout = layoutGraph(graph);
@@ -134,7 +135,11 @@ const portfolioHref =
                     {links.map((link, linkIndex) => (
                       <>
                         {linkIndex > 0 && <span class="talk-note__sep">·</span>}
-                        <a class="talk-note__link" href={`#${link.anchor}`}>{titleOf(link)}</a>
+                        {/* «Связанные» — про заметку, а не про место в расписании:
+                            адрес канонический (`/talk/<id>/`), а не якорь на этой
+                            странице. Строка «День N · время · зал» выше — наоборот,
+                            ведёт в расписание (`note.href`). */}
+                        <a class="talk-note__link" href={link.hrefTalk}>{titleOf(link)}</a>
                       </>
                     ))}
                   </p>
@@ -162,7 +167,9 @@ const portfolioHref =
         <ul class="theme-group__list">
           {group.notes.map((note) => (
             <li>
-              <a class="theme-group__link" href={`#${note.anchor}`}>
+              {/* Хаб темы ссылается на заметку, а не на её якорь: у заметки один
+                  канонический адрес — `/talk/<id>/`. */}
+              <a class="theme-group__link" href={note.hrefTalk}>
                 {titleOf(note)}
                 <span class="theme-group__track">
                   {trackLabel(lang, note.track === "Без трека" ? "" : note.track)}

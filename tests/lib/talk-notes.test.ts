@@ -76,3 +76,48 @@ describe("тело заметки", () => {
     expect(empty).toEqual([]);
   });
 });
+
+describe("композиция генератора (scripts/generate-talk-notes.ts:67-78)", () => {
+  // `write()` при дрейфе frontmatter пишет `${target.frontmatter}${body}`, где
+  // `body` — тело прежнего файла. Инвариант: переписав frontmatter, генератор
+  // обязан оставить тело побайтово — иначе `talks:generate` стирает ручные
+  // правки, а `--check` этого не видит (он сверяет только frontmatter).
+  test("frontmatter + прежнее тело возвращает тело побайтово", () => {
+    const checked: string[] = [];
+    for (const talk of PROGRAM.talks) {
+      const meta = META.get(talk.dayId)!;
+      for (const lang of ["ru", "en"] as const) {
+        const raw = readFileSync(join(DIRS[lang], `${talk.id}.md`), "utf8");
+        const before = splitNote(raw)!;
+        const view = localizeTalk(lang, talk);
+        const frontmatter = frontmatterOf(
+          noteDataOf(view, { dayOrdinal: meta.ordinal, dayDate: meta.date, lang }),
+        );
+        const after = splitNote(`${frontmatter}${before.body}`)!;
+        expect(after.frontmatter, `${lang}/${talk.id}: frontmatter композиции`).toBe(frontmatter);
+        expect(after.body, `${lang}/${talk.id}: тело потерялось при переписывании frontmatter`).toBe(
+          before.body,
+        );
+        checked.push(`${lang}/${talk.id}`);
+      }
+    }
+    expect(checked.length).toBe(PROGRAM.talks.length * 2);
+  });
+
+  test("splitNote режет только по закрывающей паре: `---` в теле остаётся телом", () => {
+    const raw = "---\nid: 1\n---\nпервый абзац\n\n---\n\nвторой абзац\n";
+    const split = splitNote(raw)!;
+    expect(split.frontmatter).toBe("---\nid: 1\n---\n");
+    expect(split.body).toBe("первый абзац\n\n---\n\nвторой абзац\n");
+  });
+
+  test("тело с горизонтальной чертой переживает композицию", () => {
+    const body = "первый абзац\n\n---\n\nвторой абзац\n";
+    const talk = PROGRAM.talks[0]!;
+    const meta = META.get(talk.dayId)!;
+    const frontmatter = frontmatterOf(
+      noteDataOf(localizeTalk("ru", talk), { dayOrdinal: meta.ordinal, dayDate: meta.date, lang: "ru" }),
+    );
+    expect(splitNote(`${frontmatter}${body}`)!.body).toBe(body);
+  });
+});

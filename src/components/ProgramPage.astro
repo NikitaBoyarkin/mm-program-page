@@ -5,7 +5,7 @@
  * фильтрует, открывает модалку, помнит избранное и собирает `.ics`.
  */
 import { dayLabel, dayLongLabel, pluralDays, pluralTalks } from "../i18n/format";
-import { dayHrefFor } from "../i18n/paths";
+import { dayHrefFor, talkHrefFor } from "../i18n/paths";
 import { t, type Lang } from "../i18n/ui";
 import { hallLabel, dayNameLabel, localizeTalk, trackLabel } from "../lib/localize";
 import {
@@ -83,12 +83,14 @@ const trackChips = tracksOfProgram().map((track) => ({
 
 // Связанные доклады считаются один раз на страницу: та же модель, что у графа
 // (`/talks/`), поэтому карточка и заметка не могут показать разные связи.
-// Адрес ссылки — постоянный адрес заметки: `/day/N/#t<id>`, а не `?talk=`,
-// иначе у одного доклада было бы два разных адреса.
+// Адресов у доклада два, и они не конкурируют: `href` — локатор в расписании
+// (`/day/N/#t<id>`), `hrefTalk` — канон (`/talk/<id>/`). «Связанные» ведут на
+// канон, поэтому у доклада один адрес, а не по одному на каждую поверхность.
 const allDaysOrdinal = new Map(allDays.map((day, index) => [day.id, index + 1]));
 const programNotes = buildNotes(PROGRAM.talks, {
   dayOrdinal: allDaysOrdinal,
   hrefOf: (ordinal, id) => `${dayHrefFor(lang, ordinal)}#t${id}`,
+  talkHrefOf: (id) => talkHrefFor(lang, id),
 });
 const relatedMap = relatedNotes(programNotes);
 // Заголовок связанной заметки — на языке страницы: id и адрес остаются

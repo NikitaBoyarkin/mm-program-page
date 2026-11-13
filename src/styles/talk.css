@@ -1,28 +1,37 @@
 /* Заметка доклада. Отдельный файл, как talks.css: страница не грузит сетку,
-   карточки и модалку, а программа не грузит эту типографику. */
+   карточки и модалку, а программа не грузит эту типографику.
+
+   Все цвета и отступы — токены `tokens.css`, литералов здесь нет ни одного:
+   страница заметки грузит только `tokens.css` + `site.css` + `nav.css` +
+   этот файл, поэтому выдуманное имя переменной не падает, а молча уезжает в
+   запасное значение и живёт вне всех трёх тем. */
 .talk-note {
-  max-width: var(--prose-measure, 66ch);
+  max-width: var(--prose-measure);
   margin-inline: auto;
-  padding: clamp(16px, 4vw, 48px) var(--gap, 16px) 64px;
+  /* Те же поля, что у `.page` в site.css: в ландшафте вырез сбоку шире
+     --page-pad, поэтому нижняя граница — max() с safe-area-inset. */
+  padding-block: clamp(var(--space-4), 4vw, var(--space-12)) var(--space-16);
+  padding-inline: max(var(--page-pad), env(safe-area-inset-left))
+    max(var(--page-pad), env(safe-area-inset-right));
   display: flex;
   flex-direction: column;
-  gap: 32px;
+  gap: var(--space-8);
 }
 
 .talk-note__back {
   font-size: 0.875rem;
-  color: var(--fg-muted, #9aa0a6);
+  color: var(--text-muted);
   text-decoration: none;
 }
 
 .talk-note__back:hover {
-  color: var(--fg, #f5f5f5);
+  color: var(--text-normal);
 }
 
 .talk-note__head {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: var(--space-2);
 }
 
 .talk-note__eyebrow,
@@ -31,7 +40,7 @@
   font-size: 0.8125rem;
   letter-spacing: 0.02em;
   text-transform: uppercase;
-  color: var(--fg-muted, #9aa0a6);
+  color: var(--text-muted);
 }
 
 .talk-note__eyebrow {
@@ -51,7 +60,7 @@
 .talk-note section {
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: var(--space-3);
 }
 
 .talk-note h2 {
@@ -59,7 +68,7 @@
   font-size: 0.75rem;
   letter-spacing: 0.08em;
   text-transform: uppercase;
-  color: var(--fg-muted, #9aa0a6);
+  color: var(--text-muted);
 }
 
 .talk-note__speaker-list,
@@ -70,7 +79,7 @@
   list-style: none;
   display: flex;
   flex-wrap: wrap;
-  gap: 8px 20px;
+  gap: var(--space-2) var(--space-5);
 }
 
 .talk-note__speaker {
@@ -85,19 +94,22 @@
 
 .talk-note__speaker-role {
   font-size: 0.875rem;
-  color: var(--fg-muted, #9aa0a6);
+  color: var(--text-muted);
 }
 
+/* Обводка чипа — `--border-strong`, а не `--border-color`: чип читается как
+   граница элемента, и `--border-color` в киберпанке даёт 1.80:1 на карточке
+   (норма 3:1). `--border-strong` держит 3.18:1 / 6.24:1 / 4.70:1 в трёх темах. */
 .talk-note__chip {
   padding: 2px 10px;
-  border: 1px solid var(--line, #2a2f36);
-  border-radius: 999px;
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-full);
   font-size: 0.8125rem;
 }
 
 .talk-note__prose {
   font-size: 1rem;
-  line-height: var(--prose-lh, 1.5);
+  line-height: var(--prose-lh);
 }
 
 .talk-note__prose p {
@@ -112,6 +124,61 @@
 }
 
 .talk-note__related-list a {
-  color: var(--accent, #7aa2f7);
+  color: var(--text-accent);
   text-underline-offset: 3px;
+}
+
+/* Соцсети спикера. Геометрия (24px маска, 20px зазор, 44px зона нажатия)
+   объявлена в program.css рядом с карточками, но страница заметки program.css
+   не грузит — без правил ниже ссылка схлопывалась в текст 64–75×20 px без
+   иконки. Здесь те же значения под скоупом `.talk-note`, чтобы program.css не
+   менялся: карточки на странице дня остаются как были. Иконка берётся из
+   `--social-icon`, который задаёт site.css (`.social-link--<сеть>`), — копии
+   SVG-путей в этом файле нет. */
+.talk-note .social-links {
+  display: flex;
+  flex-wrap: wrap;
+  /* 20px, а не 8: зона нажатия — 44px (24 + 2 × 10, см. `::after`), при
+     меньшем зазоре соседние зоны перекрывались бы. */
+  gap: var(--space-5);
+  margin-block-start: 2px;
+}
+
+.talk-note .social-link {
+  position: relative;
+  display: inline-block;
+  flex: none;
+  /* 24px — видимый размер маски (WCAG 2.5.8). */
+  inline-size: 24px;
+  block-size: 24px;
+  background-color: currentColor;
+  color: var(--text-muted);
+  -webkit-mask-image: var(--social-icon);
+  mask-image: var(--social-icon);
+  -webkit-mask-position: center;
+  mask-position: center;
+  -webkit-mask-repeat: no-repeat;
+  mask-repeat: no-repeat;
+  -webkit-mask-size: 14px;
+  mask-size: 14px;
+  transition: color 120ms ease;
+}
+
+/* Маска обязана остаться 24px, но палец в неё не попадает: псевдоэлемент
+   расширяет зону нажатия до 44×44 (24 + 2 × 10), клик всё равно принадлежит
+   самой ссылке. */
+.talk-note .social-link::after {
+  content: "";
+  position: absolute;
+  inset: -10px;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .talk-note .social-link:hover {
+    color: var(--text-normal);
+  }
+}
+
+.talk-note .social-link:focus-visible {
+  color: var(--text-normal);
 }

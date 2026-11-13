@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://nikitaboyarkin.github.io/mm-program-page/sitemap-index.xml

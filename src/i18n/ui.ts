@@ -59,6 +59,7 @@ const RU = {
   talkPage: "Страница доклада",
   talkAbout: "О докладе",
   talkSpeakers: "Спикеры",
+  talkHall: "Зал",
   talkMetaDescription: "{title} — {track}, {day}, {start}–{end}, {hall}.",
   metaTalks:
     "91 доклад, 11 треков и 11 тем Матемаркетинг 2026: граф связей, заметки с постоянными адресами и обратные ссылки.",
@@ -151,6 +152,7 @@ const EN: Record<keyof typeof RU, string> = {
   talkPage: "Talk page",
   talkAbout: "About the talk",
   talkSpeakers: "Speakers",
+  talkHall: "Hall",
   talkMetaDescription: "{title} — {track}, {day}, {start}–{end}, {hall}.",
   metaTalks:
     "91 talks, 11 tracks and 11 themes of Matemarketing 2026: a relation graph, notes with permanent addresses and backlinks.",

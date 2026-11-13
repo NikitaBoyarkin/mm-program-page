@@ -22,9 +22,15 @@ interface Props {
   themes: Array<{ id: string; label: string }>;
   related: RelatedNote[];
   backHref: string;
+  /**
+   * Есть ли у заметки тело. У докладов без описания (267, 292, 361, 362) в
+   * `.md` только frontmatter, и секция «О докладе» превращалась бы в пустой
+   * заголовок. Решает страница: она одна видит запись коллекции.
+   */
+  hasBody?: boolean;
 }
 
-const { talk, lang, dayName, dayDate, themes, related, backHref } = Astro.props;
+const { talk, lang, dayName, dayDate, themes, related, backHref, hasBody = true } = Astro.props;
 const time = `${talk.start}–${talk.end}`;
 ---
 
@@ -37,7 +43,9 @@ const time = `${talk.start}–${talk.end}`;
       <span aria-hidden="true">·</span>
       <span>{time}</span>
       <span aria-hidden="true">·</span>
-      <span>{talk.hall}</span>
+      <span>
+        <span class="visually-hidden">{t(lang, "talkHall")}: </span>{talk.hall}
+      </span>
     </p>
     <h1 class="talk-note__title">{talk.title}</h1>
     <p class="talk-note__track">{talk.track}</p>
@@ -58,11 +66,12 @@ const time = `${talk.start}–${talk.end}`;
                     class={`social-link social-link--${link.network}`}
                     href={link.url}
                     target="_blank"
-                    rel="noopener noreferrer"
+                    rel="noopener noreferrer nofollow"
+                    aria-label={`${SOCIAL_LABELS[link.network]}: ${lector.name}`}
+                    title={SOCIAL_LABELS[link.network]}
                     data-analytics="speaker-social"
-                  >
-                    {SOCIAL_LABELS[link.network]}
-                  </a>
+                    data-speaker={lector.name}
+                  ></a>
                 ))}
               </span>
             )}
@@ -72,12 +81,14 @@ const time = `${talk.start}–${talk.end}`;
     </section>
   )}
 
-  <section class="talk-note__about" aria-labelledby="talk-note-about">
-    <h2 id="talk-note-about">{t(lang, "talkAbout")}</h2>
-    <div class="talk-note__prose">
-      <slot />
-    </div>
-  </section>
+  {hasBody && (
+    <section class="talk-note__about" aria-labelledby="talk-note-about">
+      <h2 id="talk-note-about">{t(lang, "talkAbout")}</h2>
+      <div class="talk-note__prose">
+        <slot />
+      </div>
+    </section>
+  )}
 
   {themes.length > 0 && (
     <section class="talk-note__themes" aria-labelledby="talk-note-themes">
@@ -94,7 +105,7 @@ const time = `${talk.start}–${talk.end}`;
       <ul class="talk-note__related-list">
         {related.map((note) => (
           <li>
-            <a href={note.href}>{note.title}</a>
+            <a href={note.hrefTalk}>{note.title}</a>
           </li>
         ))}
       </ul>
