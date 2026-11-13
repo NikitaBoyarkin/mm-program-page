@@ -1,0 +1,73 @@
+---
+/**
+ * EN-пара заметки доклада: `/en/talk/<id>/`. Тело — из коллекции `talks-en`,
+ * факты — из `localizeProgram`-цепочек (`localizeTalk` + подписи трека/зала),
+ * чтобы страница не собирала перевод сама.
+ */
+import { getCollection, render } from "astro:content";
+import Base from "../../../layouts/Base.astro";
+import TalkNote from "../../../components/TalkNote.astro";
+import { dayLabel } from "../../../i18n/format";
+import { dayHrefFor, talkHrefFor } from "../../../i18n/paths";
+import { t } from "../../../i18n/ui";
+import { dayNameLabel, hallLabel, localizeTalk, trackLabel } from "../../../lib/localize";
+import { days, PROGRAM, talkById } from "../../../lib/program";
+import { buildNotes, relatedNotes, themeLabel, themesOf } from "../../../lib/talks-graph";
+
+const lang = "en" as const;
+const relatedById = relatedNotes(buildNotes(PROGRAM.talks, { hrefOf: (_ordinal, id) => talkHrefFor(lang, id) }));
+const dayOf = new Map(days().map((day, index) => [day.id, { day, ordinal: index + 1 }]));
+
+export async function getStaticPaths() {
+  const [ru, en] = await Promise.all([getCollection("talks"), getCollection("talks-en")]);
+  const ruIds = new Set(ru.map((entry) => String(entry.data.id)));
+  return [...en]
+    .sort((a, b) => a.data.id - b.data.id)
+    .map((entry) => ({
+      params: { id: String(entry.data.id) },
+      props: { entry, hasRu: ruIds.has(String(entry.data.id)) },
+    }));
+}
+
+const { entry, hasRu } = Astro.props;
+const anchor = talkById(entry.data.id);
+if (!anchor) throw new Error(`note ${entry.id}: talk ${entry.data.id} is missing from program.json`);
+
+const talk = {
+  ...localizeTalk(lang, anchor),
+  track: trackLabel(lang, anchor.track),
+  hall: hallLabel(lang, anchor.hall),
+};
+const meta = dayOf.get(talk.dayId)!;
+const { Content } = await render(entry);
+const related = (relatedById.get(talk.id) ?? []).filter((note) => note.id !== talk.id);
+const themes = themesOf(anchor).map((id) => ({ id, label: themeLabel(id, lang) }));
+const description = t(lang, "talkMetaDescription", {
+  title: talk.title,
+  track: talk.track,
+  day: `${dayNameLabel(lang, meta.day.name)} ${dayLabel(meta.day.date, lang)}`,
+  start: talk.start,
+  end: talk.end,
+  hall: talk.hall,
+});
+---
+
+<Base
+  title={`${talk.title} — ${t(lang, "brandEvent")}`}
+  {description}
+  {lang}
+  page="talk"
+  alternatePath={hasRu ? `talk/${talk.id}/` : undefined}
+>
+  <TalkNote
+    {talk}
+    {lang}
+    dayName={dayNameLabel(lang, meta.day.name)}
+    dayDate={meta.day.date}
+    {themes}
+    {related}
+    backHref={`${dayHrefFor(lang, meta.ordinal)}#t${talk.id}`}
+  >
+    <Content />
+  </TalkNote>
+</Base>

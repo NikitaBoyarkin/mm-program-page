@@ -32,7 +32,7 @@
 
 | Было (v1) | Стало (v2) |
 | --- | --- |
-| `index.html` и 3 файла, запуск двойным кликом по `file://` | Astro: 9 страниц — три дня × две локали, граф докладов (`/talks/`, `/en/talks/`), 404 и два JSON-эндпоинта; `bun run build` |
+| `index.html` и 3 файла, запуск двойным кликом по `file://` | Astro: 191 страница — три дня × две локали, граф докладов (`/talks/`, `/en/talks/`), заметка на каждый из 91 доклада (`/talk/<id>/`, `/en/talk/<id>/`), 404 и два JSON-эндпоинта; `bun run build` |
 | Браузер рисует сетку из `window.MM_PROGRAM` | Сетка **лежит в HTML**: три страницы по 39 / 37 / 15 карточек, у каждого дня свой URL |
 | День переключается на клиенте, состояние живёт в памяти | День — это адрес: `/`, `/day/2/`, `/day/3/` (в EN — `/en/`, `/en/day/2/`, `/en/day/3/`) — ссылки, история, шаринг |
 | `app.js` — IIFE на 780 строк без типов | `src/lib/program.ts` и `src/lib/ics.ts` — типизированное ядро и 186 юнит-тестов без браузера |
@@ -135,6 +135,8 @@ src/
   pages/en/program.json.ts   /en/program.json с переводом
   pages/talks.astro          граф докладов → /talks/
   pages/en/talks.astro       граф докладов → /en/talks/
+  pages/talk/[id].astro      заметка доклада → /talk/<id>/ (EN-пара в pages/en/talk/)
+  content/talks, talks-en    182 заметки: frontmatter из слепка, тело — seed (bun run talks:generate)
   pages/404.astro            404
   scripts/program-client.ts  клиентский JS: тема, фильтр, поиск
   styles/tokens.css          токены тем, Inter и Cormorant

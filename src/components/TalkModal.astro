@@ -47,6 +47,7 @@ const { lang } = Astro.props;
       <div class="talk-modal__speakers" data-modal-speakers></div>
       <div class="talk-modal__text" data-modal-text></div>
       <div class="talk-modal__actions">
+        <a class="talk-modal__page" href="#" data-modal-page hidden>{t(lang, "talkPage")}</a>
         <a
           class="talk-modal__buy"
           href="https://matemarketing.ru/tickets/"

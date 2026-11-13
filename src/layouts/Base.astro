@@ -43,8 +43,8 @@ interface Props {
    *  предзагрузка обязана просить ровно тот вариант, который выберет `srcset`,
    *  иначе браузер качает два файла. */
   preloadBanner?: BannerSources | null;
-  /** Какая это поверхность: у графа свой адрес и свой пункт в шапке. */
-  page?: "day" | "talks";
+  /** Какая это поверхность: у графа и заметки доклада свой адрес и свой пункт в шапке. */
+  page?: "day" | "talks" | "talk";
   /** Путь пары в другом языке (`en/talks/`) для страниц, у которых нет дня:
    *  у дней пара считается из `dayOrdinal`, у графа — только отсюда. */
   alternatePath?: string;
@@ -267,6 +267,7 @@ const [ticketsBefore, ticketsAfter = ""] = t(lang, "footerTickets").split("{link
       favorites={Boolean(dayOrdinal)}
       tracks={Boolean(dayOrdinal)}
       page={page}
+      langHref={alternatePath ? `${BASE_URL}${alternatePath}` : undefined}
     />
 
     <main id="main" class="page" tabindex="-1">

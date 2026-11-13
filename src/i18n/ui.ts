@@ -56,6 +56,10 @@ const RU = {
   talksPortfolio: "Полная версия графа — в портфолио",
   talksPortfolioNote: "Там же темы каждой карточки и рекомендации по докладам.",
   talksToProgram: "К расписанию",
+  talkPage: "Страница доклада",
+  talkAbout: "О докладе",
+  talkSpeakers: "Спикеры",
+  talkMetaDescription: "{title} — {track}, {day}, {start}–{end}, {hall}.",
   metaTalks:
     "91 доклад, 11 треков и 11 тем Матемаркетинг 2026: граф связей, заметки с постоянными адресами и обратные ссылки.",
   dayTabsLabel: "Дни программы",
@@ -144,6 +148,10 @@ const EN: Record<keyof typeof RU, string> = {
   talksPortfolio: "Full graph version — in the portfolio",
   talksPortfolioNote: "Every card there also carries its themes and related talks.",
   talksToProgram: "To the schedule",
+  talkPage: "Talk page",
+  talkAbout: "About the talk",
+  talkSpeakers: "Speakers",
+  talkMetaDescription: "{title} — {track}, {day}, {start}–{end}, {hall}.",
   metaTalks:
     "91 talks, 11 tracks and 11 themes of Matemarketing 2026: a relation graph, notes with permanent addresses and backlinks.",
   dayTabsLabel: "Program days",

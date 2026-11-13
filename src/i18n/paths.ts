@@ -24,3 +24,8 @@ export function switchLangHref(lang: Lang, ordinal: number): string {
 export function talksHrefFor(lang: Lang): string {
   return `${BASE_URL}${langPrefix(lang)}talks/`;
 }
+
+/** Постоянный адрес доклада: пара `/talk/<id>/` и `/en/talk/<id>/`. */
+export function talkHrefFor(lang: Lang, id: number | string): string {
+  return `${BASE_URL}${langPrefix(lang)}talk/${id}/`;
+}

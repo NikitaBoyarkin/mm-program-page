@@ -1,0 +1,117 @@
+/* Заметка доклада. Отдельный файл, как talks.css: страница не грузит сетку,
+   карточки и модалку, а программа не грузит эту типографику. */
+.talk-note {
+  max-width: var(--prose-measure, 66ch);
+  margin-inline: auto;
+  padding: clamp(16px, 4vw, 48px) var(--gap, 16px) 64px;
+  display: flex;
+  flex-direction: column;
+  gap: 32px;
+}
+
+.talk-note__back {
+  font-size: 0.875rem;
+  color: var(--fg-muted, #9aa0a6);
+  text-decoration: none;
+}
+
+.talk-note__back:hover {
+  color: var(--fg, #f5f5f5);
+}
+
+.talk-note__head {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.talk-note__eyebrow,
+.talk-note__track {
+  margin: 0;
+  font-size: 0.8125rem;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  color: var(--fg-muted, #9aa0a6);
+}
+
+.talk-note__eyebrow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.talk-note__title {
+  margin: 0;
+  font-family: var(--font-display, inherit);
+  font-size: clamp(1.5rem, 1.1rem + 1.8vw, 2.25rem);
+  line-height: 1.15;
+  text-wrap: balance;
+}
+
+.talk-note section {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.talk-note h2 {
+  margin: 0;
+  font-size: 0.75rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--fg-muted, #9aa0a6);
+}
+
+.talk-note__speaker-list,
+.talk-note__chips,
+.talk-note__related-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 20px;
+}
+
+.talk-note__speaker {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.talk-note__speaker-name {
+  font-weight: 600;
+}
+
+.talk-note__speaker-role {
+  font-size: 0.875rem;
+  color: var(--fg-muted, #9aa0a6);
+}
+
+.talk-note__chip {
+  padding: 2px 10px;
+  border: 1px solid var(--line, #2a2f36);
+  border-radius: 999px;
+  font-size: 0.8125rem;
+}
+
+.talk-note__prose {
+  font-size: 1rem;
+  line-height: var(--prose-lh, 1.5);
+}
+
+.talk-note__prose p {
+  margin: 0 0 1em;
+  text-wrap: wrap;
+  hyphens: manual;
+}
+
+.talk-note__related-list {
+  flex-direction: column;
+  gap: 6px;
+}
+
+.talk-note__related-list a {
+  color: var(--accent, #7aa2f7);
+  text-underline-offset: 3px;
+}

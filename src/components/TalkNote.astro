@@ -1,0 +1,103 @@
+---
+/**
+ * Тело страницы доклада — одно на оба языка, чтобы RU и EN не разошлись.
+ *
+ * Факты (день, время, зал, трек, спикеры) берутся из `PROGRAM`, а не из
+ * frontmatter заметки: слепок остаётся единственным источником данных, а
+ * frontmatter — его проверяемая копия для редактора. Тело (`<slot />`) —
+ * из `.md`: сначала seed из описания, потом ручная правка.
+ */
+import { t, type Lang } from "../i18n/ui";
+import { dayLabel } from "../i18n/format";
+import type { Talk } from "../lib/program-core";
+import { SOCIAL_LABELS } from "../lib/socials";
+import type { RelatedNote } from "../lib/talks-graph";
+import "../styles/talk.css";
+
+interface Props {
+  talk: Talk;
+  lang: Lang;
+  dayName: string;
+  dayDate: string;
+  themes: Array<{ id: string; label: string }>;
+  related: RelatedNote[];
+  backHref: string;
+}
+
+const { talk, lang, dayName, dayDate, themes, related, backHref } = Astro.props;
+const time = `${talk.start}–${talk.end}`;
+---
+
+<article class="talk-note">
+  <a class="talk-note__back" href={backHref}>← {t(lang, "talksToProgram")}</a>
+
+  <header class="talk-note__head">
+    <p class="talk-note__eyebrow">
+      <span>{dayName} {dayLabel(dayDate, lang)}</span>
+      <span aria-hidden="true">·</span>
+      <span>{time}</span>
+      <span aria-hidden="true">·</span>
+      <span>{talk.hall}</span>
+    </p>
+    <h1 class="talk-note__title">{talk.title}</h1>
+    <p class="talk-note__track">{talk.track}</p>
+  </header>
+
+  {talk.lectors.length > 0 && (
+    <section class="talk-note__speakers" aria-labelledby="talk-note-speakers">
+      <h2 id="talk-note-speakers">{t(lang, "talkSpeakers")}</h2>
+      <ul class="talk-note__speaker-list">
+        {talk.lectors.map((lector) => (
+          <li class="talk-note__speaker">
+            <span class="talk-note__speaker-name">{lector.name}</span>
+            {lector.role && <span class="talk-note__speaker-role">{lector.role}</span>}
+            {lector.socials && lector.socials.length > 0 && (
+              <span class="social-links">
+                {lector.socials.map((link) => (
+                  <a
+                    class={`social-link social-link--${link.network}`}
+                    href={link.url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    data-analytics="speaker-social"
+                  >
+                    {SOCIAL_LABELS[link.network]}
+                  </a>
+                ))}
+              </span>
+            )}
+          </li>
+        ))}
+      </ul>
+    </section>
+  )}
+
+  <section class="talk-note__about" aria-labelledby="talk-note-about">
+    <h2 id="talk-note-about">{t(lang, "talkAbout")}</h2>
+    <div class="talk-note__prose">
+      <slot />
+    </div>
+  </section>
+
+  {themes.length > 0 && (
+    <section class="talk-note__themes" aria-labelledby="talk-note-themes">
+      <h2 id="talk-note-themes">{t(lang, "factsThemes")}</h2>
+      <ul class="talk-note__chips">
+        {themes.map((theme) => <li class="talk-note__chip">{theme.label}</li>)}
+      </ul>
+    </section>
+  )}
+
+  {related.length > 0 && (
+    <section class="talk-note__related" aria-labelledby="talk-note-related">
+      <h2 id="talk-note-related">{t(lang, "talksRelated")}</h2>
+      <ul class="talk-note__related-list">
+        {related.map((note) => (
+          <li>
+            <a href={note.href}>{note.title}</a>
+          </li>
+        ))}
+      </ul>
+    </section>
+  )}
+</article>

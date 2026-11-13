@@ -1020,6 +1020,30 @@ h2.talk-modal__title {
   border-block-start: 1px solid var(--border-color);
 }
 
+/* Ссылка на постоянную страницу доклада: вторичное действие рядом с «Купить».
+   Скрыта до первого открытия модалки — адрес подставляет клиент. */
+.talk-modal__page {
+  display: inline-flex;
+  align-items: center;
+  min-block-size: 44px;
+  padding: var(--space-3) var(--space-4);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  color: var(--fg);
+  font-size: 0.9rem;
+  line-height: 1.2;
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.talk-modal__page[hidden] {
+  display: none;
+}
+
+.talk-modal__page:hover {
+  border-color: var(--fg-muted);
+}
+
 /* Кнопка «Купить» повторяет primary-рецепт .button из site.css: файлы
    независимы, поэтому рецепт продублирован целиком, а не одной строкой. */
 .talk-modal__buy {

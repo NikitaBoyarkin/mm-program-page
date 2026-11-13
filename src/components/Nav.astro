@@ -22,10 +22,20 @@ interface Props {
   /** Кнопка «Все треки»: сбрасывает фильтр трека, значит нужен тот же скрипт. */
   tracks?: boolean;
   /** Какая это страница: у графа свой адрес и свой пункт «текущая страница». */
-  page?: "day" | "talks";
+  page?: "day" | "talks" | "talk";
+  /** Пара в другом языке для страницы без номера дня (заметка доклада). */
+  langHref?: string;
 }
 
-const { ordinal, lang, search = false, favorites = false, tracks = false, page = "day" } = Astro.props;
+const {
+  ordinal,
+  lang,
+  search = false,
+  favorites = false,
+  tracks = false,
+  page = "day",
+  langHref: langHrefProp,
+} = Astro.props;
 const portfolio = "https://nikitaboyarkin.github.io";
 
 // Переход на портфолио размечен: без UTM визит, начавшийся в новой сессии,
@@ -61,7 +71,9 @@ const trackOptions = tracksOfProgram().map((name) => ({ name, label: trackLabel(
 const targetLang = otherLang(lang);
 // С страницы графа язык переключается на граф, а не на первый день: иначе
 // переключатель уводил бы читателя с той страницы, которую он читает.
-const langHref = page === "talks" ? talksHrefFor(targetLang) : switchLangHref(lang, ordinal ?? 1);
+// У заметки доклада дня нет вовсе — адрес пары приходит сверху.
+const langHref =
+  langHrefProp ?? (page === "talks" ? talksHrefFor(targetLang) : switchLangHref(lang, ordinal ?? 1));
 const langCode = targetLang.toUpperCase();
 ---
 

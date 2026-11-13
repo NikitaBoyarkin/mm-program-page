@@ -11,7 +11,7 @@
  * Промис мемоизирован, ошибка показывается тостом; в консоль не пишем ничего.
  */
 import { pluralTalks } from "../i18n/format";
-import { dayHrefFor } from "../i18n/paths";
+import { dayHrefFor, talkHrefFor } from "../i18n/paths";
 import { t, type Lang } from "../i18n/ui";
 import { buildCalendar, calendarFilename, downloadIcs } from "../lib/ics";
 import {
@@ -1227,6 +1227,12 @@ function fillText(talk: Talk): void {
 function fillModal(talk: Talk): void {
   const title = $("[data-modal-title]");
   if (title) title.textContent = talk.title;
+  // Постоянный адрес заметки: модалка — быстрый просмотр, страница — адрес.
+  const pageLink = $<HTMLAnchorElement>("[data-modal-page]");
+  if (pageLink) {
+    pageLink.href = talkHrefFor(LANG, talk.id);
+    pageLink.hidden = false;
+  }
   fillPoster(talk);
   fillMeta(talk);
   fillSpeakers(talk);
