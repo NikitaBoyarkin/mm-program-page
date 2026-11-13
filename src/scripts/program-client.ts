@@ -3,8 +3,8 @@
  *
  * Разметку, сетку и стили рисует Astro на билде, поэтому здесь нет ни рендера
  * карточек, ни раскладки: только поведение, которому нужен пользователь, —
- * переключатель темы, drawer, фильтры (трек и избранное), «Подробнее»,
- * модалка доклада и экспорт `.ics`.
+ * переключатель темы, drawer, фильтры (трек и избранное), модалка доклада
+ * и экспорт `.ics`.
  *
  * Данные (`Program`) приходят из prerendered-эндпоинта `<локаль>/program.json`
  * лениво — только при первом открытии модалки, поиске или экспорте календаря.
@@ -429,9 +429,6 @@ function applyFilter(): void {
     empty.hidden = visible !== 0;
     empty.textContent = t(LANG, favoritesOnly ? "emptyFavorites" : "emptyTrack");
   }
-  // Карточка могла быть скрыта при первичном замере: теперь у неё есть бокс,
-  // и решение «нужна ли кнопка» можно принять честно.
-  syncExpandAffordance();
 
   syncTimeGroups();
 }
@@ -857,80 +854,6 @@ function initFavorites(): void {
   });
 }
 
-/* ── 5. «Подробнее» в карточке ─────────────────────────────────────── */
-
-/**
- * Кламп не виден в `scrollHeight` (там всегда высота клампа), поэтому меряем
- * «до/после»: снимаем кламп на один кадр, сравниваем высоту и возвращаем как
- * было. Возвращает `null`, если у карточки сейчас нет бокса (скрыта фильтром):
- * по нулевой высоте решать нельзя, состояние кнопки в этом случае не трогаем.
- */
-function isClamped(paragraph: HTMLElement): boolean | null {
-  if (!paragraph.getClientRects().length) return null;
-  const inline = paragraph.style;
-  const saved = {
-    clamp: inline.webkitLineClamp,
-    display: inline.display,
-    overflow: inline.overflow,
-  };
-  inline.webkitLineClamp = "unset";
-  inline.display = "block";
-  inline.overflow = "visible";
-  const full = paragraph.getBoundingClientRect().height;
-  inline.webkitLineClamp = saved.clamp;
-  inline.display = saved.display;
-  inline.overflow = saved.overflow;
-  const clamped = paragraph.getBoundingClientRect().height;
-  return full > clamped + 1;
-}
-
-/**
- * На билде `canExpand` считает символы, а кламп — строки: 150 знаков дают
- * 5+ строк на 320px и 4 строки на десктопной карточке 391px. Поэтому кнопка
- * есть с запасом у всех «длинных», а здесь прячется та, что ничего не
- * раскрывает — иначе в десктопной сетке «Подробнее» открывало пустоту.
- */
-function syncExpandAffordance(): void {
-  for (const button of $$<HTMLButtonElement>("button.talk-card__toggle-btn[data-more]")) {
-    const card = button.closest<HTMLElement>("article.talk-card");
-    const paragraph = card?.querySelector<HTMLElement>(".talk-card__theses p");
-    if (!card || !paragraph) {
-      button.hidden = true;
-      continue;
-    }
-    if (card.classList.contains("talk-card--expanded")) {
-      button.hidden = false;
-      continue;
-    }
-    const clamped = isClamped(paragraph);
-    if (clamped !== null) button.hidden = !clamped;
-  }
-}
-
-function initExpand(): void {
-  for (const button of $$<HTMLButtonElement>("button.talk-card__toggle-btn[data-more]")) {
-    button.addEventListener("click", (event) => {
-      // Кнопка живёт внутри карточки: клик не должен открыть модалку.
-      event.stopPropagation();
-      event.preventDefault();
-      const card = button.closest<HTMLElement>("article.talk-card");
-      if (!card) return;
-      const expanded = card.classList.toggle("talk-card--expanded");
-      button.setAttribute("aria-expanded", String(expanded));
-      button.textContent = t(LANG, expanded ? "less" : "more");
-    });
-  }
-
-  syncExpandAffordance();
-  // Порог «5 строк» зависит от ширины: 320 → 254px текста, 1440 → 349px.
-  // После поворота экрана кнопка должна появиться/исчезнуть сама.
-  let resizeTimer = 0;
-  window.addEventListener("resize", () => {
-    window.clearTimeout(resizeTimer);
-    resizeTimer = window.setTimeout(syncExpandAffordance, 200);
-  });
-}
-
 /* ── Данные: ленивый мемоизированный fetch ─────────────────────────── */
 
 let programPromise: Promise<Program> | null = null;
@@ -965,7 +888,7 @@ function loadProgram(): Promise<Program> {
   return programPromise;
 }
 
-/* ── 5a. Прогрев данных и предзагрузка постера ─────────────────────── */
+/* ── 5. Прогрев данных и предзагрузка постера ──────────────────────── */
 
 /**
  * `/program.json` — 280 КБ (63 КБ gzip). Качать его при загрузке страницы
@@ -1680,7 +1603,6 @@ export function init(): void {
   initDrawerFavorites();
   initHeaderFavorites();
   initTimeGroups();
-  initExpand();
   initModal();
   initSearch();
   initExport();

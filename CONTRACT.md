@@ -86,12 +86,12 @@
 
 Остальные иконки — декоративные и живут **только в CSS**: `::before` с data-URI маской
 (`--icon-calendar`, `--icon-clock`, `--icon-mic`, `--icon-layers`, `--icon-pin`,
-`--icon-star`/`--icon-star-filled`, `--icon-download`, `--icon-ticket`, `--icon-chevron`,
+`--icon-star`/`--icon-star-filled`, `--icon-download`, `--icon-ticket`,
 `--icon-tag`, `--icon-expand`). Разметка остаётся текстовой, поэтому селекторы Playwright и порядок узлов не
 меняются. Точки: `dt` фактов (класс `facts__item--*`), `.day-tab` (скрыт ≤ 767.98 px — иначе
 полоса табов переполняет 320 px), чипы избранного и треков (на телефоне вся полоса чипов
 скрыта, а трек выбирается из меню в шапке — `div.track-menu`), экспорт `.ics`, бейджи времени и
-зала, «Подробнее» (шеврон переворачивается по `aria-expanded`), мета-кейсы, «Купить» и
+зала, мета-кейсы, «Купить» и
 «Избранное» в модалке. Новая иконка = `--icon-*` + селектор в общем рецепте.
 
 Кнопка-заголовок карточки (`button.talk-card__title-btn`) несёт иконку «развернуть»
@@ -264,7 +264,7 @@ section.program-grid[data-grid][style=--mm-hall-count:N]
           div.talk-card__media > img.talk-card__banner-img | div.talk-card__media-text > h3 > button.talk-card__title-btn[data-talk-open]
         div.talk-card__bottom
           div.talk-card__speakers > div.talk-card__speaker > img.talk-card__speaker-photo | span.talk-card__speaker-initials + div.talk-card__speaker-info > span.talk-card__speaker-name + span.talk-card__speaker-desc + span.social-links > a.social-link.social-link--<network>[href^=https][target=_blank][rel="noopener noreferrer nofollow"][aria-label]
-          div.talk-card__content > h3.talk-card__content-title > button.talk-card__title-btn + div.talk-card__theses > p + button.talk-card__toggle-btn[data-more][aria-expanded] + p.talk-card__related > span.talk-card__related-label + a.talk-card__related-link[href] × 1..3
+          div.talk-card__content > h3.talk-card__content-title > button.talk-card__title-btn + div.talk-card__theses > p + p.talk-card__related > span.talk-card__related-label + a.talk-card__related-link[href] × 1..3
 p.program-empty[data-empty][hidden]
 div.talk-modal[data-modal][hidden]
   div.talk-modal__backdrop[data-modal-backdrop]
@@ -424,7 +424,7 @@ origin (`https://nikitaboyarkin.github.io`) — файл оставлен заг
 | `.talk-card__media-meta` | скрыт: трек и зал уже в шапке, дубль не нужен |
 | `.talk-card__title-btn`, `.track-chip` | заголовок-кнопка — `min-block-size: 44px` (сенсорная цель, а не только визуальная высота), подписи не мельче 0.75 rem. Чип компактнее — `36px`: он в ряду фильтров, 44 px на каждом давали три строки тулбара; 36 ≥ 24 px (WCAG 2.5.8 AA) с запасом на палец |
 | `div.track-chips` | `display: none` (было `flex`, чипы треков по одному). Тулбар сокращается до счётчика и экспорта: «Избранное» и «Все треки» живут в шапке, и вторая поверхность того же состояния только дублировала выбор. Узлы остаются в DOM: `[data-fav-filter]` владеет состоянием фильтра, `button[data-track]` — списком допустимых треков для клиента |
-| `.talk-card__favorite`, `.talk-card__toggle-btn`, `.talk-modal__close` | целевой размер 44 px даёт псевдоэлемент (`::after`/`::before`), глиф остаётся прежнего размера |
+| `.talk-card__favorite`, `.talk-modal__close` | целевой размер 44 px даёт псевдоэлемент (`::after`/`::before`), глиф остаётся прежнего размера |
 | `header.nav-mobile` | `backdrop-filter: none`: блюр на каждой прокрутке дороже, чем даёт, а фон `color-mix(… 97%)` и так почти непрозрачен |
 | `header.nav-mobile a.nav-lang` | `display: none`: место в полосе занимает кнопка треков, а ссылка на язык остаётся в `.drawer-foot` (глобус + код цели) |
 | `nav.day-tabs` | липкие под шапкой, `flex-wrap: nowrap`; подпись вкладки без даты (`.day-tab__date` скрыт), поэтому три вкладки встают в строку даже на 320 px. Горизонтальный скролл остаётся страховкой, а не основным способом добраться до третьего дня |
@@ -518,8 +518,10 @@ origin (`https://nikitaboyarkin.github.io`) — файл оставлен заг
    отдельное состояние: `sessionStorage['mm-program:favorites-only']`, общее у чипа, звезды в
    шапке и кнопки в панели, поэтому все три несут `aria-pressed` и переключаются одной
    функцией.
-7. **Карточка**: `button.talk-card__title-btn` открывает модалку; «Подробнее» разворачивает
-   текст в карточке (`talk-card--expanded`, подпись «Свернуть», `aria-expanded`).
+7. **Карточка**: `button.talk-card__title-btn` открывает модалку. Тезисы обрезаны клампом
+   в 5 строк (`-webkit-line-clamp`): высота карточки задаёт строку сетки «время × залы»,
+   и развёрнутый текст растянул бы весь ряд. Полный текст — в модалке и на `/talk/<id>/`;
+   без JS (`html:not([data-js])`) кламп снят, потому что модалки в этом режиме нет.
 8. **Модалка**: `hidden` по умолчанию; открытие — `hidden = false`, `body.is-modal-open`,
    заполнение из `/program.json`; закрытие — backdrop, кнопка, `Esc`; фокус-трап внутри
    `[data-modal-dialog]`, возврат фокуса на триггер. Слой живёт в истории браузера: открытие
@@ -549,7 +551,7 @@ origin (`https://nikitaboyarkin.github.io`) — файл оставлен заг
 ## Доступность и качество
 
 - Интерактив с видимой подписью или иконкой — настоящий `button`/`a`: drawer, оба тумблера
-  темы, чипы, звезда избранного, «Подробнее», экспорт `.ics`, закрытие и триггер поиска.
+  темы, чипы, звезда избранного, экспорт `.ics`, закрытие и триггер поиска.
   Три исключения — затемнения-подложки `div.nav-scrim`, `div.talk-modal__backdrop` и
   `div.search-dialog__backdrop`: это закрытие по указателю, и у каждого слоя рядом работают
   кнопка и `Esc`, так что клик по подложке не единственный путь. `href="#"` нет нигде.

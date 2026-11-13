@@ -1,7 +1,7 @@
 ---
 /**
  * Карточка доклада. Рендерится на билде целиком: время, звёздочка, спикеры,
- * тезисы и «Подробнее». JS только переключает состояния — разметку не создаёт.
+ * тезисы. JS только переключает состояния — разметку не создаёт.
  */
 import { t, type Lang } from "../i18n/ui";
 import { STAR } from "../lib/icons";
@@ -41,12 +41,9 @@ const lectors = talk.lectors
   .filter((lector) => lector.name.trim() !== "")
   .map((lector) => ({ ...lector, socials: lector.socials ?? [] }));
 const theses = (talk.short || firstParagraph(talk.description)).trim();
-/** Кнопка нужна только там, где текст реально не влезает в 5 строк клампа.
-    Порог считается по строкам, а не по «длинный/короткий»: при карточке 254px
-    на 320px пять строк держат ≈165 знаков, поэтому 150 — безопасный низ.
-    Замер дня 1: 8 карточек на 179–239 знаках вылезали за кламп на 22–90px
-    (до 4 скрытых строк) и оставались без кнопки. */
-const canExpand = theses.length > 150;
+/** Тезисы обрезаны клампом в 5 строк (`program.css`): высота карточки задаёт
+    строку сетки «время × залы», и развёрнутый текст растянул бы весь ряд.
+    Полный текст — в модалке (заголовок-кнопка) и на `/talk/<id>/`. */
 const trackText = talk.track.trim() ? trackLabel(lang, talk.track) : t(lang, "noTrack");
 const hallText = hallLabel(lang, talk.hall);
 
@@ -213,13 +210,6 @@ const initials = (name: string): string =>
           <div class="talk-card__theses">
             <p>{theses}</p>
           </div>
-        )
-      }
-      {
-        canExpand && (
-          <button class="talk-card__toggle-btn" type="button" data-more aria-expanded="false">
-            {t(lang, "more")}
-          </button>
         )
       }
       {/* Связанные доклады — тот же список, что на странице графа, но здесь он

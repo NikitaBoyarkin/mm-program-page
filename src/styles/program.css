@@ -501,7 +501,7 @@ nav.day-tabs {
   overflow-wrap: anywhere;
 }
 
-/* Низ карточки: спикеры, затем тезисы и «Подробнее» — сверху вниз, как в
+/* Низ карточки: спикеры, затем тезисы — сверху вниз, как в
    эталоне; пустое место остаётся внизу карточки, а не между блоками. */
 .talk-card__bottom {
   display: flex;
@@ -702,62 +702,14 @@ nav.day-tabs {
   outline-offset: 2px;
 }
 
-/* Развёрнутое состояние снимает clamp. Карточка перестаёт быть фиксированной
-   по высоте: строка сетки minmax(520px, auto) вырастет, а не обрежет текст. */
-.talk-card--expanded {
-  block-size: auto;
-}
-
-.talk-card--expanded .talk-card__theses p {
-  display: block;
-  overflow: visible;
-  -webkit-line-clamp: unset;
-}
-
-/* Без JS развернуть карточку нечем: кнопка осталась бы мёртвой, а кламп
-   спрятал бы половину тезисов. Маркер `data-js` ставит предрисуночный скрипт,
-   поэтому «JS выключен или упал» = текст целиком, кнопки нет. */
+/* Без JS модалки тоже нет, поэтому кламп стал бы единственным местом, где
+   текст теряется молча: на странице без скрипта показываем тезисы целиком.
+   Маркер `data-js` ставит предрисуночный скрипт, поэтому «JS выключен или
+   упал» = полный текст. */
 html:not([data-js]) .talk-card__theses p {
   display: block;
   overflow: visible;
   -webkit-line-clamp: unset;
-}
-
-html:not([data-js]) .talk-card__toggle-btn {
-  display: none;
-}
-
-.talk-card__toggle-btn {
-  position: relative;
-  display: inline-flex;
-  align-items: center;
-  /* 44px — настоящая цель: подпись стала кнопкой, и подгонять её псевдоэлементом
-     больше не нужно. Пара литералов та же, что у кнопки-заголовка (киберпанк
-     переопределяет `--button-bg` на розовый). */
-  min-block-size: 44px;
-  padding: var(--space-2) var(--space-4);
-  border: 1px solid var(--control-border);
-  border-radius: var(--radius-full);
-  background: #171717;
-  color: #f8f2da;
-  font-family: inherit;
-  font-size: 0.875rem;
-  font-weight: 500;
-  line-height: 1.3;
-  text-decoration: none;
-  cursor: pointer;
-}
-
-@media (hover: hover) and (pointer: fine) {
-  .talk-card__toggle-btn:hover {
-    border-color: var(--border-active);
-    background: #2e2e2e;
-  }
-}
-
-.talk-card__toggle-btn:active {
-  border-color: var(--border-active);
-  background: #2e2e2e;
 }
 
 /* Компактная карточка — без баннера: кремовая панель ниже, карточка читается
@@ -1492,7 +1444,6 @@ html:has(body.is-search-open) {
   --icon-star-filled: url("data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%2024%2024'%20fill='%23000'%20stroke='none'%3E%3Cpath%20d='M12%202l3.1%206.3%206.9%201-5%204.9%201.2%206.8L12%2017.8%205.8%2021l1.2-6.8-5-4.9%206.9-1z'/%3E%3C/svg%3E");
   --icon-download: url("data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%2024%2024'%20fill='none'%20stroke='%23000'%20stroke-width='2'%20stroke-linecap='round'%20stroke-linejoin='round'%3E%3Cpath%20d='M21%2015v4a2%202%200%200%201-2%202H5a2%202%200%200%201-2-2v-4M7%2010l5%205%205-5M12%2015V3'/%3E%3C/svg%3E");
   --icon-ticket: url("data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%2024%2024'%20fill='none'%20stroke='%23000'%20stroke-width='2'%20stroke-linecap='round'%20stroke-linejoin='round'%3E%3Cpath%20d='M3%209V7a2%202%200%200%201%202-2h14a2%202%200%200%201%202%202v2a3%203%200%200%200%200%206v2a2%202%200%200%201-2%202H5a2%202%200%200%201-2-2v-2a3%203%200%200%200%200-6z'/%3E%3C/svg%3E");
-  --icon-chevron: url("data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%2024%2024'%20fill='none'%20stroke='%23000'%20stroke-width='2'%20stroke-linecap='round'%20stroke-linejoin='round'%3E%3Cpath%20d='M6%209l6%206%206-6'/%3E%3C/svg%3E");
   --icon-tag: url("data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%2024%2024'%20fill='none'%20stroke='%23000'%20stroke-width='2'%20stroke-linecap='round'%20stroke-linejoin='round'%3E%3Cpath%20d='M20.59%2013.41l-7.17%207.17a2%202%200%200%201-2.83%200L2%2012V2h10l8.59%208.59a2%202%200%200%201%200%202.82zM7%207h.01'/%3E%3C/svg%3E");
   --icon-expand: url("data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%2024%2024'%20fill='none'%20stroke='%23000'%20stroke-width='2'%20stroke-linecap='round'%20stroke-linejoin='round'%3E%3Cpath%20d='M15%203h6v6M9%2021H3v-6M21%203l-7%207M3%2021l7-7'/%3E%3C/svg%3E");
 }
@@ -1510,7 +1461,6 @@ html:has(body.is-search-open) {
 .talk-card__time::before,
 .talk-card__hall::before,
 .talk-card__track::before,
-.talk-card__toggle-btn::before,
 .talk-card__title-btn::before,
 .talk-modal__buy::before,
 .talk-modal__fav::before,
@@ -1545,7 +1495,6 @@ html:has(body.is-search-open) {
 /* Во flex-контейнерах отступ между иконкой и текстом даёт `gap`, а не margin. */
 .talk-card__time,
 .talk-card__hall,
-.talk-card__toggle-btn,
 .talk-card__title-btn,
 .talk-modal__buy {
   gap: 0.4em;
@@ -1581,17 +1530,6 @@ html:has(body.is-search-open) {
 .track-chip[data-track]::before {
   --icon: var(--icon-tag);
   --icon-size: 13px;
-}
-
-/* Шеврон смотрит вниз в свёрнутом состоянии и переворачивается раскрытым:
-   подпись кнопки при этом меняется на «Свернуть». */
-.talk-card__toggle-btn::before {
-  --icon: var(--icon-chevron);
-  transition: transform 0.2s ease;
-}
-
-.talk-card__toggle-btn[aria-expanded="true"]::before {
-  transform: rotate(180deg);
 }
 
 /* Заголовок-кнопка открывает модалку: «развернуть» читается как обещание
@@ -1688,8 +1626,7 @@ html:has(body.is-search-open) {
   .mm-toast,
   .talk-modal,
   img.talk-card__banner-img,
-  .talk-card__favorite,
-  .talk-card__toggle-btn {
+  .talk-card__favorite {
     display: none !important;
   }
 
@@ -1809,10 +1746,6 @@ html:has(body.is-search-open) {
   }
 
   .talk-card__favorite path {
-    transition: none;
-  }
-
-  .talk-card__toggle-btn::before {
     transition: none;
   }
 
