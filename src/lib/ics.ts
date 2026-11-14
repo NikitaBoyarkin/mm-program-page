@@ -97,6 +97,39 @@ export function icsStamp(date: Date): string {
   );
 }
 
+/** Шапка календаря: у дня и у всей программы она одна и та же. */
+function calendarEnvelope(name: string): string[] {
+  return [
+    "BEGIN:VCALENDAR",
+    "VERSION:2.0",
+    "PRODID:-//mm-program-page//NONSGML program//EN",
+    "CALSCALE:GREGORIAN",
+    "METHOD:PUBLISH",
+    `X-WR-CALNAME:${icsEscape(name)}`,
+    `X-WR-TIMEZONE:${TZID}`,
+    ...VTIMEZONE,
+  ];
+}
+
+/** Один `VEVENT`; дата берётся у дня, в котором стоит доклад. */
+function eventLines(date: string, talk: Talk, stamp: string): string[] {
+  assertIcsTime(talk.start, talk.id);
+  assertIcsTime(talk.end, talk.id);
+  const lines = [
+    "BEGIN:VEVENT",
+    `UID:${icsEscape(talk.id)}@mm-program-page`,
+    `DTSTAMP:${stamp}`,
+    `DTSTART;TZID=${TZID}:${icsDate(date, talk.start)}`,
+    `DTEND;TZID=${TZID}:${icsDate(date, talk.end)}`,
+    `SUMMARY:${icsEscape(talk.title)}`,
+    `LOCATION:${icsEscape(talk.hall)}`,
+  ];
+  const description = talk.short || firstParagraph(talk.description);
+  if (description) lines.push(`DESCRIPTION:${icsEscape(description)}`);
+  lines.push("END:VEVENT");
+  return lines;
+}
+
 /**
  * Собирает календарь дня: один VEVENT на доклад.
  * `now` подставляется в тестах, чтобы вывод был побайтово стабильным.
@@ -114,30 +147,42 @@ export function buildCalendar(
     assertIcsTime(talk.end, talk.id);
   }
   const stamp = icsStamp(now);
-  const lines = [
-    "BEGIN:VCALENDAR",
-    "VERSION:2.0",
-    "PRODID:-//mm-program-page//NONSGML program//EN",
-    "CALSCALE:GREGORIAN",
-    "METHOD:PUBLISH",
-    `X-WR-CALNAME:${icsEscape(`${eventName} — ${day.name || day.date}`)}`,
-    `X-WR-TIMEZONE:${TZID}`,
-    ...VTIMEZONE,
-  ];
+  const lines = calendarEnvelope(`${eventName} — ${day.name || day.date}`);
+
+  for (const talk of talks) lines.push(...eventLines(day.date, talk, stamp));
+
+  lines.push("END:VCALENDAR");
+  return `${lines.map(foldLine).join(CRLF)}${CRLF}`;
+}
+
+/** Имя файла всего расписания: `matemarketing-program.ics`. */
+export const PROGRAM_CALENDAR_FILENAME = "matemarketing-program.ics";
+
+/**
+ * Собирает календарь всей программы: дни из `days`, дата каждого `VEVENT` —
+ * дня, в котором доклад стоит. Неизвестный `dayId` — ошибка, а не пропуск:
+ * молча выпавший доклад читатель найдёт только в календаре, после скачивания.
+ *
+ * @throws если у дня некорректная дата или доклад не принадлежит ни одному дню.
+ */
+export function buildProgramCalendar(
+  days: Day[],
+  talks: Talk[],
+  now: Date = new Date(),
+  eventName: string = "Матемаркетинг 2026",
+): string {
+  const dateOf = new Map<number, string>();
+  for (const day of days) {
+    assertIcsDate(day.date);
+    dateOf.set(day.id, day.date);
+  }
+  const stamp = icsStamp(now);
+  const lines = calendarEnvelope(`${eventName} — все дни`);
 
   for (const talk of talks) {
-    lines.push(
-      "BEGIN:VEVENT",
-      `UID:${icsEscape(talk.id)}@mm-program-page`,
-      `DTSTAMP:${stamp}`,
-      `DTSTART;TZID=${TZID}:${icsDate(day.date, talk.start)}`,
-      `DTEND;TZID=${TZID}:${icsDate(day.date, talk.end)}`,
-      `SUMMARY:${icsEscape(talk.title)}`,
-      `LOCATION:${icsEscape(talk.hall)}`,
-    );
-    const description = talk.short || firstParagraph(talk.description);
-    if (description) lines.push(`DESCRIPTION:${icsEscape(description)}`);
-    lines.push("END:VEVENT");
+    const date = dateOf.get(talk.dayId);
+    if (!date) throw new Error(`ics: доклад ${talk.id} ссылается на неизвестный день ${talk.dayId}`);
+    lines.push(...eventLines(date, talk, stamp));
   }
 
   lines.push("END:VCALENDAR");

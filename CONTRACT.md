@@ -38,16 +38,17 @@
 | `scripts/fetch-program.ts` | data | `--fetch` / `--check` / `--dry-run`, нормализация |
 | `src/lib/program.ts` | core | типы + чистые функции домена; собирает `PROGRAM` из слепка и overlay'ев `socials.json` / `copy.ru.json` (заморожено) |
 | `src/lib/ics.ts` | core | сборка `.ics` (заморожено) |
-| `src/lib/icons.ts` | core | общие глифы: звезда и ярлык трека (один контур на карточку/шапку и на чип/шапку — потому что это одна функция) |
+| `src/lib/icons.ts` | core | общие глифы: звезда, ярлык трека и булавка зала (один контур на карточку/шапку, на чип/шапку и на бейдж зала/шапку — потому что это одна функция) |
 | `src/lib/images.ts` | core | доставка картинок: `bannerSources` (WebP-варианты 400/800 только у Netlify-хоста), `photoSources` / `photoMapEntry` (локальная аватарка из `photos.json` с фолбэком на оригинал). Только билд: в `/program.json` локальные пути не уезжают — модалка валидирует `photo` через `imageUrl()`, а тот относительный адрес отвергает |
 | `src/data/photos.json` | data | производная карта «оригинал аватарки → `/media/lectors/<hash>.webp`»; производится `bun run photos`, коммитится (по ней читают карточка и эндпоинт) |
 | `scripts/optimize-photos.ts` | data | `prebuild`: качает аватарки, режет до 144×144 WebP q72 в `public/media/lectors/` (каталог не коммитится), ошибка сети не валит сборку |
 | `src/lib/theme.ts` | core | три темы, цвета `theme-color`, `nextTheme` |
+| `src/components/NavDrawer.astro` | view | панель меню (`nav#site-nav`) и подложка: дни, «Граф докладов», «Контакты», избранное, `.ics`, тема, язык; вынесена из `Nav.astro` из-за бюджета 20 КБ на файл |
 | `src/lib/analytics.ts` | core | UTM-атрибуция, единственный канал в PostHog (`track`, супер-свойства) и карта событий `AnalyticsEvents` — тип, по которому компилятор и тест не дают имени разъехаться с портфолио |
 | `src/components/Analytics.astro` | view | ленивый `init` PostHog, `outbound_click` |
 | `src/components/CollabCta.astro` | view | авторский CTA на сотрудничество: одна строка в подвале всех страниц, крупного блока в теле дня нет намеренно; `cta_view` по IntersectionObserver 50 %, `cta_click` с поверхностью и целью |
 | `src/layouts/Base.astro` | view | `<head>`, тема до отрисовки, шапка, подвал; `og:image` — `src/assets/og/program-2026.png` (1200×630), пересборка `bun run og` |
-| `src/components/Nav.astro` | view | шапка, drawer (дни, «Граф докладов», ссылки портфолио), тумблер темы (луна в разметке), звезда «Избранное» со счётчиком (первая в группе действий, только на страницах дня), кнопка поиска и переключатель `.nav-lang` |
+| `src/components/Nav.astro` | view | шапка, drawer (дни, «Граф докладов», «Контакты»), тумблер темы (луна в разметке), звезда «Избранное» со счётчиком (первая в группе действий, только на страницах дня), меню треков и меню залов, кнопка поиска и переключатель `.nav-lang` |
 | `src/components/ProgramPage.astro` | view | день: шапка, табы, чипы, тулбар, сетка, модалка |
 | `src/components/TalksPage.astro` | view | граф: шапка, figure с SVG, заметки по трекам, хабы тем, подвал |
 | `src/components/TalksGraph.astro` | view | SVG графа и пакер подписей: раскладка приходит готовой, интерактив — только ссылки-якоря |
@@ -62,16 +63,16 @@
 | `src/pages/program.json.ts` | data | `/program.json` — тот же слепок для клиента |
 | `src/scripts/program-client.ts` | client | единственный JS: тема (морф иконки), drawer, фильтр, избранное, модалка, `.ics`, поиск |
 | `src/styles/tokens.css` | design | токены трёх тем + шрифты + типографическая шкала (заморожено) + три слоя земли: ramp (`body::before`), свечение (`.ground-bloom`), соты (`body::after`), рампа и свечение едут двумя орбитами |
-| `src/styles/nav.css` | design | шапка и её меню: круг кнопок группы действий, звезда избранного, меню треков (триггер + панель 12 пунктов), переключатель языка. Глобальный файл, потому что правила были scoped в `Nav.astro`, а все селекторы и так из `.nav-*`/`.track-menu*`; вынесено, когда компонент перевалил за бюджет 20 КБ на файл |
+| `src/styles/nav.css` | design | шапка и её меню: круг кнопок группы действий, звезда избранного, меню треков (триггер + панель 12 пунктов), меню залов (триггер + панель залов дня, `.hall-menu` делит рецепт с `.track-menu`), переключатель языка. Глобальный файл, потому что правила были scoped в `Nav.astro`, а все селекторы и так из `.nav-*`/`.track-menu*`; вынесено, когда компонент перевалил за бюджет 20 КБ на файл |
 | `src/styles/site.css` | design | каркас страницы, шапка, подвал с контактами; геометрия иконок соцсетей — маски `--social-*` (нужны и карточкам, и подвалу, в том числе на `404`); иконки ссылок шапки — маски `--nav-*`; монограмма в шапке — маска `--brand-logo`: шестиугольник фавикона с вырезанными «NB» (`fill-rule: evenodd`, глифы Inter 800 путями) |
 | `src/styles/program.css` | design | сетка, карточка, модалка, печать; геометрия всех декоративных иконок — маски `--icon-*` |
 | `src/styles/talks.css` | design | граф и заметки: SVG, списки заметок, хабы тем. Отдельный файл: страница не грузит сетку, карточки и модалку |
 | `src/styles/search.css` | design | диалог поиска; файл глобальный, потому что результаты вставляет клиент уже после отрисовки и узлы `.search-result` не получают scope-атрибут Astro |
 | `tests/lib/*.test.ts` | verify | 229 юнит-тестов ядра, i18n, поиска, земли, картинок, графа, заметок, материалов и аналитики (`bun test tests/lib`, 13 файлов) |
-| `tests/built/program.spec.ts` | verify | 31 браузерный тест сборки (Playwright) |
+| `tests/built/program.spec.ts` | verify | 32 браузерных теста сборки (Playwright) |
 | `tests/built/i18n-search.spec.ts` | verify | 8 тестов EN-маршрутов, переключателя языка и поиска |
 | `tests/built/talks.spec.ts` | verify | 10 тестов графа: заметки и якоря, SVG на билде, хабы тем, вход в шапке на трёх ширинах (включая 768 px — иконка), EN-копия, скролл только внутри графа |
-| `tests/built/talk-pages.spec.ts` | verify | 17 тестов заметки доклада: адрес и пара языков, факты, связанные ссылки резолвятся, EN-переключатель, вход из модалки; вместе 66 тестов × 3 проекта = 198 прогонов |
+| `tests/built/talk-pages.spec.ts` | verify | 17 тестов заметки доклада: адрес и пара языков, факты, связанные ссылки резолвятся, EN-переключатель, вход из модалки; вместе 67 тестов × 3 проекта = 201 прогон |
 | `src/content.config.ts` | core | коллекции `talks` / `talks-en`: zod-схема фактов заметки, `.strict()` ловит опечатку в ключе |
 | `src/content/talks/<id>.md`, `src/content/talks-en/<id>.md` | data | по заметке на доклад в каждой локали (92 + 92); frontmatter производится генератором, тело — seed из описания и ручная правка |
 | `src/lib/talk-note.ts` | core | детерминированный frontmatter-форматер и разбор файла: один источник для генератора и тестов |
@@ -89,11 +90,11 @@
 
 Остальные иконки — декоративные и живут **только в CSS**: `::before` с data-URI маской
 (`--icon-calendar`, `--icon-clock`, `--icon-mic`, `--icon-layers`, `--icon-pin`,
-`--icon-star`/`--icon-star-filled`, `--icon-download`, `--icon-ticket`,
+`--icon-star`/`--icon-star-filled`, `--icon-ticket`,
 `--icon-tag`, `--icon-expand`). Разметка остаётся текстовой, поэтому селекторы Playwright и порядок узлов не
 меняются. Точки: `dt` фактов (класс `facts__item--*`), `.day-tab` (скрыт ≤ 767.98 px — иначе
 полоса табов переполняет 320 px), чипы избранного и треков (на телефоне вся полоса чипов
-скрыта, а трек выбирается из меню в шапке — `div.track-menu`), экспорт `.ics`, бейджи времени и
+скрыта, а трек выбирается из меню в шапке — `div.track-menu`), бейджи времени и
 зала, мета-кейсы, «Купить» и
 «Избранное» в модалке. Новая иконка = `--icon-*` + селектор в общем рецепте.
 
@@ -196,7 +197,7 @@ resolveTrack, talkById, dayHref, socialsOf`; медиа: `IMAGE_HOSTS, imageUrl`
 (`bannerSources, photoSources, photoMapEntry, BANNER_SIZES`) — единственное место, где из
 разрешённого URL делается уменьшенный вариант. Соцсети: `SOCIAL_NETWORKS, SOCIAL_LABELS,
 SocialNetwork, SocialLink` из `src/lib/socials.ts`. Календарь: `icsEscape, foldLine, icsDate, icsStamp,
-buildCalendar, calendarFilename, downloadIcs`.
+buildCalendar, calendarFilename, buildProgramCalendar, PROGRAM_CALENDAR_FILENAME, downloadIcs`.
 
 Правила, которые эти функции держат:
 
@@ -231,9 +232,11 @@ html[data-theme=dark|light|cyberpunk][data-lang=ru|en][data-day-id][data-day-dat
 `button.nav-icon-btn.theme-toggle--header[data-theme-toggle]` (тема из шапки, без меню) и
 `button.nav-toggle[data-nav-open][aria-expanded][aria-controls=site-nav]`; второй
 `button.theme-toggle[data-theme-toggle]`, `button.drawer-favs[data-fav-drawer]`
-(внутри тоже `[data-favorites-count]`; только на страницах дня, иначе кнопка-фильтр мертва)
-и второй `a.nav-lang` живут в `.drawer-foot` внутри `nav#site-nav`, где также
-`ul.drawer-links > a.drawer-link`; класс-модификатор `drawer-link--day|home|projects|contacts|talks`
+(внутри тоже `[data-favorites-count]`; только на страницах дня, иначе кнопка-фильтр мертва),
+`button.drawer-ics[data-export-ics]` (экспорт `.ics`; только на страницах дня, рядом
+инлайновая иконка скачивания — `--icon-download` больше не нужен) и второй `a.nav-lang`
+живут в `.drawer-foot` внутри `nav#site-nav`, где также
+`ul.drawer-links > a.drawer-link`; класс-модификатор `drawer-link--day|contacts|talks`
 даёт пункту иконку маской (`::before`). «Граф докладов» — **пункт этого сайта, а не ссылка
 портфолио**, и живёт на трёх поверхностях, ни на одной не дублируясь:
 `header.nav-mobile ul.nav-inline > li > a.nav-link--talks[href][aria-current=page]` (≥ 1024 px,
@@ -255,7 +258,6 @@ div.program-toolbar
     button.track-chip[data-track][aria-pressed] × N          ← чипы треков; они же список
                                                                допустимых значений для клиента
   p.talk-count > span[data-talk-count] + span[data-talk-count-label]
-  button.button[data-export-ics]
 section.program-grid[data-grid][style=--mm-hall-count:N]
   div.program-grid__halls-header > div.program-grid__time-label + div.program-grid__hall-name × N
   div.program-grid__content
@@ -535,7 +537,18 @@ origin (`https://nikitaboyarkin.github.io`) — файл оставлен заг
    третья поверхность одного состояния. Чипы остаются в DOM и продолжают получать
    `aria-pressed` — по ним клиент проверяет `?track=`, а CSS их только скрывает.
    Условия складываются по «И»: видима ячейка, у которой (трек не выбран или совпал)
-   И (избранное выключено или доклад в избранном); в URL попадает только `?track=`.
+   И (зал не выбран или совпал) И (избранное выключено или доклад в избранном); в URL
+   попадают `?track=` и `?hall=`.
+   Вторая ось фильтра — зал (`button[data-hall-header]` → панель `[data-hall-menu]`,
+   `.hall-menu`): пункты — залы этого дня (`hallsOfDay`), потому что у третьего дня залы
+   свои (онлайн-залы) и список программы целиком давал бы пункты с пустой выдачей.
+   Разметка ячейки несёт `data-hall` рядом с `data-track`; допустимые значения клиент
+   берёт из ячеек, второго списка у зала нет. Выбор идёт через `setActiveHall` — зеркало
+   `setActiveTrack`: `aria-pressed` у пунктов, `data-active` у кнопки, `?hall=` в URL,
+   `?hall=` переезжает вместе с днём. Кнопка зала видна на всех ширинах; в 480–767.98 px
+   её место занимает иконка «Граф докладов» (граф остаётся в панели меню), поэтому
+   витрина иконки графа — 768–1023.98 px, а не 480–1023.98 px. При пустой выдаче
+   `[data-empty]` говорит `emptyHall`; приоритет у `emptyFavorites`.
    Число в чипе — размер избранного, обновляется вместе с `[data-favorites-count]`;
    снятие звезды при включённом фильтре немедленно убирает карточку из списка.
    В режиме списка (≤767.98 px) у группы не остаётся видимых докладов → её
@@ -564,8 +577,12 @@ origin (`https://nikitaboyarkin.github.io`) — файл оставлен заг
    механизм у drawer'а: обе панели открываются через `pushLayer`, а закрываются своими
    `closeDrawer`/`closeModal` с общей проверкой `mmLayerToken`. Поиск — третий слой того же
    механизма.
-9. **`.ics`**: экспортирует видимые доклады дня (с учётом фильтра) через `buildCalendar`
-   и `downloadIcs`; имя файла `matemarketing-<YYYY-MM-DD>.ics`; пустой набор → тост.
+9. **`.ics`**: кнопка `button.drawer-ics[data-export-ics]` живёт в `.drawer-foot` панели меню
+   (в теле страницы её нет) и после клика закрывает панель. Экспортирует **всю программу** —
+   все доклады трёх дней через `buildProgramCalendar`, дата каждого `VEVENT` берётся у его дня;
+   фильтры страницы на экспорт не влияют (они и не могут: на других днях своего набора нет).
+   Файл `matemarketing-program.ics`; доклады без валидного времени и с неизвестным `dayId`
+   в календарь не попадают (второе — исключение, а не пропуск); пустой набор → тост.
 10. **Тост**: `div.mm-toast[role=status]`, живёт ~2.5 с.
 11. **Поиск**: `button[data-search-open]` открывает `div.search-dialog` (`hidden = false`,
     фокус в `[data-search-input]`, запись истории через `pushLayer("search")`); закрывают

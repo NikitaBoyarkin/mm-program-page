@@ -13,15 +13,13 @@
 import { pluralTalks } from "../i18n/format";
 import { talkHrefFor } from "../i18n/paths";
 import { t, type Lang } from "../i18n/ui";
-import { buildCalendar, calendarFilename, downloadIcs } from "../lib/ics";
+import { buildProgramCalendar, downloadIcs, PROGRAM_CALENDAR_FILENAME } from "../lib/ics";
 import {
   BASE_URL,
-  DATE_RE,
   formatRange,
   imageUrl,
   isTime,
   minutes,
-  type Day,
   type Program,
   type Talk,
 } from "../lib/program-core";
@@ -371,10 +369,12 @@ function initDrawer(): void {
   });
 }
 
-/* ── 3. Фильтры: трек и избранное ──────────────────────────────────── */
+/* ── 3. Фильтры: трек, зал и избранное ─────────────────────────────── */
 
 let activeTrack: string | null = null;
-/** Второй фильтр — по избранному; независим от трека, условия складываются по «И». */
+/** Вторая ось того же фильтра; независима от трека, условия складываются по «И». */
+let activeHall: string | null = null;
+/** Третий фильтр — по избранному; независим от первых двух, условия те же «И». */
 let favoritesOnly = false;
 
 /** Режим списка переключается CSS, но видимость разделителей зависит от него же. */
@@ -390,11 +390,16 @@ function cellTalkId(cell: HTMLElement): number {
   return Number(card?.dataset.talkId);
 }
 
-function writeTrackToUrl(): void {
+function writeFilterToUrl(): void {
   try {
     const url = new URL(window.location.href);
-    if (activeTrack) url.searchParams.set("track", activeTrack);
-    else url.searchParams.delete("track");
+    for (const [key, value] of [
+      ["track", activeTrack],
+      ["hall", activeHall],
+    ] as const) {
+      if (value) url.searchParams.set(key, value);
+      else url.searchParams.delete(key);
+    }
     const next = `${url.pathname}${url.search}${url.hash}`;
     const current = `${window.location.pathname}${window.location.search}${window.location.hash}`;
     // `history.state` переносим как есть: в нём может лежать маркер открытого
@@ -413,8 +418,9 @@ function applyFilter(): void {
   let visible = 0;
   for (const cell of cells) {
     const trackMatches = activeTrack === null || cell.dataset.track === activeTrack;
+    const hallMatches = activeHall === null || cell.dataset.hall === activeHall;
     const favoriteMatches = !favoritesOnly || favorites.has(cellTalkId(cell));
-    const show = trackMatches && favoriteMatches;
+    const show = trackMatches && hallMatches && favoriteMatches;
     // `hidden` на ячейке, а не удаление карточки: сетка не пересобирается и
     // пустые ячейки без `data-track` продолжают держать геометрию.
     cell.hidden = !show;
@@ -428,7 +434,10 @@ function applyFilter(): void {
   const empty = $<HTMLElement>("[data-empty]");
   if (empty) {
     empty.hidden = visible !== 0;
-    empty.textContent = t(LANG, favoritesOnly ? "emptyFavorites" : "emptyTrack");
+    empty.textContent = t(
+      LANG,
+      favoritesOnly ? "emptyFavorites" : activeHall !== null ? "emptyHall" : "emptyTrack",
+    );
   }
 
   syncTimeGroups();
@@ -474,11 +483,11 @@ function syncTimeGroups(): void {
 }
 
 /**
- * `?track=` переезжает вместе с днём: вкладки дней — обычные ссылки, и без
- * правки их `href` фильтр терялся бы на первом же переходе. `dayHref` в ядре
- * не трогаем (это core) — квери добавляется здесь, на клиенте.
+ * `?track=` и `?hall=` переезжают вместе с днём: вкладки дней — обычные ссылки,
+ * и без правки их `href` фильтр терялся бы на первом же переходе. `dayHref` в
+ * ядре не трогаем (это core) — квери добавляется здесь, на клиенте.
  */
-function syncDayTabTracks(): void {
+function syncDayTabFilters(): void {
   // Drawer — второй путь к дням, особенно на мобиле; без него фильтр терялся
   // на первом же переходе по меню. Внешние ссылки портфолио в drawer'е не
   // трогаем: у них другой origin.
@@ -496,8 +505,13 @@ function syncDayTabTracks(): void {
     if (!href) continue;
     try {
       const url = new URL(href, window.location.href);
-      if (activeTrack) url.searchParams.set("track", activeTrack);
-      else url.searchParams.delete("track");
+      for (const [key, value] of [
+        ["track", activeTrack],
+        ["hall", activeHall],
+      ] as const) {
+        if (value) url.searchParams.set(key, value);
+        else url.searchParams.delete(key);
+      }
       link.setAttribute("href", `${url.pathname}${url.search}${url.hash}`);
     } catch {
       // некорректный href — оставляем как есть, вкладка продолжает работать
@@ -525,13 +539,33 @@ function setActiveTrack(track: string | null, updateUrl = true): void {
   if (headerButton) headerButton.dataset.active = String(known !== null);
 
   applyFilter();
-  syncDayTabTracks();
-  if (updateUrl) writeTrackToUrl();
+  syncDayTabFilters();
+  if (updateUrl) writeFilterToUrl();
+}
+
+/**
+ * Допустимые залы — из самих ячеек дня: второго списка (чипов, как у треков)
+ * у зала нет, поэтому страница остаётся единственным источником правды.
+ */
+function setActiveHall(hall: string | null, updateUrl = true): void {
+  const cells = $$<HTMLElement>("div.program-grid__talk-cell[data-hall]");
+  const known =
+    hall !== null && cells.some((cell) => cell.dataset.hall === hall) ? hall : null;
+  activeHall = known;
+
+  for (const option of $$<HTMLButtonElement>("button[data-hall-option]")) {
+    option.setAttribute("aria-pressed", String((option.dataset.hall ?? "") === (known ?? "")));
+  }
+  const headerButton = $<HTMLButtonElement>("button[data-hall-header]");
+  if (headerButton) headerButton.dataset.active = String(known !== null);
+
+  applyFilter();
+  syncDayTabFilters();
+  if (updateUrl) writeFilterToUrl();
 }
 
 function initFilter(): void {
   const chips = trackChips();
-  if (!chips.length) return;
 
   for (const chip of chips) {
     chip.addEventListener("click", () => {
@@ -541,34 +575,41 @@ function initFilter(): void {
   }
 
   // Телефонного списка больше нет: на телефоне трек выбирается из меню в шапке
-  // (`button[data-track-option]`), которое обрабатывается `initHeaderTracks`.
+  // (`button[data-track-option]`), которое обрабатывается `initMenu`.
   // Чипы остаются списком допустимых треков даже когда CSS их скрывает.
 
-  let raw: string | null = null;
+  let params: URLSearchParams | null = null;
   try {
-    raw = new URLSearchParams(window.location.search).get("track");
+    params = new URLSearchParams(window.location.search);
   } catch {
-    raw = null;
+    params = null;
   }
+
   // Пустой `?track=` — тоже состояние. Выравниваем обе поверхности (чипы и
   // меню в шапке) с фактическим фильтром сразу, а не ждём первого клика:
   // иначе разметка меню («Все треки» нажата) остаётся единственным источником
   // правды, и `data-active` у кнопки не появляется.
-  if (!raw) {
-    setActiveTrack(null, false);
-    return;
+  const raw = params?.get("track") ?? null;
+  if (!raw) setActiveTrack(null, false);
+  else {
+    const exact = chips.find((chip) => chip.dataset.track === raw);
+    const loose = chips.find(
+      (chip) => (chip.dataset.track ?? "").toLowerCase() === raw.toLowerCase(),
+    );
+    const chip = exact ?? loose;
+    // Резолв по чипам, а не через `resolveTrack` из ядра: та функция читает
+    // статический `PROGRAM` и втянула бы в клиентский бандл весь слепок (280 КБ)
+    // ради одного сравнения. Плата: `?track=28` (по id) здесь не резолвится —
+    // ссылки с чипов всегда несут имя трека.
+    // Неизвестный трек в URL не применяем: чип не подсветить, фильтр врал бы.
+    // `setActiveTrack(null)` выравнивает поверхности так же, как пустой query.
+    setActiveTrack(chip ? (chip.dataset.track ?? null) : null, false);
   }
 
-  const exact = chips.find((chip) => chip.dataset.track === raw);
-  const loose = chips.find((chip) => (chip.dataset.track ?? "").toLowerCase() === raw.toLowerCase());
-  const chip = exact ?? loose;
-  // Резолв по чипам, а не через `resolveTrack` из ядра: та функция читает
-  // статический `PROGRAM` и втянула бы в клиентский бандл весь слепок (280 КБ)
-  // ради одного сравнения. Плата: `?track=28` (по id) здесь не резолвится —
-  // ссылки с чипов всегда несут имя трека.
-  // Неизвестный трек в URL не применяем: чип не подсветить, фильтр врал бы.
-  // `setActiveTrack(null)` выравнивает поверхности так же, как пустой query.
-  setActiveTrack(chip ? (chip.dataset.track ?? null) : null, false);
+  // Зал: допустимые значения — ячейки дня, поэтому валидация живёт в
+  // `setActiveHall`. Неизвестный `?hall=` сводится к «Все залы», а не к пустой
+  // выдаче.
+  setActiveHall(params?.get("hall") ?? null, false);
 }
 
 function setFavoritesOnly(next: boolean): void {
@@ -658,35 +699,39 @@ function initHeaderFavorites(): void {
   });
 }
 
-/* «Все треки» в шапке — раскрывающийся список, а не сброс.
-   Первая версия кнопки снимала фильтр: при полном списке клик не делал ничего,
-   и со стороны это «кнопка не работает». Здесь она открывает 12 пунктов того же
-   фильтра, что чипы под вкладками дня, поэтому выбрать трек можно из шапки.
-   Панель — не модалка: без фокус-трапа, закрывается по Esc, клику мимо и выбору,
-   фокус возвращается на кнопку (она остаётся на месте, шапка липкая). */
-function trackMenu(): { trigger: HTMLButtonElement; panel: HTMLElement } | null {
-  const trigger = $<HTMLButtonElement>("button[data-track-header]");
-  const panel = $<HTMLElement>("[data-track-menu]");
+/* «Все треки» и «Все залы» в шапке — раскрывающиеся списки, а не сброс.
+   Первая версия кнопки треков снимала фильтр: при полном списке клик не делал
+   ничего, и со стороны это «кнопка не работает». Здесь каждая открывает пункты
+   того же фильтра, что чипы под вкладками дня, поэтому выбрать трек или зал
+   можно из шапки. Панель — не модалка: без фокус-трапа, закрывается по Esc,
+   клику мимо и выбору, фокус возвращается на кнопку (она остаётся на месте,
+   шапка липкая). Обе оси обслуживает один код: различаются только `kind`,
+   атрибуты и функция применения. */
+type FilterMenu = { trigger: HTMLButtonElement; panel: HTMLElement };
+
+function filterMenu(kind: "track" | "hall"): FilterMenu | null {
+  const trigger = $<HTMLButtonElement>(`button[data-${kind}-header]`);
+  const panel = $<HTMLElement>(`[data-${kind}-menu]`);
   return trigger && panel ? { trigger, panel } : null;
 }
 
-function setTrackMenuOpen(open: boolean): void {
-  const menu = trackMenu();
-  if (!menu) return;
+function setMenuOpen(menu: FilterMenu, open: boolean): void {
   menu.panel.hidden = !open;
   menu.trigger.setAttribute("aria-expanded", String(open));
 }
 
-function initHeaderTracks(): void {
-  const menu = trackMenu();
+const FILTER_MENUS = ["track", "hall"] as const;
+
+function initMenu(kind: "track" | "hall", pick: (value: string | null) => void): void {
+  const menu = filterMenu(kind);
   if (!menu) return;
 
-  menu.trigger.addEventListener("click", () => setTrackMenuOpen(menu.panel.hidden));
+  menu.trigger.addEventListener("click", () => setMenuOpen(menu, menu.panel.hidden));
 
-  for (const option of $$<HTMLButtonElement>("button[data-track-option]")) {
+  for (const option of $$<HTMLButtonElement>(`button[data-${kind}-option]`)) {
     option.addEventListener("click", () => {
-      setActiveTrack(option.dataset.track || null);
-      setTrackMenuOpen(false);
+      pick(option.dataset[kind] || null);
+      setMenuOpen(menu, false);
       // Фокус на кнопку, а не в список: панель закрылась, и следующий Tab должен
       // идти дальше по шапке, а не в скрытые пункты.
       menu.trigger.focus();
@@ -700,8 +745,13 @@ function initHeaderTracks(): void {
     if (!(target instanceof Node)) return;
     if (menu.panel.hidden) return;
     if (menu.panel.contains(target) || menu.trigger.contains(target)) return;
-    setTrackMenuOpen(false);
+    setMenuOpen(menu, false);
   });
+}
+
+function initHeaderTracks(): void {
+  initMenu("track", (value) => setActiveTrack(value));
+  initMenu("hall", (value) => setActiveHall(value));
 }
 
 function initTimeGroups(): void {
@@ -1480,41 +1530,21 @@ function initModal(): void {
 
 /* ── 7. Экспорт .ics ───────────────────────────────────────────────── */
 
-function visibleTalkIds(): Set<number> {
-  const ids = new Set<number>();
-  for (const cell of $$<HTMLElement>("div.program-grid__talk-cell[data-track]")) {
-    if (cell.hidden) continue;
-    const card = cell.querySelector<HTMLElement>("article.talk-card[data-talk-id]");
-    const id = Number(card?.dataset.talkId);
-    if (Number.isFinite(id)) ids.add(id);
-  }
-  return ids;
-}
-
-function currentDay(program: Program): Day | undefined {
-  const root = document.documentElement;
-  const id = root.dataset.dayId ?? "";
-  const date = root.dataset.dayDate ?? "";
-  return (
-    program.days.find((day) => String(day.id) === id) ??
-    program.days.find((day) => day.date === date)
-  );
-}
-
 function exportIcs(): void {
   loadProgram()
     .then((program) => {
-      const day = currentDay(program);
-      // Только видимые доклады: фильтр по треку — это и есть выбор на экспорт.
-      const ids = visibleTalkIds();
-      const talks = program.talks.filter(
-        (talk) => ids.has(talk.id) && isTime(talk.start) && isTime(talk.end),
-      );
-      if (!day || !DATE_RE.test(day.date) || !talks.length) {
+      // Вся программа, а не один день: календарь конференции читатель ждёт
+      // целиком. Фильтры страницы на другие дни не распространяются, поэтому
+      // экспорт их не учитывает — иначе файл был бы наполовину отфильтрован.
+      const talks = program.talks.filter((talk) => isTime(talk.start) && isTime(talk.end));
+      if (!program.days.length || !talks.length) {
         toast(t(LANG, "toastNoExport"));
         return;
       }
-      downloadIcs(calendarFilename(day), buildCalendar(day, talks, new Date(), t(LANG, "brandEvent")));
+      downloadIcs(
+        PROGRAM_CALENDAR_FILENAME,
+        buildProgramCalendar(program.days, talks, new Date(), t(LANG, "brandEvent")),
+      );
       toast(
         t(LANG, "toastExported", {
           count: `${talks.length} ${pluralTalks(talks.length, LANG)}`,
@@ -1525,7 +1555,14 @@ function exportIcs(): void {
 }
 
 function initExport(): void {
-  $<HTMLButtonElement>("button[data-export-ics]")?.addEventListener("click", () => exportIcs());
+  // Кнопка одна, но живёт в панели меню: после клика панель закрывается, иначе
+  // скачанный файл остаётся за непрозрачным листом.
+  for (const button of $$<HTMLButtonElement>("button[data-export-ics]")) {
+    button.addEventListener("click", () => {
+      exportIcs();
+      if (button.closest("#site-nav")) closeDrawer();
+    });
+  }
 }
 
 /* ── 7a. Поиск по программе ────────────────────────────────────────── */
@@ -1728,13 +1765,15 @@ export function init(): void {
     if (event.key !== "Escape") return;
     // Поиск — верхний слой: Esc закрывает его первым, даже если снизу
     // открыта модалка.
-    // Меню треков живёт в шапке и перекрывает контент — оно верхний слой,
-    // когда открыто: Esc закрывает его первым.
-    const menu = trackMenu();
-    if (menu && !menu.panel.hidden) {
-      setTrackMenuOpen(false);
-      menu.trigger.focus();
-      return;
+    // Меню фильтров живёт в шапке и перекрывает контент — открытое меню
+    // верхний слой: Esc закрывает его первым. Оси идут в порядке разметки.
+    for (const kind of FILTER_MENUS) {
+      const menu = filterMenu(kind);
+      if (menu && !menu.panel.hidden) {
+        setMenuOpen(menu, false);
+        menu.trigger.focus();
+        return;
+      }
     }
     if (isSearchOpen()) {
       closeSearch();

@@ -24,6 +24,14 @@
     margin-inline-start: 0;
   }
 
+  /* 320 px: пять целей по 44 px + имя-монограмма не влезали на 4 px. Зазор
+     группы — единственное, что можно отдать, не урезая сенсорную цель. */
+  @media (max-width: 479.98px) {
+    .nav-top-actions {
+      gap: var(--space-1);
+    }
+  }
+
   /* Тема доступна из шапки, не открывая drawer: на странице программы тема —
      частая операция, а меню на мобиле ещё и перекрывает контент.
      Стиль повторяет `.nav-toggle`, но отдельным классом: `.nav-toggle` в
@@ -85,23 +93,27 @@
     }
   }
 
-  /* «Все треки» — обёртка, из которой свисает меню. `position: relative` нужна
-     панели: `absolute` считается от неё, а не от строки шапки. Кнопка — тот же
-     круг 44 px, что у соседей; заливка акцентом появляется, когда трек выбран,
-     — тогда шапка говорит «фильтр включён», как нажатый чип в тулбаре. */
-  .nav-tracks {
+  /* «Все треки» и «Все залы» — обёртки, из которых свисают меню. `position:
+     relative` нужна панели: `absolute` считается от неё, а не от строки шапки.
+     Кнопка — тот же круг 44 px, что у соседей; заливка акцентом появляется,
+     когда фильтр этой оси выбран, — тогда шапка говорит «фильтр включён»,
+     как нажатый чип в тулбаре. */
+  .nav-tracks,
+  .nav-halls {
     position: relative;
     display: inline-flex;
   }
 
-  .nav-tracks__trigger[data-active="true"] {
+  .nav-tracks__trigger[data-active="true"],
+  .nav-halls__trigger[data-active="true"] {
     border-color: var(--text-accent);
     background: var(--text-accent);
     color: var(--accent-ink);
   }
 
   @media (hover: hover) and (pointer: fine) {
-    .nav-tracks__trigger[data-active="true"]:hover {
+    .nav-tracks__trigger[data-active="true"]:hover,
+    .nav-halls__trigger[data-active="true"]:hover {
       border-color: var(--text-accent-hover);
       background: var(--text-accent-hover);
       color: var(--accent-ink);
@@ -111,7 +123,8 @@
   /* Панель свисает из-под кнопки и прижимается к правому краю группы, иначе на
      телефоне она уехала бы за экран. Ширина — по содержимому, но не шире
      вьюпорта; высота ограничена, чтобы 12 пунктов не превращались в простыню. */
-  .track-menu {
+  .track-menu,
+  .hall-menu {
     position: absolute;
     inset-block-start: calc(100% + var(--space-2));
     inset-inline-end: 0;
@@ -131,7 +144,8 @@
     box-shadow: 0 12px 32px var(--shadow-color);
   }
 
-  .track-menu[hidden] {
+  .track-menu[hidden],
+  .hall-menu[hidden] {
     display: none;
   }
 
@@ -179,7 +193,8 @@
      вьюпорта (замер: left = −98 при 390 px). `position: fixed` считается от
      вьюпорта, поэтому лист встаёт ровно по полям страницы. */
   @media (max-width: 767.98px) {
-    .track-menu {
+    .track-menu,
+    .hall-menu {
       position: fixed;
       inset-block-start: calc(var(--nav-mobile-h) + var(--space-2));
       inset-inline: var(--space-3);
@@ -243,15 +258,15 @@
   /* ── «Граф докладов» в группе действий ────────────────────────────────────
      Один пункт — три поверхности по ширине, и ни на одной он не дублируется:
      ≥ 1024 px — текстовая ссылка в `.nav-inline` (site.css), здесь кнопка
-     скрыта; 480–1023.98 px — полосы ссылок нет (она ушла в drawer), но шестая
-     иконка влезает, поэтому кнопка видна; ≤ 479.98 px — пять целей по 44 px
-     занимают 285 px из 296 возможных на 320 px, шестая не влезает, и граф
-     остаётся в панели меню. */
+     скрыта; 768–1023.98 px — полосы ссылок нет (она ушла в drawer), но место
+     под иконку есть, поэтому кнопка видна; ≤ 767.98 px — её место занимает
+     кнопка зала (второй оси фильтра на телефоне нужнее: там сетка становится
+     списком, и зал иначе не выбрать), а граф остаётся в панели меню. */
   .nav-graph {
     display: none;
   }
 
-  @media (min-width: 480px) and (max-width: 1023.98px) {
+  @media (min-width: 768px) and (max-width: 1023.98px) {
     .nav-graph {
       display: inline-flex;
     }

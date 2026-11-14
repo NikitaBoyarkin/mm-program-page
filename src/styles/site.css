@@ -189,22 +189,6 @@ dl.facts dt:lang(ru) {
   }
 }
 
-/* Та же пара литералов, что у остальных кнопок программы: в киберпанке
-   `--button-bg` розовый. Единственный потребитель — «Загрузить .ics». */
-.button--ghost {
-  background: #171717;
-  border-color: var(--control-border);
-  color: #f8f2da;
-}
-
-@media (hover: hover) and (pointer: fine) {
-  .button--ghost:not(:disabled):hover {
-    background: #2e2e2e;
-    border-color: var(--border-active);
-    color: #f8f2da;
-  }
-}
-
 /* ── Верхняя панель (sticky, full-bleed) ────────────────────────────────── */
 header.nav-mobile {
   position: sticky;
@@ -391,14 +375,6 @@ ul.nav-inline {
   background-color: currentColor;
   -webkit-mask: var(--nav-icon) center / contain no-repeat;
   mask: var(--nav-icon) center / contain no-repeat;
-}
-
-.nav-link--home {
-  --nav-icon: var(--nav-home);
-}
-
-.nav-link--projects {
-  --nav-icon: var(--nav-projects);
 }
 
 .nav-link--contacts {
@@ -637,14 +613,6 @@ ul.drawer-links {
   --nav-icon: var(--nav-calendar);
 }
 
-.drawer-link--home {
-  --nav-icon: var(--nav-home);
-}
-
-.drawer-link--projects {
-  --nav-icon: var(--nav-projects);
-}
-
 .drawer-link--contacts {
   --nav-icon: var(--nav-contact);
 }
@@ -800,8 +768,6 @@ ul.drawer-links {
 :root {
   /* Иконки ссылок шапки: живут в site.css, а не в program.css, — шапка есть
      и на 404, где стили программы не грузятся. */
-  --nav-home: url("data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%2024%2024'%20fill='none'%20stroke='%23000'%20stroke-width='2'%20stroke-linecap='round'%20stroke-linejoin='round'%3E%3Cpath%20d='M3%209l9-7%209%207v11a2%202%200%200%201-2%202H5a2%202%200%200%201-2-2zM9%2022V12h6v10'/%3E%3C/svg%3E");
-  --nav-projects: url("data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%2024%2024'%20fill='none'%20stroke='%23000'%20stroke-width='2'%20stroke-linecap='round'%20stroke-linejoin='round'%3E%3Cpath%20d='M22%2019a2%202%200%200%201-2%202H4a2%202%200%200%201-2-2V5a2%202%200%200%201%202-2h5l2%203h9a2%202%200%200%201%202%202z'/%3E%3C/svg%3E");
   --nav-contact: url("data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%2024%2024'%20fill='none'%20stroke='%23000'%20stroke-width='2'%20stroke-linecap='round'%20stroke-linejoin='round'%3E%3Cpath%20d='M4%204h16a2%202%200%200%201%202%202v12a2%202%200%200%201-2%202H4a2%202%200%200%201-2-2V6a2%202%200%200%201%202-2zM22%206l-10%207L2%206'/%3E%3C/svg%3E");
   /* Две иконки пунктов бокового меню: дни программы и избранное. Лежат здесь,
      а не в program.css, потому что панель есть и на 404, где стили программы
@@ -1027,8 +993,7 @@ ul.drawer-links {
   }
 
   .button,
-  .button--secondary,
-  .button--ghost {
+  .button--secondary {
     border: 1px solid black;
     background: white;
     color: black;

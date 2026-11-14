@@ -6,9 +6,10 @@
 import { dayLabel } from "../i18n/format";
 import { dayHrefFor, switchLangHref, talksHrefFor } from "../i18n/paths";
 import { otherLang, t, type Lang } from "../i18n/ui";
-import { STAR, TAG } from "../lib/icons";
-import { dayNameLabel, trackLabel } from "../lib/localize";
-import { days, tracksOfProgram } from "../lib/program";
+import { STAR, TAG, PIN } from "../lib/icons";
+import NavDrawer from "./NavDrawer.astro";
+import { dayNameLabel, hallLabel, trackLabel } from "../lib/localize";
+import { days, hallsOfDay, tracksOfProgram } from "../lib/program";
 import { THEME_PATHS } from "../lib/theme";
 
 interface Props {
@@ -21,6 +22,8 @@ interface Props {
   favorites?: boolean;
   /** Кнопка «Все треки»: сбрасывает фильтр трека, значит нужен тот же скрипт. */
   tracks?: boolean;
+  /** Экспорт `.ics` в панели: качает видимые доклады, нужен тот же скрипт. */
+  ics?: boolean;
   /** Какая это страница: у графа свой адрес и свой пункт «текущая страница». */
   page?: "day" | "talks" | "talk";
   /** Пара в другом языке для страницы без номера дня (заметка доклада). */
@@ -33,6 +36,7 @@ const {
   search = false,
   favorites = false,
   tracks = false,
+  ics = false,
   page = "day",
   langHref: langHrefProp,
 } = Astro.props;
@@ -50,9 +54,9 @@ const dayLinks = days().map((day, index) => ({
   label: `${dayNameLabel(lang, day.name)} ${dayLabel(day.date, lang)}`.trim(),
 }));
 
+// Один внешний пункт. «Главная» дублировала логотип (он ведёт туда же), а
+// «Проекты» в шапке программы конкурировали за место с фильтрами.
 const siteLinks = [
-  { href: portfolioHref("/", "nav-home"), label: t(lang, "navHome"), icon: "home" },
-  { href: portfolioHref("/projects/", "nav-projects"), label: t(lang, "navProjects"), icon: "projects" },
   { href: portfolioHref("/contact/", "nav-contacts"), label: t(lang, "navContacts"), icon: "contacts" },
 ];
 
@@ -67,6 +71,15 @@ const talksHref = talksHrefFor(lang);
 // Пункты меню «Все треки»: сброс + те же 11 треков, что у чипов под вкладками
 // дня. Считаются на билде, как и сами чипы, поэтому список один.
 const trackOptions = tracksOfProgram().map((name) => ({ name, label: trackLabel(lang, name) }));
+
+// Залы — только этого дня: у третьего дня залы свои (онлайн-залы), и список
+// программы целиком давал бы пункты с пустой выдачей. `name` остаётся ключом
+// слепка: по нему фильтрует клиент, подпись — перевод.
+const day = ordinal ? days()[ordinal - 1] : undefined;
+const hallOptions = (day ? hallsOfDay(day) : []).map((name) => ({
+  name,
+  label: hallLabel(lang, name),
+}));
 
 const targetLang = otherLang(lang);
 // С страницы графа язык переключается на граф, а не на первый день: иначе
@@ -87,7 +100,7 @@ const langCode = targetLang.toUpperCase();
   </a>
 
   <ul class="nav-inline">
-    {/* Свой пункт сайта идёт первым: он про эту программу, а три ссылки ниже —
+    {/* Свой пункт сайта идёт первым: он про эту программу, а ссылка ниже —
         про сайт-портфолио. Инлайновая полоса видна только ≥ 1024 px; ниже
         «Граф докладов» даёт иконка в группе действий. */}
     <li>
@@ -194,6 +207,64 @@ const langCode = targetLang.toUpperCase();
               type="button"
               data-track-option
               data-track={option.name}
+              aria-pressed="false"
+            >
+              {option.label}
+            </button>
+          ))}
+        </div>
+      </div>
+    )}
+
+    {/* «Все залы» — вторая ось того же фильтра, устроена как кнопка треков:
+        булавка вместо ярлыка (тот же контур, что у бейджа зала на карточке).
+        Пункты — залы этого дня; выбор пишется в `?hall=` и складывается с
+        треком по «И». */}
+    {hallOptions.length > 0 && (
+      <div class="nav-halls">
+        <button
+          class="nav-icon-btn nav-halls__trigger"
+          type="button"
+          data-hall-header
+          aria-expanded="false"
+          aria-controls="hall-menu"
+          aria-haspopup="true"
+          title={t(lang, "allHalls")}
+        >
+          <svg
+            viewBox="0 0 24 24"
+            width="18"
+            height="18"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="1.8"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            aria-hidden="true"
+            focusable="false"
+          >
+            <path d={PIN}></path>
+          </svg>
+          <span class="visually-hidden">{t(lang, "allHalls")}</span>
+        </button>
+
+        <div
+          class="hall-menu"
+          id="hall-menu"
+          role="group"
+          aria-label={t(lang, "trackFiltersLabel")}
+          data-hall-menu
+          hidden
+        >
+          <button class="track-menu__item" type="button" data-hall-option data-hall="" aria-pressed="true">
+            {t(lang, "allHalls")}
+          </button>
+          {hallOptions.map((option) => (
+            <button
+              class="track-menu__item"
+              type="button"
+              data-hall-option
+              data-hall={option.name}
               aria-pressed="false"
             >
               {option.label}
@@ -341,143 +412,17 @@ const langCode = targetLang.toUpperCase();
   </div>
 </header>
 
-<div class="nav-scrim" data-nav-close></div>
-
-<nav id="site-nav" aria-label={t(lang, "navMenuLabel")}>
-  <div class="drawer-head">
-    <a class="nav-brand" href={portfolioHref("/", "brand-drawer")}>
-      <span class="nav-brand-icon" aria-hidden="true"></span>
-      <span class="nav-brand-text">
-        <b>{t(lang, "brandName")}</b>
-        <span class="nav-brand-role">{t(lang, "brandRole")}</span>
-      </span>
-    </a>
-    <button class="drawer-close" type="button" data-nav-close aria-label={t(lang, "navClose")}>
-      <svg
-        viewBox="0 0 24 24"
-        width="20"
-        height="20"
-        fill="none"
-        stroke="currentColor"
-        stroke-width="2"
-        stroke-linecap="round"
-        aria-hidden="true"
-        focusable="false"
-      >
-        <path d="M6 6l12 12M18 6L6 18"></path>
-      </svg>
-    </button>
-  </div>
-
-  <ul class="drawer-links">
-    {
-      dayLinks.map((link) => (
-        <li>
-          <a
-            class:list={["drawer-link", "drawer-link--day", link.ordinal === ordinal ? "is-current" : null]}
-            href={link.href}
-            aria-current={link.ordinal === ordinal ? "page" : undefined}
-          >
-            {link.label}
-          </a>
-        </li>
-      ))
-    }
-    <li>
-      <a
-        class="drawer-link drawer-link--talks"
-        href={talksHref}
-        aria-current={page === "talks" ? "page" : undefined}
-      >
-        {t(lang, "navTalks")}
-      </a>
-    </li>
-    {
-      siteLinks.map((link) => (
-        <li>
-          <a class={`drawer-link drawer-link--${link.icon}`} href={link.href} rel="noopener">{link.label}</a>
-        </li>
-      ))
-    }
-  </ul>
-
-  <div class="drawer-foot">
-    {/* Не подпись, а кнопка: из панели избранное открывается одним тапом.
-        Счётчик остаётся тем же `data-favorites-count`, его обновляет клиент. */}
-    {favorites && (
-    <button
-      class="drawer-favs"
-      type="button"
-      data-fav-drawer
-      aria-pressed="false"
-      aria-label={t(lang, "navFavoritesOpen")}
-      title={t(lang, "navFavoritesOpen")}
-    >
-      <span>{t(lang, "navFavorites")}</span>
-      <span class="drawer-favs__tail">
-        <span class="drawer-favs__count" data-favorites-count>0</span>
-        <svg
-          class="drawer-favs__arrow"
-          viewBox="0 0 24 24"
-          width="16"
-          height="16"
-          fill="none"
-          stroke="currentColor"
-          stroke-width="2"
-          stroke-linecap="round"
-          stroke-linejoin="round"
-          aria-hidden="true"
-          focusable="false"
-        >
-          <path d="M9 6l6 6-6 6"></path>
-        </svg>
-      </span>
-    </button>
-    )}
-    <button class="theme-toggle" type="button" data-theme-toggle aria-label={t(lang, "navThemeToggle")}>
-      <svg
-        viewBox="0 0 24 24"
-        width="18"
-        height="18"
-        fill="none"
-        stroke="currentColor"
-        stroke-width="2"
-        stroke-linecap="round"
-        stroke-linejoin="round"
-        aria-hidden="true"
-        focusable="false"
-      >
-        <path d={THEME_PATHS.dark}></path>
-      </svg>
-      <span>{t(lang, "navThemeToggle")}</span>
-    </button>
-    <a
-      class="nav-icon-btn nav-lang"
-      href={langHref}
-      hreflang={targetLang}
-      lang={targetLang}
-      aria-label={t(lang, "langSwitch")}
-      title={t(lang, "langSwitch")}
-    >
-      <svg
-        viewBox="0 0 24 24"
-        width="16"
-        height="16"
-        fill="none"
-        stroke="currentColor"
-        stroke-width="2"
-        stroke-linecap="round"
-        stroke-linejoin="round"
-        aria-hidden="true"
-        focusable="false"
-      >
-        <circle cx="12" cy="12" r="10"></circle>
-        <path d="M2 12h20"></path>
-        <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"
-        ></path>
-      </svg>
-      <span>{langCode}</span>
-    </a>
-  </div>
-</nav>
-
+<NavDrawer
+  lang={lang}
+  langHref={langHref}
+  targetLang={targetLang}
+  langCode={langCode}
+  page={page}
+  ordinal={ordinal}
+  dayLinks={dayLinks}
+  siteLinks={siteLinks}
+  talksHref={talksHref}
+  favorites={favorites}
+  ics={ics}
+  brandHref={portfolioHref("/", "brand-drawer")}
+/>

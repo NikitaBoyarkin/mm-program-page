@@ -14,7 +14,6 @@ import { expect, test, type APIRequestContext, type Locator, type Page } from "p
  */
 const BASE = "/mm-program-page";
 
-const DAY1_DATE = "2026-11-26";
 const DAY1_TALKS = 39;
 const TOTAL_TALKS = 92;
 
@@ -248,6 +247,79 @@ test("05 · фильтр по треку: aria-pressed, одинаковый dat
   expect(page.url()).not.toContain("track=");
 });
 
+test("05a · фильтр по залу: меню в шапке, чужие залы скрыты, hall= в URL, «И» с треком", async ({
+  page,
+}) => {
+  await open(page, "/");
+
+  // Кнопка зала — единственная поверхность фильтра зала и видна на всех
+  // ширинах (CONTRACT §4): чипов залов в тулбаре нет.
+  const trigger = page.locator("button[data-hall-header]");
+  await expect(trigger).toBeVisible();
+
+  await trigger.click();
+  const option = page.locator('button[data-hall-option]:not([data-hall=""])').first();
+  const hall = (await option.getAttribute("data-hall")) ?? "";
+  expect(hall).not.toBe("");
+  await option.click();
+
+  await expect(trigger).toHaveAttribute("data-active", "true");
+  await expect(trigger).toHaveAttribute("aria-expanded", "false");
+  await expect(page.locator(`button[data-hall-option][data-hall="${hall}"]`)).toHaveAttribute(
+    "aria-pressed",
+    "true",
+  );
+
+  const visibleHalls = () =>
+    page
+      .locator("div.program-grid__talk-cell[data-hall]:visible")
+      .evaluateAll((nodes) => nodes.map((node) => (node as HTMLElement).dataset.hall ?? null));
+
+  const halls = await visibleHalls();
+  expect(halls.length).toBeGreaterThan(0);
+  expect(halls.every((value) => value === hall)).toBe(true);
+
+  const visibleCards = await page.locator("article.talk-card:visible").count();
+  expect(visibleCards).toBe(halls.length);
+  await expect(page.locator("[data-talk-count]")).toHaveText(String(visibleCards));
+  expect(page.url()).toContain("hall=");
+
+  // Трек поверх зала: условия складываются по «И», ни одно не теряется.
+  // Берём трек карточки, которая уже видна, иначе выдача стала бы пустой и
+  // проверка «И» прошла бы вхолостую.
+  const track =
+    (await page
+      .locator("div.program-grid__talk-cell[data-hall]:visible")
+      .first()
+      .getAttribute("data-track")) ?? "";
+  expect(track).not.toBe("");
+  await chooseTrack(
+    page,
+    page.locator(`[data-track-chips] > button.track-chip[data-track="${track}"]`),
+    track,
+  );
+  const both = await page
+    .locator("div.program-grid__talk-cell[data-hall]:visible")
+    .evaluateAll((nodes) =>
+      nodes.map((node) => {
+        const cell = node as HTMLElement;
+        return [cell.dataset.hall ?? null, cell.dataset.track ?? null];
+      }),
+    );
+  expect(both.length).toBeGreaterThan(0);
+  expect(both.every(([cellHall, cellTrack]) => cellHall === hall && cellTrack === track)).toBe(true);
+
+  // Сброс зала возвращает выдачу трека, URL теряет только `hall=`.
+  await trigger.click();
+  await page.locator('button[data-hall-option][data-hall=""]').click();
+  await expect(trigger).toHaveAttribute("data-active", "false");
+  expect(page.url()).not.toContain("hall=");
+  expect(page.url()).toContain("track=");
+  const trackOnly = await page.locator("article.talk-card:visible").count();
+  expect(trackOnly).toBeGreaterThan(0);
+  await expect(page.locator("[data-talk-count]")).toHaveText(String(trackOnly));
+});
+
 test("06 · избранное: звезда, [data-favorites-count], сохранение после reload", async ({
   page,
 }) => {
@@ -353,15 +425,26 @@ test("07 · модалка: hidden снят, заголовок непустой
   expect(await trigger.evaluate((node) => node === document.activeElement)).toBe(true);
 });
 
-test("08 · .ics: имя файла, VCALENDAR, Europe/Moscow, SUMMARY, 39 VEVENT", async ({ page }) => {
+test("08 · .ics: кнопка в панели меню, все три дня, VCALENDAR, Europe/Moscow, 92 VEVENT", async ({
+  page,
+}) => {
   await open(page, "/");
+
+  // В теле страницы экспорта больше нет — только в панели меню.
+  expect(await page.locator("#main [data-export-ics]").count()).toBe(0);
+  await page.locator("button[data-nav-open]").click();
+  const exportButton = page.locator("nav#site-nav [data-export-ics]");
+  await expect(exportButton).toBeVisible();
 
   const [download] = await Promise.all([
     page.waitForEvent("download"),
-    page.locator("[data-export-ics]").click(),
+    exportButton.click(),
   ]);
 
-  expect(download.suggestedFilename()).toBe(`matemarketing-${DAY1_DATE}.ics`);
+  // Панель закрывается сама: иначе скачанный файл остаётся за листом.
+  await expect(page.locator("body")).not.toHaveClass(/nav-open/);
+
+  expect(download.suggestedFilename()).toBe("matemarketing-program.ics");
   const file = await download.path();
   expect(file, "скачивание должно быть сохранено на диск").toBeTruthy();
 
@@ -369,7 +452,7 @@ test("08 · .ics: имя файла, VCALENDAR, Europe/Moscow, SUMMARY, 39 VEVEN
   expect(text.startsWith("BEGIN:VCALENDAR")).toBe(true);
   expect(text).toContain("TZID=Europe/Moscow");
   expect(text).toContain("SUMMARY:");
-  expect((text.match(/^BEGIN:VEVENT/gm) ?? []).length).toBe(DAY1_TALKS);
+  expect((text.match(/^BEGIN:VEVENT/gm) ?? []).length).toBe(TOTAL_TALKS);
 });
 
 test.describe("мобильный 390×844", () => {

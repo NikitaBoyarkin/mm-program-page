@@ -193,10 +193,6 @@ const hallsFact = lang === "en" ? `${hallCount} halls` : `${hallCount} зало�
     <span data-talk-count>{total}</span>
     <span data-talk-count-label>{pluralTalks(total, lang)}</span>
   </p>
-
-  <button class="button button--ghost" type="button" data-export-ics>
-    {t(lang, "exportIcs")}
-  </button>
 </div>
 
 <section class="program-grid" data-grid aria-labelledby="schedule-title" style={`--mm-hall-count:${halls.length}`}>
@@ -232,6 +228,7 @@ const hallsFact = lang === "en" ? `${hallCount} halls` : `${hallCount} зало�
             class="program-grid__talk-cell"
             id={`t${cell.slot.talk.id}`}
             data-track={cell.slot.talk.track}
+            data-hall={cell.slot.talk.hall}
             data-span={cell.slot.span > 1 ? cell.slot.span : undefined}
             style={`grid-area:${cell.slot.row} / ${cell.slot.column} / span ${cell.slot.span}`}
           >

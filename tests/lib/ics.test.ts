@@ -10,6 +10,7 @@ import {
 } from "../../src/lib/program";
 import {
   buildCalendar,
+  buildProgramCalendar,
   calendarFilename,
   foldLine,
   icsDate,
@@ -199,6 +200,25 @@ describe("buildCalendar на реальных данных", () => {
       expect(unfold(text)).toContain(`DTSTART;TZID=${TZID}:${icsDate(day.date, talks[0]!.start)}`);
     }
     expect(total).toBe(PROGRAM.talks.length);
+  });
+});
+
+describe("buildProgramCalendar: вся программа в одном файле", () => {
+  const now = new Date("2026-11-02T18:22:10Z");
+
+  test("все 92 доклада, дата каждого — дата своего дня", () => {
+    const text = buildProgramCalendar(days(), PROGRAM.talks, now);
+    expect(count(text, "BEGIN:VEVENT")).toBe(PROGRAM.talks.length);
+    for (const day of days()) {
+      const first = talksOfDay(day)[0]!;
+      expect(unfold(text)).toContain(`DTSTART;TZID=${TZID}:${icsDate(day.date, first.start)}`);
+    }
+    for (const line of lines(text)) expect(bytes(line)).toBeLessThanOrEqual(75);
+  });
+
+  test("доклад с неизвестным днём — ошибка, а не молчаливый пропуск", () => {
+    const orphan = makeTalk({ dayId: 999 });
+    expect(() => buildProgramCalendar(days(), [orphan], now)).toThrow(/неизвестный день 999/);
   });
 });
 

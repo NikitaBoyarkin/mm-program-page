@@ -1442,7 +1442,6 @@ html:has(body.is-search-open) {
   --icon-pin: url("data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%2024%2024'%20fill='none'%20stroke='%23000'%20stroke-width='2'%20stroke-linecap='round'%20stroke-linejoin='round'%3E%3Cpath%20d='M21%2010c0%207-9%2012-9%2012s-9-5-9-12a9%209%200%200%201%2018%200zM12%2013a3%203%200%201%200%200-6%203%203%200%200%200%200%206z'/%3E%3C/svg%3E");
   --icon-star: url("data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%2024%2024'%20fill='none'%20stroke='%23000'%20stroke-width='2'%20stroke-linecap='round'%20stroke-linejoin='round'%3E%3Cpath%20d='M12%202l3.1%206.3%206.9%201-5%204.9%201.2%206.8L12%2017.8%205.8%2021l1.2-6.8-5-4.9%206.9-1z'/%3E%3C/svg%3E");
   --icon-star-filled: url("data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%2024%2024'%20fill='%23000'%20stroke='none'%3E%3Cpath%20d='M12%202l3.1%206.3%206.9%201-5%204.9%201.2%206.8L12%2017.8%205.8%2021l1.2-6.8-5-4.9%206.9-1z'/%3E%3C/svg%3E");
-  --icon-download: url("data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%2024%2024'%20fill='none'%20stroke='%23000'%20stroke-width='2'%20stroke-linecap='round'%20stroke-linejoin='round'%3E%3Cpath%20d='M21%2015v4a2%202%200%200%201-2%202H5a2%202%200%200%201-2-2v-4M7%2010l5%205%205-5M12%2015V3'/%3E%3C/svg%3E");
   --icon-ticket: url("data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%2024%2024'%20fill='none'%20stroke='%23000'%20stroke-width='2'%20stroke-linecap='round'%20stroke-linejoin='round'%3E%3Cpath%20d='M3%209V7a2%202%200%200%201%202-2h14a2%202%200%200%201%202%202v2a3%203%200%200%200%200%206v2a2%202%200%200%201-2%202H5a2%202%200%200%201-2-2v-2a3%203%200%200%200%200-6z'/%3E%3C/svg%3E");
   --icon-tag: url("data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%2024%2024'%20fill='none'%20stroke='%23000'%20stroke-width='2'%20stroke-linecap='round'%20stroke-linejoin='round'%3E%3Cpath%20d='M20.59%2013.41l-7.17%207.17a2%202%200%200%201-2.83%200L2%2012V2h10l8.59%208.59a2%202%200%200%201%200%202.82zM7%207h.01'/%3E%3C/svg%3E");
   --icon-expand: url("data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%2024%2024'%20fill='none'%20stroke='%23000'%20stroke-width='2'%20stroke-linecap='round'%20stroke-linejoin='round'%3E%3Cpath%20d='M15%203h6v6M9%2021H3v-6M21%203l-7%207M3%2021l7-7'/%3E%3C/svg%3E");
@@ -1457,7 +1456,6 @@ html:has(body.is-search-open) {
 .day-tab::before,
 .track-chip[data-fav-filter]::before,
 .track-chip[data-track]::before,
-.button[data-export-ics]::before,
 .talk-card__time::before,
 .talk-card__hall::before,
 .talk-card__track::before,
@@ -1540,11 +1538,6 @@ html:has(body.is-search-open) {
   align-self: flex-start;
   margin-block-start: 0.2em;
   opacity: 0.65;
-}
-
-.button[data-export-ics]::before {
-  --icon: var(--icon-download);
-  --icon-size: 16px;
 }
 
 /* Бейдж времени — единственное место, где иконка стоит на тёмной плашке:
