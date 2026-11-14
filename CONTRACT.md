@@ -50,15 +50,17 @@
 | `src/layouts/Base.astro` | view | `<head>`, тема до отрисовки, шапка, подвал; `og:image` — `src/assets/og/program-2026.png` (1200×630), пересборка `bun run og` |
 | `src/components/Nav.astro` | view | шапка, drawer (дни, «Граф докладов», «Контакты»), тумблер темы (луна в разметке), звезда «Избранное» со счётчиком (первая в группе действий, только на страницах дня), меню треков и меню залов, кнопка поиска и переключатель `.nav-lang` |
 | `src/components/ProgramPage.astro` | view | день: шапка, табы, чипы, тулбар, сетка, модалка |
-| `src/components/TalksPage.astro` | view | граф: шапка, figure с SVG, заметки по трекам, хабы тем, подвал |
-| `src/components/TalksGraph.astro` | view | SVG графа и пакер подписей: раскладка приходит готовой, интерактив — только ссылки-якоря |
+| `src/components/TalksPage.astro` | view | три вида одной страницы (граф / заметки / темы), переключаемые якорями `:target`, и три панели под ними |
+| `src/components/TalksGraph.astro` | view | SVG графа: дуги участков треков, рёбра, круги хабов со счётчиком, пакер подписей с мобильными метриками; интерактив — только ссылки-якоря |
 | `src/lib/talks-graph.ts` | core | Zettelkasten-модель, точка входа: атомарные заметки, хабы, рёбра `трек ↔ тема`, связанные доклады, обратные индексы по треку и теме. Реэкспортирует три части ниже, поэтому потребителю достаточно одного импорта |
 | `src/lib/talks-themes.ts` | core | словарь тем: стемы, классификатор текста, подписи RU/EN и короткие формы для кольца графа. Единственная часть модели, не знающая о докладах как об узлах |
+| `src/lib/talks-labels.ts` | core | пакер подписей колец: оценка ширины по мобильному кеглю, слоты, выноски; разметки нет, поэтому модуль проверяем |
 | `src/lib/talks-model.ts` | core | типы модели (`TalkNote`, `HubNode`, `GraphEdge`, `TalksGraph`) и ключ хаба трека: нужны и сборщику, и раскладке |
 | `src/lib/talks-layout.ts` | core | детерминированная раскладка колец: темы внутри, треки снаружи, заметки на дугах. На вход — готовый граф, на выходе — координаты |
 | `src/components/TalkCard.astro` | view | карточка доклада; звезда избранного (контур → заливка через `fill-opacity`) |
 | `src/components/TalkModal.astro` | view | оболочка диалога |
 | `src/pages/index.astro`, `src/pages/day/[n].astro` | view | три пререндеренных дня |
+| `src/styles/talks-graph.css` | view | стили графа: кольца, рёбра, дуги, подписи и мобильный скролл холста; отдельно от каркаса страницы (`talks.css`) |
 | `src/pages/talks.astro`, `src/pages/en/talks.astro` | view | тонкие обёртки `TalksPage` для двух локалей |
 | `src/pages/program.json.ts` | data | `/program.json` — тот же слепок для клиента |
 | `src/scripts/program-client.ts` | client | единственный JS: тема (морф иконки), drawer, фильтр, избранное, модалка, `.ics`, поиск |
@@ -334,29 +336,40 @@ span.search-result__day + span.search-result__title + span.search-result__meta`;
 main#main.page
   header.page-head > p.eyebrow + h1.page-title + p.page-intro
     dl.facts > div.facts__item × 4 > dt + dd
-  section.talks-section
-    h2.talks-section__title
-    a.talks-graph__skip[href=#talks-notes-title]      ← выход из 92 остановок табуляции
-    figure.talks-graph
-      div.talks-graph__canvas > svg.talks-graph__svg[role=group][aria-label]
-        g.talks-graph__spokes > line × 92            ← членство: хаб ↔ заметка
-        g.talks-graph__edges > line.talks-graph__edge--core|topic[--single] > title
-        g.talks-graph__hubs > circle.talks-graph__hub--event|track + text.talks-graph__label
-                           > a.talks-graph__hub-link[href=#theme-<id>] > circle.talks-graph__hub--theme + text
-        g.talks-graph__notes > g.talks-graph__cluster[data-hub=track:<имя>] × 12
-                                > a.talks-graph__note[href=/talk/<id>/] > title + circle + circle.talks-graph__note-hit
-                                                             ← 92 ссылки; роль `group`, а не `img`:
-                                                                `img` сделал бы поддерево презентационным
-      figcaption.talks-graph__caption
-  section.talks-section
-    section.track-group#track-<n> > h3.track-group__title
-      ol.note-list > li.talk-note#t<id>
-        p.talk-note__meta > a.talk-note__where[href=/day/N/#t<id>]
-        p.talk-note__title
-        p.talk-note__themes > a.talk-note__theme[href=#theme-<id>] × n
-        p.talk-note__related > a.talk-note__link[href=/talk/<id>/] × 1..4
-  section.talks-section
-    section.theme-group#theme-<id> > ul.theme-group__list > a.theme-group__link[href=/talk/<id>/]
+  nav.talks-view__tabs[aria-label]                  ← переключение вида, только ссылки
+    a.talks-view__tab--graph[href=#talks-panel-graph]
+    a.talks-view__tab--notes[href=#talks-panel-notes] > span.talks-view__count
+    a.talks-view__tab--themes[href=#talks-panel-themes] > span.talks-view__count
+  div.talks-view__panel--graph#talks-panel-graph     ← видна по умолчанию
+    section.talks-section
+      h2.talks-section__title
+      a.talks-graph__skip[href=#talks-notes-title]    ← выход из 92 остановок табуляции
+      figure.talks-graph
+        div.talks-graph__canvas > svg.talks-graph__svg[role=group][aria-label]
+          g.talks-graph__arcs > path × 12             ← членство: дуга участка трека
+          g.talks-graph__edges > line.talks-graph__edge--core|topic[--single] > title
+          g.talks-graph__hubs > circle.talks-graph__hub--event + text.talks-graph__hub-count
+                             > text.talks-graph__label--track + text.talks-graph__hub-count
+                             > a.talks-graph__hub-link[href=#theme-<id>]
+                                 > circle.talks-graph__hub--theme + text.talks-graph__hub-count + text
+          g.talks-graph__notes > g.talks-graph__cluster[data-hub=track:<имя>] × 12
+                                  > a.talks-graph__note[href=/talk/<id>/] > title + circle + circle.talks-graph__note-hit
+                                                               ← 92 ссылки; роль `group`, а не `img`:
+                                                                  `img` сделал бы поддерево презентационным
+        figcaption.talks-graph__caption
+  div.talks-view__panel--notes#talks-panel-notes
+    section.talks-section
+      nav.talks-subtabs > a.talks-subtab--all + a.talks-subtab--track-<n> × 12
+      section.track-group#track-<n> > h3.track-group__title
+        ol.note-list > li.talk-note#t<id>
+          p.talk-note__meta > a.talk-note__where[href=/day/N/#t<id>]
+          p.talk-note__title
+          p.talk-note__themes > a.talk-note__theme[href=#theme-<id>] × n
+          p.talk-note__related > a.talk-note__link[href=/talk/<id>/] × 1..4
+  div.talks-view__panel--themes#talks-panel-themes
+    section.talks-section
+      nav.talks-subtabs > a.talks-subtab--all + a.talks-subtab--theme-<id> × 11
+      section.theme-group#theme-<id> > ul.theme-group__list > a.theme-group__link[href=/talk/<id>/]
   footer.talks-footer > a.talks-footer__link
 ```
 
@@ -366,20 +379,55 @@ main#main.page
   `git diff` не шумит геометрией;
 - темы считаются по русскому тексту всегда — даже на `/en/` (`data-track` и словарь тем);
   подпись темы переводится, классификатор один;
-- клиентского скрипта у страницы **нет**: `figure` и списки приходят в HTML, интерактив —
-  обычные ссылки; без JS страница читается целиком;
+- клиентского скрипта у **вида** нет: внутри `.talks-view` ноль `<script>`, `figure` и списки
+  приходят в HTML, интерактив — обычные ссылки; без JS страница читается целиком. Общая шапка
+  и подвал свой скрипт держат, но к графу не относятся — счёт идёт по поддереву
+  (`tests/built/talks.spec.ts`, тест 40);
+- три вида (граф / заметки / темы) переключаются **якорями на `:target`**, не радио-кнопками и
+  не скриптом: настоящее состояние тогда всегда совпадает с картинкой (WCAG 4.1.2), а
+  `#theme-<id>` из заметки сам раскрывает панель тем. `:has()` отвечает только за показ панели
+  и подсветку активной вкладки; без `:has()` `@supports not selector(:has(*))` показывает все
+  три секции подряд — деградация мягкая. `@media print` также раскрывает всё;
+- внутри заметок и тем — **свои под-вкладки** на том же `:target`: 12 треков и 11 тем плюс
+  «Все». Пока ни одна группа не в якоре, видны все (состояние по умолчанию); якорь группы
+  гасит остальные (`:has(.track-group:target) .track-group:not(:target)`). Правила подсветки
+  активной под-вкладки **генерируются из данных** в `TalksPage.astro`, а не пишутся руками —
+  иначе 23 селектора пришлось бы держать в двух местах. Граф скрывается **адресно** по якорям
+  заметок и тем: общее правило `:has(.talks-view__panel:target)` гасило его и при клике по его
+  же вкладке (специфичность `(0,3,0)` против `(0,2,0)`) — вкладка «Граф» показывала пустоту,
+  это ловит тест 40;
 - все внутренние якоря (`#t<id>` на странице дня, `#theme-<id>`, `#track-<n>`) разрешаются
   в существующие `id` — проверяется обходом DOM, а не доверием; ссылки на заметки ведут на
   `/talk/<id>/`;
 - на 320 px вбок скроллится только `.talks-graph__canvas`, документ стоит: ось подписей
-  сохраняется, страница не «уезжает»;
+  сохраняется, страница не «уезжает». Холст растянут до `max(100%, 640px)`, чтобы в ландшафте
+  не оставалось пустой полосы; тени у краёв (`background local`/`scroll`) — единственный
+  признак, что граф листается. Лента вкладок липнет под шапкой
+  (`inset-block-start: var(--nav-mobile-h)`, `z-index: calc(var(--z-sticky) - 1)`), поэтому
+  `:target` получает `scroll-margin-block-start` на высоту шапки **плюс** ленты — иначе якорь
+  теме прятался под ней. Хит-круг у точек не увеличивается: при шаге ~12 CSS px он перекрывал
+  бы соседей и отдавал клик чужому докладу, а эквивалент точки — та же заметка во вкладке
+  «Заметки»;
 - подписи на кольцах: у темы — **короткая форма** (`themeShortLabel`: «AI», «A/B», «BI»,
   «Приватность»), потому что 11 полных названий (~190 px каждое) физически не влезают на
   окружность внутреннего кольца (~800 px); полное имя остаётся в `<title>` узла и в заголовке
   хаба темы ниже. Обе группы подписей проходят через один пакер: подпись садится на первый
   свободный радиус, иначе соседние треки сажали подписи друг на друга у полюсов. Смещения
   отсчитываются от **радиуса своего круга** (`radius + 5`), а занятые прямоугольники включают
-  круги хабов: подпись не ложится ни на свой диск, ни на чужой узел;
+  круги хабов: подпись не ложится ни на свой диск, ни на чужой узел. Ширина знака в пакере —
+  **по мобильному кеглю** (10.2 / 10.3 px): на ≤767.98 px подписи вырастают до 13/14 px, и
+  коробка, посчитанная под 11/12 px, была на 18 % уже настоящей. Если все полосы и сдвиги заняты,
+  подпись садится в слот с **наименьшим** перекрытием, а не в самый дальний (тот ложился ровно
+  поверх соседа); подпись, уехавшая от своего круга больше чем на 12 px, получает тонкую
+  выноску (`g.talks-graph__leaders > line`). Наездов нет ни на 1280, ни на 320 px — это
+  проверяет тест 41 по реальным прямоугольникам, а не по оценкам пакера;
+- членство в хабе — **дуга участка** (`g.talks-graph__arcs > path`, радиус 272 между кольцом
+  треков и дугой заметок), а не 92 спицы: спицы давали серую шубу и спорили с рёбрами. Дуга
+  рисуется на `aria-hidden`-слое и тоньше любого смыслового ребра — это граница участка, а не
+  связь;
+- число докладов написано **внутри круга хаба** (`text.talks-graph__hub-count`): размер кодирует
+  его же, но «сколько» по диаметру не прочитать, а суффикс у подписи стоил бы ~35 px упаковщика.
+  Счёт идёт по `pointer-events: none`, чтобы не воровать клик у ссылки темы;
 - подписи и координаты округлены до сотых: `552.99`, а не `552.9865103565057` — иначе
   «побайтово» держится только в пределах одного JS-движка;
 - подсветка трека — **CSS без скрипта**: заметки сгруппированы по хабу
@@ -388,6 +436,10 @@ main#main.page
   читается как прежде — деградация мягкая, JS-фолбэка не появляется;
 - рёбра читаемы: контраст ≥ 3:1 к `--card-background` (WCAG 1.4.11), тип закодирован и
   толщиной, и штрихом — иерархия `core` пунктиром, связь в один доклад тоже пунктиром.
+  Толщина `topic` нормируется **по максимуму среди `topic`**, а не по всем рёбрам
+  (`0.8 + 2.4 · w / max_topic`): общая нормировка прижимала смысловые рёбра к 0.89–1.60 px,
+  потому что весит до 27 спица события. Толщина и штрих дают второй признак веса — цвет не
+  единственный носитель.
 
 Внешняя ссылка «Полная версия графа — в портфолио» размечена UTM
 (`utm_content=talks-footer`) — единственный внешний переход **внутри содержимого**

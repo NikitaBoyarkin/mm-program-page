@@ -27,182 +27,153 @@
   color: var(--text-muted);
 }
 
-/* ── Граф ─────────────────────────────────────────────────────────────────── */
-.talks-graph {
-  margin: 0;
+/* ── Виды страницы: граф / заметки / темы ─────────────────────────────────── */
+.talks-view__tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  margin-block-end: var(--space-6);
+  border-block-end: 1px solid var(--border-color);
 }
 
-.talks-graph__canvas {
-  border: 1px solid var(--border-color);
-  border-radius: var(--radius-xl);
-  background: var(--card-background);
-  box-shadow: 0 24px 60px -40px var(--shadow-color);
-  overflow: hidden;
+/* Вкладка — ссылка: вид переключает `:target`, скрипту работы не остаётся.
+   Настоящее состояние при этом всегда совпадает с картинкой, а `#theme-ai`
+   из заметки раскрывает панель тем без отдельного обработчика. */
+.talks-view__tab {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  min-block-size: 44px;
+  padding-inline: var(--space-3);
+  margin-block-end: -1px;
+  border-block-end: 2px solid transparent;
+  color: var(--text-muted);
+  text-decoration: none;
 }
 
-.talks-graph__svg {
+.talks-view__count {
+  font-family: var(--font-mono);
+  font-size: 0.8rem;
+  color: var(--text-accent);
+}
+
+.talks-view__panel {
+  display: none;
+}
+
+/* По умолчанию — граф; якорь панели или якорь внутри неё показывает свою.
+   Скрываем граф **адресно** по двум другим панелям: общее правило
+   `:has(.talks-view__panel:target)` гасило граф и при клике по его же вкладке —
+   специфичность `(0,3,0)` перебивала показ `(0,2,0)`, и панель выходила пустой. */
+.talks-view__panel--graph {
   display: block;
-  inline-size: 100%;
-  block-size: auto;
 }
 
-/* Спица — членство в хабе, а не смысловая связь: она не должна спорить с
-   рёбрами за внимание. Отсюда opacity ниже, а ширина фиксирована. */
-.talks-graph__spokes line {
-  stroke: var(--text-normal);
-  stroke-width: 0.6;
-  opacity: 0.2;
+.talks-view:has(#talks-panel-notes:target, .talks-view__panel--notes :target) .talks-view__panel--graph,
+.talks-view:has(#talks-panel-themes:target, .talks-view__panel--themes :target) .talks-view__panel--graph {
+  display: none;
 }
 
-.talks-graph__edge {
-  stroke-width: var(--edge-width, 1);
-  stroke-linecap: round;
+.talks-view__panel:target,
+.talks-view__panel:has(:target) {
+  display: block;
 }
 
-/* Контраст на карточке: при opacity 0.3 / 0.38 рёбра давали 1.6–2.1:1 —
-   ниже 3:1, которые нужны несущей смысл графике (WCAG 1.4.11). Тип ребра
-   добавлен пунктиром: толщина сама с ним не справлялась. */
-.talks-graph__edge--core {
-  stroke: var(--text-muted);
-  stroke-dasharray: 2 3;
-  opacity: 0.55;
-}
-
-.talks-graph__edge--topic {
-  stroke: var(--text-accent);
-  opacity: 0.6;
-}
-
-/* Связь из одного доклада — не факт о пересечении треков, а шум: 26 из 87
-   рёбер. Пунктир отличает её от веса 2+ без отдельного цвета. */
-.talks-graph__edge--topic.talks-graph__edge--single {
-  stroke-dasharray: 1 3;
-}
-
-.talks-graph__hub--event {
-  fill: var(--text-accent);
-  opacity: 0.9;
-}
-
-.talks-graph__hub--theme {
-  fill: var(--card-background);
-  stroke: var(--text-accent);
-  stroke-width: 1.4;
-  opacity: 0.95;
-}
-
-.talks-graph__hub--track {
-  fill: color-mix(in srgb, var(--text-normal) 12%, transparent);
-  stroke: var(--text-normal);
-  stroke-width: 1;
-  opacity: 0.8;
-}
-
-.talks-graph__label {
-  font-family: var(--font-sans);
-  paint-order: stroke;
-  stroke: var(--card-background);
-  stroke-width: 3px;
-  stroke-linejoin: round;
-}
-
-.talks-graph__label--theme {
-  font-size: 11px;
-  fill: var(--text-accent);
-  text-transform: uppercase;
-  letter-spacing: 0.06em;
-}
-
-.talks-graph__label--track {
-  font-size: 12px;
+/* Активная вкладка — не только цветом: вес и подчёркивание тоже. */
+.talks-view:has(#talks-panel-graph:target) .talks-view__tab--graph,
+.talks-view:has(#talks-panel-notes:target) .talks-view__tab--notes,
+.talks-view:has(.talks-view__panel--notes :target) .talks-view__tab--notes,
+.talks-view:has(#talks-panel-themes:target) .talks-view__tab--themes,
+.talks-view:has(.talks-view__panel--themes :target) .talks-view__tab--themes {
+  color: var(--text-normal);
   font-weight: 600;
-  fill: var(--text-normal);
+  border-block-end-color: var(--text-accent);
 }
 
-/* Точка заметки — ссылка. Видимая точка и хит-зона разделены: 4.5 px в SVG
-   масштабируются вниз на телефоне. Селектор хит-зоны включает класс узла:
-   без него `(0,1,0)` против `(0,1,1)` у `circle` проигрывал по специфичности,
-   и «прозрачный» круг рисовался — точки выходили вдвое крупнее задуманного.
-   Радиус 13 даёт ~17 px диаметра на 640 px-холсте; 24 px по WCAG 2.5.8 здесь
-   недостижимы без слияния точек, но у каждой ссылки есть эквивалент рядом —
-   та же заметка в списке ниже. */
-.talks-graph__note circle {
-  fill: var(--text-normal);
-  opacity: 0.55;
-  transition:
-    fill 0.15s ease,
-    opacity 0.15s ease;
-}
-
-.talks-graph__note .talks-graph__note-hit {
-  fill: transparent;
-  opacity: 0;
-}
-
-.talks-graph__note:focus-visible {
-  /* Тот же приём, что у остальных целей проекта: `outline: 2px` вокруг узла,
-     а не только смена заливки. Точка 9 px — не единственный сигнал фокуса. */
-  outline: 2px solid var(--text-accent);
-  outline-offset: 2px;
-  border-radius: var(--radius-full);
-}
-
-.talks-graph__note:focus-visible circle:first-child,
-.talks-graph__note:active circle:first-child {
-  fill: var(--text-accent);
-  opacity: 1;
+.talks-view:not(:has(.talks-view__panel:target)):not(:has(.talks-view__panel :target))
+  .talks-view__tab--graph {
+  color: var(--text-normal);
+  font-weight: 600;
+  border-block-end-color: var(--text-accent);
 }
 
 @media (hover: hover) and (pointer: fine) {
-  .talks-graph__note:hover circle:first-child {
-    fill: var(--text-accent);
-    opacity: 1;
+  .talks-view__tab:hover {
+    color: var(--text-normal);
   }
 }
 
-/* Заметки сгруппированы по треку (`.talks-graph__cluster`), поэтому наведение
-   или фокус на одной точке подсвечивает весь её трек и гасит остальные 11.
-   Сделано на `:has()`, без скрипта: в браузере без поддержки подсветки просто
-   нет, граф читается как прежде. */
-.talks-graph__cluster {
-  transition: opacity 0.15s ease;
+/* Без `:has()` переключение ссылками работает, но якоря внутри панели
+   (`#theme-*`, выход к заметкам) вели бы в скрытую секцию. Тогда — прежняя
+   страница целиком, без вкладок. */
+@supports not selector(:has(*)) {
+  .talks-view__panel {
+    display: block;
+  }
+
+  .talks-view__tabs {
+    display: none;
+  }
 }
 
-.talks-graph__notes:has(.talks-graph__cluster:is(:hover, :focus-within))
-  .talks-graph__cluster:not(:hover):not(:focus-within) {
-  opacity: 0.22;
+@media print {
+  .talks-view__panel {
+    display: block !important;
+  }
+
+  .talks-view__tabs {
+    display: none;
+  }
 }
 
-/* Хаб темы — ссылка на её обратные ссылки ниже. 92 точки идут подряд в
-   табуляции, поэтому перед графом стоит выход к списку заметок. */
-.talks-graph__hub-link:focus-visible {
-  outline: 2px solid var(--text-accent);
-  outline-offset: 2px;
+/* ── Под-вкладки: трек в заметках, тема в темах ───────────────────────────── */
+.talks-subtabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-1) var(--space-3);
+  margin-block: 0 var(--space-5);
+  padding-block-end: var(--space-2);
+  border-block-end: 1px solid var(--border-color);
 }
 
-.talks-graph__skip {
-  position: absolute;
-  inset-inline-start: -9999px;
-}
-
-.talks-graph__skip:focus-visible {
-  position: static;
-  display: inline-block;
-  margin-block-end: var(--space-2);
-  padding-block: var(--space-1);
-  padding-inline: var(--space-3);
-  border: 1px solid var(--border-color);
-  border-radius: var(--radius-sm);
-  background: var(--card-background);
-  color: var(--text-normal);
-}
-
-.talks-graph__caption {
-  margin-block-start: var(--space-3);
-  max-inline-size: var(--prose-measure);
-  font-size: 0.9rem;
-  line-height: var(--prose-lh);
+.talks-subtab {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  min-block-size: 36px;
+  padding-inline: var(--space-1);
+  border-block-end: 2px solid transparent;
+  font-size: 0.88rem;
   color: var(--text-muted);
+  text-decoration: none;
+}
+
+.talks-subtab__count {
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  color: var(--text-accent);
+}
+
+/* «Все» — состояние по умолчанию: пока ни один трек не в якоре, видны все
+   группы. Правила для выбранного трека генерирует TalksPage из данных. */
+.talks-view__panel--notes:not(:has(.track-group:target)) .talks-subtab--all,
+.talks-view__panel--themes:not(:has(.theme-group:target)) .talks-subtab--all {
+  color: var(--text-normal);
+  font-weight: 600;
+  border-block-end-color: var(--text-accent);
+}
+
+/* Один трек — одна группа: остальные гасятся, а не уезжают под бесконечный
+   скролл. Печать и браузер без `:has()` показывают всё подряд. */
+.talks-view__panel--notes:has(.track-group:target) .track-group:not(:target),
+.talks-view__panel--themes:has(.theme-group:target) .theme-group:not(:target) {
+  display: none;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .talks-subtab:hover {
+    color: var(--text-normal);
+  }
 }
 
 /* ── Хабы треков и заметки ────────────────────────────────────────────────── */
@@ -382,33 +353,57 @@
 
 /* ── Телефон ──────────────────────────────────────────────────────────────── */
 @media (max-width: 767.98px) {
-  /* Граф на телефоне: кольца остаются читаемыми только в полную ширину, а
-     подписи тем на 320 px мельчают до 8 px. Поэтому граф скроллится по
-     горизонтали в собственной рамке — фиксированная минимальная ширина держит
-     подписи, а `overflow` не даёт странице получить горизонтальный скролл. */
-  .talks-graph__canvas {
+  :root {
+    /* Высота липкой ленты табов: её читает только смещение якорей. Реальная
+       высота — 44 px цели + паддинги `--space-2`, то есть 60 px. */
+    --mm-talks-tabs-h: 60px;
+  }
+
+  /* Вкладки липнут под шапкой: 92 заметки — это несколько экранов, и без
+     липкой ленты переключение вида пришлось бы искать наверху. */
+  .talks-view__tabs {
+    position: sticky;
+    inset-block-start: var(--nav-mobile-h);
+    z-index: calc(var(--z-sticky) - 1);
+    margin-block: 0 var(--space-4);
+    padding-block: var(--space-2);
+    background: var(--surface-sticky);
+    border-block-end: 1px solid var(--border-color);
+  }
+
+  /* Якорь панели не должен прятаться под лентой: высота шапки плюс лента. */
+  .page .talks-view :target {
+    scroll-margin-block-start: calc(var(--nav-mobile-h) + var(--mm-talks-tabs-h) + var(--space-4));
+  }
+
+
+  /* Двенадцать имён треков в 320 px переносились бы на шесть строк и съедали
+     экран до первого доклада. Одна лента с горизонтальным скроллом: подпись
+     целиком, прокрутка внутри полосы, документ не уезжает. */
+  .talks-subtabs {
+    flex-wrap: nowrap;
     overflow-x: auto;
-    overscroll-behavior-inline: contain;
+    overscroll-behavior-x: contain;
+    scrollbar-width: none;
   }
 
-  .talks-graph__svg {
-    inline-size: 640px;
-    max-inline-size: none;
+  .talks-subtab {
+    flex: none;
+    min-block-size: 40px;
   }
 
-  .talks-graph__label--theme {
-    font-size: 13px;
+  /* Плотность списка: 40 px воздуха между карточками на 92 заметках — это
+     ~3.7k px прокрутки. Разделитель остаётся, воздух сжат. */
+  .note-list {
+    gap: var(--space-2);
   }
 
-  .talks-graph__label--track {
-    font-size: 14px;
+  .talk-note {
+    padding-block-end: var(--space-4);
   }
 
-  /* На 640 px холсте, ужатом до 320 px экрана, хит r=13 даёт 17 CSS px —
-     меньше 24 px из WCAG 2.5.8. Радиус задан свойством `r`: атрибут пришлось
-     бы дублировать в разметке, а он должен остаться детерминированным. */
-  .talks-graph__note .talks-graph__note-hit {
-    r: 18px;
+  .talks-footer__link {
+    padding-block: 2px;
   }
 }
 

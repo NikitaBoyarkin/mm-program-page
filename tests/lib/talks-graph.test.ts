@@ -327,4 +327,17 @@ describe("раскладка", () => {
     }
     expect(JSON.stringify(layoutGraph(graph))).toBe(JSON.stringify(layout));
   });
+
+  test("толщина смыслового ребра нормируется по максимуму среди тем, а не среди всех", () => {
+    // Спица «событие → трек» весит до 27: общая нормировка прижимала рёбра
+    // трек ↔ тема к 0.89–1.60 px, и вес на графе читался обратным образом.
+    const topics = layout.edges.filter((edge) => edge.kind === "topic");
+    const maxTopic = Math.max(...topics.map((edge) => edge.weight));
+    const heaviest = topics.find((edge) => edge.weight === maxTopic);
+    expect(heaviest?.width).toBeCloseTo(3.2, 5);
+    for (const edge of topics) {
+      expect(edge.width).toBeGreaterThanOrEqual(0.8);
+      expect(edge.width).toBeLessThanOrEqual(3.2 + 1e-9);
+    }
+  });
 });

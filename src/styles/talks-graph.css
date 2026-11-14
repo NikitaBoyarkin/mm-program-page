@@ -1,0 +1,258 @@
+/* ==========================================================================
+   Граф: SVG, кольца, подписи. Отдельно от каркаса страницы: у графа свой
+   набор правил и своя мобильная модель (горизонтальный скролл холста).
+   Ни одного литерала цвета — только var(--token).
+   ========================================================================== */
+
+/* ── Граф ─────────────────────────────────────────────────────────────────── */
+.talks-graph {
+  margin: 0;
+}
+
+.talks-graph__canvas {
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-xl);
+  background: var(--card-background);
+  box-shadow: 0 24px 60px -40px var(--shadow-color);
+  overflow: hidden;
+}
+
+.talks-graph__svg {
+  display: block;
+  inline-size: 100%;
+  block-size: auto;
+}
+
+/* Скобка участка — членство в хабе, а не смысловая связь: она не должна
+   спорить с рёбрами за внимание. Девяносто две линии «хаб → точка» давали
+   серую шубу; одна дуга на трек говорит то же самое. */
+.talks-graph__arcs path {
+  fill: none;
+  stroke: var(--text-normal);
+  stroke-width: 1.2;
+  opacity: 0.28;
+}
+
+/* Выноска оторванной подписи к её кругу: связь нужна, но не должна спорить с
+   рёбрами — она тоньше и бледнее любого смыслового ребра. */
+.talks-graph__leaders line {
+  stroke: var(--text-muted);
+  stroke-width: 1;
+  opacity: 0.55;
+}
+
+/* Число докладов в круге хаба: размер кодирует его же, но «сколько» по
+   диаметру не прочитать, а суффикс у подписи стоил бы 35 px упаковщика. */
+.talks-graph__hub-count {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  fill: var(--text-normal);
+  text-anchor: middle;
+  dominant-baseline: central;
+  paint-order: stroke;
+  stroke: var(--card-background);
+  stroke-width: 2.5px;
+  stroke-linejoin: round;
+  pointer-events: none;
+}
+
+.talks-graph__hub-count--event {
+  fill: var(--card-background);
+  stroke: none;
+}
+
+.talks-graph__edge {
+  stroke-width: var(--edge-width, 1);
+  stroke-linecap: round;
+}
+
+/* Контраст на карточке: при opacity 0.3 / 0.38 рёбра давали 1.6–2.1:1 —
+   ниже 3:1, которые нужны несущей смысл графике (WCAG 1.4.11). Тип ребра
+   добавлен пунктиром: толщина сама с ним не справлялась. */
+.talks-graph__edge--core {
+  stroke: var(--text-muted);
+  stroke-dasharray: 2 3;
+  opacity: 0.55;
+}
+
+.talks-graph__edge--topic {
+  stroke: var(--text-accent);
+  opacity: 0.6;
+}
+
+/* Связь из одного доклада — не факт о пересечении треков, а шум: 26 из 87
+   рёбер. Пунктир отличает её от веса 2+ без отдельного цвета. */
+.talks-graph__edge--topic.talks-graph__edge--single {
+  stroke-dasharray: 1 3;
+}
+
+.talks-graph__hub--event {
+  fill: var(--text-accent);
+  opacity: 0.9;
+}
+
+.talks-graph__hub--theme {
+  fill: var(--card-background);
+  stroke: var(--text-accent);
+  stroke-width: 1.4;
+  opacity: 0.95;
+}
+
+.talks-graph__hub--track {
+  fill: color-mix(in srgb, var(--text-normal) 12%, transparent);
+  stroke: var(--text-normal);
+  stroke-width: 1;
+  opacity: 0.8;
+}
+
+.talks-graph__label {
+  font-family: var(--font-sans);
+  paint-order: stroke;
+  stroke: var(--card-background);
+  stroke-width: 3px;
+  stroke-linejoin: round;
+}
+
+.talks-graph__label--theme {
+  font-size: 11px;
+  fill: var(--text-accent);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.talks-graph__label--track {
+  font-size: 12px;
+  font-weight: 600;
+  fill: var(--text-normal);
+}
+
+/* Точка заметки — ссылка. Видимая точка и хит-зона разделены: 4.5 px в SVG
+   масштабируются вниз на телефоне. Селектор хит-зоны включает класс узла:
+   без него `(0,1,0)` против `(0,1,1)` у `circle` проигрывал по специфичности,
+   и «прозрачный» круг рисовался — точки выходили вдвое крупнее задуманного.
+   Радиус 13 даёт ~17 px диаметра на 640 px-холсте; 24 px по WCAG 2.5.8 здесь
+   недостижимы без слияния точек, но у каждой ссылки есть эквивалент рядом —
+   та же заметка в списке ниже. */
+.talks-graph__note circle {
+  fill: var(--text-normal);
+  opacity: 0.55;
+  transition:
+    fill 0.15s ease,
+    opacity 0.15s ease;
+}
+
+.talks-graph__note .talks-graph__note-hit {
+  fill: transparent;
+  opacity: 0;
+}
+
+.talks-graph__note:focus-visible {
+  /* Тот же приём, что у остальных целей проекта: `outline: 2px` вокруг узла,
+     а не только смена заливки. Точка 9 px — не единственный сигнал фокуса. */
+  outline: 2px solid var(--text-accent);
+  outline-offset: 2px;
+  border-radius: var(--radius-full);
+}
+
+.talks-graph__note:focus-visible circle:first-child,
+.talks-graph__note:active circle:first-child {
+  fill: var(--text-accent);
+  opacity: 1;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .talks-graph__note:hover circle:first-child {
+    fill: var(--text-accent);
+    opacity: 1;
+  }
+}
+
+/* Заметки сгруппированы по треку (`.talks-graph__cluster`), поэтому наведение
+   или фокус на одной точке подсвечивает весь её трек и гасит остальные 11.
+   Сделано на `:has()`, без скрипта: в браузере без поддержки подсветки просто
+   нет, граф читается как прежде. */
+.talks-graph__cluster {
+  transition: opacity 0.15s ease;
+}
+
+.talks-graph__notes:has(.talks-graph__cluster:is(:hover, :focus-within))
+  .talks-graph__cluster:not(:hover):not(:focus-within) {
+  opacity: 0.22;
+}
+
+/* Хаб темы — ссылка на её обратные ссылки ниже. 92 точки идут подряд в
+   табуляции, поэтому перед графом стоит выход к списку заметок. */
+.talks-graph__hub-link:focus-visible {
+  outline: 2px solid var(--text-accent);
+  outline-offset: 2px;
+}
+
+.talks-graph__skip {
+  position: absolute;
+  inset-inline-start: -9999px;
+}
+
+.talks-graph__skip:focus-visible {
+  position: static;
+  display: inline-block;
+  margin-block-end: var(--space-2);
+  padding-block: var(--space-1);
+  padding-inline: var(--space-3);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-sm);
+  background: var(--card-background);
+  color: var(--text-normal);
+}
+
+.talks-graph__caption {
+  margin-block-start: var(--space-3);
+  max-inline-size: var(--prose-measure);
+  font-size: 0.9rem;
+  line-height: var(--prose-lh);
+  color: var(--text-muted);
+}
+
+@media (max-width: 767.98px) {
+  /* Граф на телефоне: кольца остаются читаемыми только в полную ширину, а
+     подписи тем на 320 px мельчают до 8 px. Поэтому граф скроллится по
+     горизонтали в собственной рамке — фиксированная минимальная ширина держит
+     подписи, а `overflow` не даёт странице получить горизонтальный скролл. */
+  .talks-graph__canvas {
+    overflow-x: auto;
+    overscroll-behavior-x: contain;
+    /* Тень у краёв — единственный признак, что граф листается: на 320 px видно
+       меньше половины холста, а системный скроллбар на iOS поверхностный и
+       появляется только в движении. Слой `local` уезжает с содержимым,
+       `scroll` стоит на месте — границы гасятся сами. */
+    background:
+      linear-gradient(to right, var(--card-background) 40%, transparent) left center / 40px 100%
+        no-repeat local,
+      linear-gradient(to left, var(--card-background) 40%, transparent) right center / 40px 100%
+        no-repeat local,
+      radial-gradient(farthest-side at 0 50%, var(--shadow-color), transparent) left center / 16px
+        100% no-repeat scroll,
+      radial-gradient(farthest-side at 100% 50%, var(--shadow-color), transparent) right center / 16px
+        100% no-repeat scroll,
+      var(--card-background);
+  }
+
+  /* `max()` — чтобы на 640–767.98 px (ландшафт) холст занимал рамку целиком,
+     а не оставлял справа пустую полосу. */
+  .talks-graph__svg {
+    inline-size: max(100%, 640px);
+    max-inline-size: none;
+  }
+
+  .talks-graph__label--theme {
+    font-size: 13px;
+  }
+
+  .talks-graph__label--track {
+    font-size: 14px;
+  }
+
+  /* Хит-круг r=18 из прошлой волны снят: точки идут по дуге с шагом ~12 CSS px,
+     поэтому увеличенный радиус не даёт цель 24 px, зато перекрывает соседей и
+     отдаёт клик не тому докладу. Эквивалент точки — та же заметка во вкладке
+     «Заметки». */
+}

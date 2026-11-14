@@ -24,6 +24,7 @@ import {
   themeLabel,
 } from "../lib/talks-graph";
 import "../styles/talks.css";
+import "../styles/talks-graph.css";
 
 interface Props {
   lang: Lang;
@@ -59,6 +60,30 @@ const portfolioHref = portfolioLink(
   lang === "en" ? "/en/talks/" : "/talks/",
   "talks-footer",
 );
+
+// Имя трека для человека: «Без трека» — это хаб, а не трек, и подписи у него в
+// слепке нет. Раньше сюда передавалась пустая строка, и группа (23 доклада)
+// рисовалась без имени — а в ленте под-вкладок это была безымянная кнопка.
+const trackName = (label: string): string =>
+  label && label !== "Без трека" ? trackLabel(lang, label) : t(lang, "noTrack");
+
+// Под-вкладки: трек в разделе заметок, тема в разделе тем. Активная — та, чей
+// якорь сейчас `:target`. Правила генерятся из данных: двенадцать треков и
+// одиннадцать тем пришлось бы иначе держать в двух местах — в разметке и в CSS.
+const subtabActive = [
+  ...trackGroups.map(
+    (_, index) => `.talks-view__panel--notes:has(#track-${index + 1}:target) .talks-subtab--track-${index + 1}`,
+  ),
+  ...themeGroups.map(
+    (group) =>
+      `.talks-view__panel--themes:has(#theme-${group.theme.id}:target) .talks-subtab--theme-${group.theme.id}`,
+  ),
+]
+  .map(
+    (selector) =>
+      `${selector} { color: var(--text-normal); font-weight: 600; border-block-end-color: var(--text-accent); }`,
+  )
+  .join("\n");
 ---
 
 <header class="page-head">
@@ -85,23 +110,56 @@ const portfolioHref = portfolioLink(
   </dl>
 </header>
 
-<section class="talks-section" aria-labelledby="talks-graph-title">
+<div class="talks-view">
+  {/* Три проекции одной программы переключаются якорями, а не скриптом: у
+      страницы нет клиентского чанка, а `:target` даёт ещё и рабочую глубокую
+      ссылку — `#theme-ai` из заметки раскрывает панель тем сам. */}
+  <nav class="talks-view__tabs" aria-label={t(lang, "talksViewsLabel")}>
+    <a class="talks-view__tab talks-view__tab--graph" href="#talks-panel-graph">
+      {t(lang, "talksTabGraph")}
+    </a>
+    <a class="talks-view__tab talks-view__tab--notes" href="#talks-panel-notes">
+      {t(lang, "talksTabNotes")}<span class="talks-view__count">{notes.length}</span>
+    </a>
+    <a class="talks-view__tab talks-view__tab--themes" href="#talks-panel-themes">
+      {t(lang, "talksTabThemes")}<span class="talks-view__count">{themeGroups.length}</span>
+    </a>
+  </nav>
+
+  <div class="talks-view__panel talks-view__panel--graph" id="talks-panel-graph">
+  <section class="talks-section" aria-labelledby="talks-graph-title">
   <h2 class="talks-section__title" id="talks-graph-title">{t(lang, "talksGraphTitle")}</h2>
   <TalksGraph layout={layout} lang={lang} titles={titles} />
 </section>
+  </div>
 
+  <div class="talks-view__panel talks-view__panel--notes" id="talks-panel-notes">
 <section class="talks-section" aria-labelledby="talks-notes-title">
   {/* `tabindex="-1"` — цель skip-link из графа: после перехода фокус стоит на
       заголовке, а не остаётся на 92-й ссылке. */}
   <h2 class="talks-section__title" id="talks-notes-title" tabindex="-1">{t(lang, "talksNotesTitle")}</h2>
   <p class="talks-section__intro">{t(lang, "talksNotesIntro")}</p>
 
+  {/* Под-вкладки трека: тот же `:target`, поэтому выбранный трек и видимая
+      группа совпадают всегда, а ссылка `#track-<n>` остаётся рабочей. */}
+  <nav class="talks-subtabs" aria-label={t(lang, "factsTracks")}>
+    <a class="talks-subtab talks-subtab--all" href="#talks-notes-title">{t(lang, "allTracks")}</a>
+    {
+      trackGroups.map((group, index) => (
+        <a class:list={["talks-subtab", `talks-subtab--track-${index + 1}`]} href={`#track-${index + 1}`}>
+          {trackName(group.hub.label)}
+          <span class="talks-subtab__count">{group.notes.length}</span>
+        </a>
+      ))
+    }
+  </nav>
+
   {
     trackGroups.map((group, index) => (
       <section class="track-group" id={`track-${index + 1}`} aria-labelledby={`track-${index + 1}-title`}>
         <h3 class="track-group__title" id={`track-${index + 1}-title`}>
           <span class="track-group__name">
-            {trackLabel(lang, group.hub.label === "Без трека" ? "" : group.hub.label)}
+            {trackName(group.hub.label)}
           </span>
           <span class="track-group__count">{group.notes.length}</span>
         </h3>
@@ -155,10 +213,29 @@ const portfolioHref = portfolioLink(
     ))
   }
 </section>
+  </div>
 
+  <div class="talks-view__panel talks-view__panel--themes" id="talks-panel-themes">
 <section class="talks-section" aria-labelledby="talks-themes-title">
   <h2 class="talks-section__title" id="talks-themes-title">{t(lang, "talksThemesTitle")}</h2>
   <p class="talks-section__intro">{t(lang, "talksThemesIntro")}</p>
+
+  <nav class="talks-subtabs" aria-label={t(lang, "factsThemes")}>
+    <a class="talks-subtab talks-subtab--all" href="#talks-themes-title">{t(lang, "allThemes")}</a>
+    {
+      themeGroups.map((group) => (
+        <a
+          class:list={["talks-subtab", `talks-subtab--theme-${group.theme.id}`]}
+          href={`#theme-${group.theme.id}`}
+        >
+          {themeLabel(group.theme.id, lang)}
+          <span class="talks-subtab__count">{group.notes.length}</span>
+        </a>
+      ))
+    }
+  </nav>
+
+  <style is:global set:html={subtabActive} />
 
   {
     themeGroups.map((group) => (
@@ -175,7 +252,7 @@ const portfolioHref = portfolioLink(
               <a class="theme-group__link" href={note.hrefTalk}>
                 {titleOf(note)}
                 <span class="theme-group__track">
-                  {trackLabel(lang, note.track === "Без трека" ? "" : note.track)}
+                  {trackName(note.track)}
                 </span>
               </a>
             </li>
@@ -185,6 +262,8 @@ const portfolioHref = portfolioLink(
     ))
   }
 </section>
+  </div>
+</div>
 
 <footer class="talks-footer">
   <p class="talks-footer__note">{t(lang, "talksPortfolioNote")}</p>

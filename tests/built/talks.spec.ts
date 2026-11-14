@@ -145,6 +145,12 @@ test("33 · темы — обратные ссылки: 11 хабов, кажд�
 
 test("34 · связанные доклады: у каждой заметки есть связи, и они ведут на канон", async ({ page }) => {
   await open(page, "/talks/");
+  // Список заметок живёт во вкладке, а не на первом экране: открываем её так
+  // же, как это сделал бы читатель, — иначе «видимость» проверяла бы скрытую
+  // панель и падала бы на верной разметке.
+  await page.locator("a.talks-view__tab--notes").click();
+  await expect(page.locator("#talks-panel-notes")).toBeVisible();
+  await expect(page.locator("#talks-panel-graph")).toBeHidden();
 
   const blocks = await page.locator("li.talk-note").evaluateAll((nodes) =>
     nodes.map((node) => node.querySelectorAll("a.talk-note__link").length),

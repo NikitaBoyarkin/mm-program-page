@@ -43,6 +43,10 @@ const RU = {
   talksGraphCaption:
     "Точка на внешней дуге — один доклад: ссылка ведёт к его заметке. Размер круга — сколько докладов несёт трек или тема, толщина ребра — сколько докладов несут и трек, и тему; пунктир — связь в один доклад. Наведение или фокус на точке подсвечивает её трек.",
   talksSkipGraph: "Перейти к списку заметок",
+  talksViewsLabel: "Разделы графа",
+  talksTabGraph: "Граф",
+  talksTabNotes: "Заметки",
+  talksTabThemes: "Темы",
   talksNotesTitle: "Заметки по трекам",
   talksNotesIntro:
     "Атомарная единица программы — доклад. Адрес заметки постоянный: #t309 открывает её и в расписании дня, и здесь.",
@@ -71,6 +75,7 @@ const RU = {
   trackFiltersLabel: "Фильтры программы",
   favoritesChip: "Избранное",
   allTracks: "Все треки",
+  allThemes: "Все темы",
   allHalls: "Все залы",
   exportIcs: "Загрузить .ics",
   scheduleTitle: "Расписание докладов",
@@ -144,6 +149,10 @@ const EN: Record<keyof typeof RU, string> = {
   talksGraphCaption:
     "A dot on the outer arc is one talk: the link leads to its note. Circle size is how many talks a track or theme carries, edge width is how many talks carry both; a dashed edge is a single-talk link. Hovering or focusing a dot highlights its track.",
   talksSkipGraph: "Skip to the note list",
+  talksViewsLabel: "Graph sections",
+  talksTabGraph: "Graph",
+  talksTabNotes: "Notes",
+  talksTabThemes: "Themes",
   talksNotesTitle: "Notes by track",
   talksNotesIntro:
     "The atomic unit of the program is one talk. Its address is permanent: #t309 opens the note both in the day schedule and here.",
@@ -172,6 +181,7 @@ const EN: Record<keyof typeof RU, string> = {
   trackFiltersLabel: "Program filters",
   favoritesChip: "Favorites",
   allTracks: "All tracks",
+  allThemes: "All themes",
   allHalls: "All halls",
   exportIcs: "Download .ics",
   scheduleTitle: "Talk schedule",

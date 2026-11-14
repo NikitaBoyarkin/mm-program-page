@@ -149,7 +149,14 @@ export function layoutGraph(graph: TalksGraph): GraphLayout {
     });
   });
 
-  const maxWeight = Math.max(1, ...graph.edges.map((edge) => edge.weight));
+  // Шкала считается только по смысловым рёбрам. Вес спицы «событие → трек» —
+  // это число докладов трека (до 27), и пока он участвовал в нормировке,
+  // пересечения весом 1…7 сжимались в 0.9–1.6 px, а служебная линия рисовалась
+  // самой толстой: читатель видел акцент там, где информация отсутствует.
+  const topicMax = Math.max(
+    1,
+    ...graph.edges.filter((edge) => edge.kind === "topic").map((edge) => edge.weight),
+  );
   const edges: PlacedEdge[] = graph.edges.flatMap((edge) => {
     const from = placed.get(edge.from);
     const to = placed.get(edge.to);
@@ -161,9 +168,11 @@ export function layoutGraph(graph: TalksGraph): GraphLayout {
         y1: from.y,
         x2: to.x,
         y2: to.y,
-        // Толщина в px: 0.8 — самое слабое ребро, 3.2 — самое сильное. Пол
-        // нужен, чтобы связь из одного доклада не исчезла в рендере.
-        width: 0.8 + 2.4 * (edge.weight / maxWeight),
+        // Толщина в px: 0.8 — связь в один доклад, 3.2 — сильнейшее
+        // пересечение. Пол нужен, чтобы слабое ребро не исчезло в рендере.
+        // Иерархия толщиной не кодируется: у неё постоянная 1.1, а тип несёт
+        // штрих (CSS).
+        width: round2(edge.kind === "core" ? 1.1 : 0.8 + 2.4 * (edge.weight / topicMax)),
       },
     ];
   });
