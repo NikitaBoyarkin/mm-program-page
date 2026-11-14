@@ -67,23 +67,44 @@ const portfolioHref = portfolioLink(
 const trackName = (label: string): string =>
   label && label !== "Без трека" ? trackLabel(lang, label) : t(lang, "noTrack");
 
-// Под-вкладки: трек в разделе заметок, тема в разделе тем. Активная — та, чей
-// якорь сейчас `:target`. Правила генерятся из данных: двенадцать треков и
-// одиннадцать тем пришлось бы иначе держать в двух местах — в разметке и в CSS.
-const subtabActive = [
-  ...trackGroups.map(
-    (_, index) => `.talks-view__panel--notes:has(#track-${index + 1}:target) .talks-subtab--track-${index + 1}`,
+// Пикер под-раздела: кнопка-`summary` с текущим выбором и раскрывающимся
+// списком ссылок. Активная ссылка и подпись на кнопке — из данных: двенадцать
+// треков и одиннадцать тем иначе пришлось бы держать в двух местах. Состояние —
+// по-прежнему `:target`, поэтому глубокие ссылки `#track-<n>` и `#theme-<id>`
+// работают без скрипта.
+const notesTargets = trackGroups.map(
+  (_, index) => `.talks-view__panel--notes:has(#track-${index + 1}:target)`,
+);
+const themeTargets = themeGroups.map(
+  (group) => `.talks-view__panel--themes:has(#theme-${group.theme.id}:target)`,
+);
+
+const pickerRules = [
+  ...notesTargets.map(
+    (target, index) =>
+      `${target} .talks-subtab--track-${index + 1} { color: var(--text-normal); border-inline-start-color: var(--text-accent); }`,
   ),
-  ...themeGroups.map(
-    (group) =>
-      `.talks-view__panel--themes:has(#theme-${group.theme.id}:target) .talks-subtab--theme-${group.theme.id}`,
+  ...themeTargets.map(
+    (target, index) =>
+      `${target} .talks-subtab--theme-${themeGroups[index]?.theme.id} { color: var(--text-normal); border-inline-start-color: var(--text-accent); }`,
   ),
-]
-  .map(
-    (selector) =>
-      `${selector} { color: var(--text-normal); font-weight: 600; border-block-end-color: var(--text-accent); }`,
-  )
-  .join("\n");
+  ...notesTargets.map(
+    (target, index) =>
+      `${target} .talks-picker__current--track-${index + 1} { display: inline; }`,
+  ),
+  ...themeTargets.map(
+    (target, index) =>
+      `${target} .talks-picker__current--theme-${themeGroups[index]?.theme.id} { display: inline; }`,
+  ),
+].join("\n");
+
+// Хаб трека на графе ведёт в свою группу заметок: точки на дуге на телефоне
+// не цель для пальца, а кольцо — крупная мишень. Порядок групп — тот же, что у
+// якорей `#track-<n>` ниже.
+const trackHrefs = new Map(
+  trackGroups.map((group, index) => [group.hub.key, `#track-${index + 1}`] as const),
+);
+
 ---
 
 <header class="page-head">
@@ -129,7 +150,7 @@ const subtabActive = [
   <div class="talks-view__panel talks-view__panel--graph" id="talks-panel-graph">
   <section class="talks-section" aria-labelledby="talks-graph-title">
   <h2 class="talks-section__title" id="talks-graph-title">{t(lang, "talksGraphTitle")}</h2>
-  <TalksGraph layout={layout} lang={lang} titles={titles} />
+  <TalksGraph layout={layout} lang={lang} titles={titles} trackHrefs={trackHrefs} />
 </section>
   </div>
 
@@ -140,19 +161,36 @@ const subtabActive = [
   <h2 class="talks-section__title" id="talks-notes-title" tabindex="-1">{t(lang, "talksNotesTitle")}</h2>
   <p class="talks-section__intro">{t(lang, "talksNotesIntro")}</p>
 
-  {/* Под-вкладки трека: тот же `:target`, поэтому выбранный трек и видимая
-      группа совпадают всегда, а ссылка `#track-<n>` остаётся рабочей. */}
-  <nav class="talks-subtabs" aria-label={t(lang, "factsTracks")}>
-    <a class="talks-subtab talks-subtab--all" href="#talks-notes-title">{t(lang, "allTracks")}</a>
-    {
-      trackGroups.map((group, index) => (
-        <a class:list={["talks-subtab", `talks-subtab--track-${index + 1}`]} href={`#track-${index + 1}`}>
-          <span class="talks-subtab__label">{trackName(group.hub.label)}</span>
-          <span class="talks-subtab__count">{group.notes.length}</span>
-        </a>
-      ))
-    }
-  </nav>
+  {/* Выбор трека — кнопка с раскрывающимся списком, а не лента вкладок:
+      тринадцать имён в строку не встают, а перенос занимал пол-экрана. Тот же
+      `:target` внутри списка, поэтому выбранный трек и видимая группа совпадают
+      всегда, а ссылка `#track-<n>` остаётся рабочей. Подпись на кнопке —
+      единственный видимый `span`, остальные гасит CSS из данных ниже. */}
+  <details class="talks-picker">
+    <summary class="talks-picker__button">
+      <span class="talks-picker__kicker">{t(lang, "talksPickTrack")}</span>
+      <span class="talks-picker__current talks-picker__current--all">{t(lang, "allTracks")}</span>
+      {
+        trackGroups.map((group, index) => (
+          <span class:list={["talks-picker__current", `talks-picker__current--track-${index + 1}`]}>
+            {trackName(group.hub.label)} · {group.notes.length}
+          </span>
+        ))
+      }
+      <span class="talks-picker__caret" aria-hidden="true">▾</span>
+    </summary>
+    <nav class="talks-subtabs" aria-label={t(lang, "factsTracks")}>
+      <a class="talks-subtab talks-subtab--all" href="#talks-notes-title">{t(lang, "allTracks")}</a>
+      {
+        trackGroups.map((group, index) => (
+          <a class:list={["talks-subtab", `talks-subtab--track-${index + 1}`]} href={`#track-${index + 1}`}>
+            <span class="talks-subtab__label">{trackName(group.hub.label)}</span>
+            <span class="talks-subtab__count">{group.notes.length}</span>
+          </a>
+        ))
+      }
+    </nav>
+  </details>
 
   {
     trackGroups.map((group, index) => (
@@ -220,22 +258,36 @@ const subtabActive = [
   <h2 class="talks-section__title" id="talks-themes-title">{t(lang, "talksThemesTitle")}</h2>
   <p class="talks-section__intro">{t(lang, "talksThemesIntro")}</p>
 
-  <nav class="talks-subtabs" aria-label={t(lang, "factsThemes")}>
-    <a class="talks-subtab talks-subtab--all" href="#talks-themes-title">{t(lang, "allThemes")}</a>
-    {
-      themeGroups.map((group) => (
-        <a
-          class:list={["talks-subtab", `talks-subtab--theme-${group.theme.id}`]}
-          href={`#theme-${group.theme.id}`}
-        >
-          <span class="talks-subtab__label">{themeLabel(group.theme.id, lang)}</span>
-          <span class="talks-subtab__count">{group.notes.length}</span>
-        </a>
-      ))
-    }
-  </nav>
+  <details class="talks-picker">
+    <summary class="talks-picker__button">
+      <span class="talks-picker__kicker">{t(lang, "talksPickTheme")}</span>
+      <span class="talks-picker__current talks-picker__current--all">{t(lang, "allThemes")}</span>
+      {
+        themeGroups.map((group) => (
+          <span class:list={["talks-picker__current", `talks-picker__current--theme-${group.theme.id}`]}>
+            {themeLabel(group.theme.id, lang)} · {group.notes.length}
+          </span>
+        ))
+      }
+      <span class="talks-picker__caret" aria-hidden="true">▾</span>
+    </summary>
+    <nav class="talks-subtabs" aria-label={t(lang, "factsThemes")}>
+      <a class="talks-subtab talks-subtab--all" href="#talks-themes-title">{t(lang, "allThemes")}</a>
+      {
+        themeGroups.map((group) => (
+          <a
+            class:list={["talks-subtab", `talks-subtab--theme-${group.theme.id}`]}
+            href={`#theme-${group.theme.id}`}
+          >
+            <span class="talks-subtab__label">{themeLabel(group.theme.id, lang)}</span>
+            <span class="talks-subtab__count">{group.notes.length}</span>
+          </a>
+        ))
+      }
+    </nav>
+  </details>
 
-  <style is:global set:html={subtabActive} />
+  <style is:global set:html={pickerRules} />
 
   {
     themeGroups.map((group) => (
@@ -263,6 +315,27 @@ const subtabActive = [
   }
 </section>
   </div>
+
+{/* Единственный скрипт вида: выбор трека меняет хеш, но не прокручивает
+    страницу. Хеш меняется навигацией, а не `replaceState`: только она
+    пересчитывает `:target` (в Chromium `replaceState` оставлял подсветку и
+    фильтр на прежней группе). Прокрутка возвращается сразу, до кадра, поэтому
+    прыжка не видно. Без скрипта строка остаётся обычной ссылкой и ведёт к
+    группе: страница читается целиком, интерактив не ломается. */}
+<script is:inline>
+  document.addEventListener("click", (event) => {
+    const row = event.target.closest(".talks-subtab");
+    if (!row) return;
+    event.preventDefault();
+    const top = window.scrollY;
+    window.location.hash = row.getAttribute("href");
+    // Chromium прокручивает к якорю не сразу, а на следующем кадре, поэтому
+    // одной синхронной отмены мало — возврат повторяется в кадре.
+    const restore = () => window.scrollTo(0, top);
+    restore();
+    requestAnimationFrame(restore);
+  });
+</script>
 </div>
 
 <footer class="talks-footer">

@@ -345,11 +345,14 @@ main#main.page
       h2.talks-section__title
       a.talks-graph__skip[href=#talks-notes-title]    ← выход из 92 остановок табуляции
       figure.talks-graph
+        label.talks-graph__labels-toggle > input.talks-graph__labels-check#talks-graph-labels
+                                        ← только ≤767.98 px: подписи колец вкл/выкл без скрипта
         div.talks-graph__canvas > svg.talks-graph__svg[role=group][aria-label]
           g.talks-graph__arcs > path × 12             ← членство: дуга участка трека
           g.talks-graph__edges > line.talks-graph__edge--core|topic[--single] > title
           g.talks-graph__hubs > circle.talks-graph__hub--event + text.talks-graph__hub-count
-                             > text.talks-graph__label--track + text.talks-graph__hub-count
+                             > a.talks-graph__hub-link[href=#track-<n>]
+                                 > circle.talks-graph__hub--track + text.talks-graph__hub-count + text
                              > a.talks-graph__hub-link[href=#theme-<id>]
                                  > circle.talks-graph__hub--theme + text.talks-graph__hub-count + text
           g.talks-graph__notes > g.talks-graph__cluster[data-hub=track:<имя>] × 12
@@ -361,7 +364,9 @@ main#main.page
         figcaption.talks-graph__caption
   div.talks-view__panel--notes#talks-panel-notes
     section.talks-section
-      nav.talks-subtabs > a.talks-subtab--all + a.talks-subtab--track-<n> × 12
+      details.talks-picker > summary.talks-picker__button
+                            > span.talks-picker__current--all | --track-<n>  ← видим ровно один
+                          + nav.talks-subtabs > a.talks-subtab--all + a.talks-subtab--track-<n> × 12
       section.track-group#track-<n> > h3.track-group__title
         ol.note-list > li.talk-note#t<id>
           p.talk-note__meta > a.talk-note__where[href=/day/N/#t<id>]
@@ -370,7 +375,9 @@ main#main.page
           p.talk-note__related > a.talk-note__link[href=/talk/<id>/] × 1..4
   div.talks-view__panel--themes#talks-panel-themes
     section.talks-section
-      nav.talks-subtabs > a.talks-subtab--all + a.talks-subtab--theme-<id> × 11
+      details.talks-picker > summary.talks-picker__button
+                            > span.talks-picker__current--all | --theme-<id>
+                          + nav.talks-subtabs > a.talks-subtab--all + a.talks-subtab--theme-<id> × 11
       section.theme-group#theme-<id> > ul.theme-group__list > a.theme-group__link[href=/talk/<id>/]
   footer.talks-footer > a.talks-footer__link
 ```
@@ -381,20 +388,29 @@ main#main.page
   `git diff` не шумит геометрией;
 - темы считаются по русскому тексту всегда — даже на `/en/` (`data-track` и словарь тем);
   подпись темы переводится, классификатор один;
-- клиентского скрипта у **вида** нет: внутри `.talks-view` ноль `<script>`, `figure` и списки
-  приходят в HTML, интерактив — обычные ссылки; без JS страница читается целиком. Общая шапка
-  и подвал свой скрипт держат, но к графу не относятся — счёт идёт по поддереву
-  (`tests/built/talks.spec.ts`, тест 40);
+- клиентского чанка у **вида** нет: `figure` и списки приходят в HTML, интерактив — обычные
+  ссылки. Внутри `.talks-view` ровно один инлайн-скрипт — перехватчик выбора под-раздела: он
+  меняет хеш **навигацией** (только она пересчитывает `:target`; `history.replaceState` в
+  Chromium оставлял и фильтр, и подсветку на прежней группе) и тут же возвращает прежнюю
+  прокрутку — синхронно и в следующем кадре, потому что Chromium прокручивает к якорю на
+  кадре. Иначе выбор трека прыгал на 770 px вниз к группе. Без скрипта строка остаётся
+  обычной ссылкой и ведёт к группе — страница читается целиком, фильтр работает как раньше
+  (`tests/built/talks-views.spec.ts`, тесты 40 и 42);
 - три вида (граф / заметки / темы) переключаются **якорями на `:target`**, не радио-кнопками и
   не скриптом: настоящее состояние тогда всегда совпадает с картинкой (WCAG 4.1.2), а
   `#theme-<id>` из заметки сам раскрывает панель тем. `:has()` отвечает только за показ панели
   и подсветку активной вкладки; без `:has()` `@supports not selector(:has(*))` показывает все
   три секции подряд — деградация мягкая. `@media print` также раскрывает всё;
-- внутри заметок и тем — **свои под-вкладки** на том же `:target`: 12 треков и 11 тем плюс
-  «Все». Пока ни одна группа не в якоре, видны все (состояние по умолчанию); якорь группы
-  гасит остальные (`:has(.track-group:target) .track-group:not(:target)`). Правила подсветки
-  активной под-вкладки **генерируются из данных** в `TalksPage.astro`, а не пишутся руками —
-  иначе 23 селектора пришлось бы держать в двух местах. Граф скрывается **адресно** по якорям
+- внутри заметок и тем выбор группы — **кнопка с раскрывающимся списком**
+  (`details.talks-picker > summary.talks-picker__button + nav.talks-subtabs`) на том же `:target`:
+  12 треков и 11 тем плюс «Все». Список — нативный `details`, не `<select>` и не скрипт: у вида
+  нет клиентского чанка, а ссылки внутри сохраняют глубокие якоря. Пока ни одна группа не в
+  якоре, видны все (состояние по умолчанию) и на кнопке стоит «Все»; якорь группы гасит
+  остальные (`:has(.track-group:target) .track-group:not(:target)`). Подпись на кнопке — один из
+  `span.talks-picker__current`, остальные скрыты: правила подсветки активной ссылки и показа
+  нужной подписи **генерируются из данных** в `TalksPage.astro`, а не пишутся руками — иначе
+  23 пары селекторов пришлось бы держать в двух местах (`tests/built/talks-views.spec.ts`,
+  тест 42). Граф скрывается **адресно** по якорям
   заметок и тем: общее правило `:has(.talks-view__panel:target)` гасило его и при клике по его
   же вкладке (специфичность `(0,3,0)` против `(0,2,0)`) — вкладка «Граф» показывала пустоту,
   это ловит тест 40;
@@ -405,12 +421,15 @@ main#main.page
   ширине (`inline-size: 100%`). Прежний скролл держался на геометрии: 960-viewBox на 320 px —
   масштаб 0.33, подпись 13 px рендерилась в 4.3 px, и ширину удерживал минимум 640 px. Поэтому
   ≤767.98 px — **компактный обзор**: подписи колец, выноски (`g.talks-graph__leaders`) и числа
-  в кругах (`text.talks-graph__hub-count`) скрыты, граф остаётся формой (кольца, дуги, рёбра,
+  в кругах (`text.talks-graph__hub-count`) скрыты, обводки наоборот утолщены (0.8 px ребра в
+  масштабе 0.33 пропадали вместе с формой), граф остаётся формой (кольца, дуги, рёбра,
   точки), а имена и числа тем живут в строчном ключе `nav.talks-graph__legend` под графом:
   одиннадцать `a.talks-graph__chip[href=#theme-<id>]` со счётчиком, поэтому чип сразу раскрывает
-  панель тем. Под-вкладки (`nav.talks-subtabs`) на телефоне тоже не скроллпорт: `flex-wrap: wrap`,
-  подпись обрезается по 11 знаков, а полное имя и число стоят заголовком группы ниже — поэтому
-  `.talks-subtab__count` скрыт. Лента вкладок липнет под шапкой
+  панель тем. Подписи возвращает **переключатель** `label.talks-graph__labels-toggle` с
+  чекбоксом `#talks-graph-labels` — без скрипта, через `:has(:checked)`: включённый режим даёт
+  масштаб 1:1 (`svg` шириной 960 px) и горизонтальный скролл **внутри** рамки графа, документ
+  не едет (тест 44). Кольцо трека — ссылка `a.talks-graph__hub-link[href=#track-<n>]`: крупная
+  мишень для пальца, которой у точки 1.5 CSS px нет. Лента вкладок липнет под шапкой
   (`inset-block-start: var(--nav-mobile-h)`, `z-index: calc(var(--z-sticky) - 1)`), поэтому
   `:target` получает `scroll-margin-block-start` на высоту шапки **плюс** ленты — иначе якорь
   теме прятался под ней. Хит-круг у точек не увеличивается: при шаге ~12 CSS px он перекрывал
@@ -423,8 +442,9 @@ main#main.page
   свободный радиус, иначе соседние треки сажали подписи друг на друга у полюсов. Смещения
   отсчитываются от **радиуса своего круга** (`radius + 5`), а занятые прямоугольники включают
   круги хабов: подпись не ложится ни на свой диск, ни на чужой узел. Ширина знака в пакере —
-  10.2 / 10.3 px; подписи существуют только на десктопе (кегли 11/12 px), а на ≤767.98 px они
-  скрыты, поэтому оценка остаётся самой узкой из реально отрисованных и служит запасом на
+  10.2 / 10.3 px; подписи видны на десктопе (кегли 11/12 px) и в режиме карты на телефоне,
+  где холст отдан в масштабе 1:1, а в компактном обзоре ≤767.98 px они скрыты — поэтому
+  оценка остаётся самой узкой из реально отрисованных и служит запасом на
   округление. Если все полосы и сдвиги заняты,
   подпись садится в слот с **наименьшим** перекрытием, а не в самый дальний (тот ложился ровно
   поверх соседа); подпись, уехавшая от своего круга больше чем на 12 px, получает тонкую

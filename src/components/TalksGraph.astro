@@ -19,9 +19,12 @@ interface Props {
   /** Заголовки заметок на языке страницы: `<title>` точки — не подсказка ради
    *  подсказки, по нему скринридер читает ссылку. */
   titles: Map<number, string>;
+  /** Хаб трека → его группа заметок. Кольцо на телефоне — крупная мишень,
+   *  в отличие от точки 1.5 CSS px. */
+  trackHrefs: Map<string, string>;
 }
 
-const { layout, lang, titles } = Astro.props;
+const { layout, lang, titles, trackHrefs } = Astro.props;
 
 /** Подпись хаба: у темы словарь один, у трека имя приходит из слепка и
  *  переводится overlay'ем. */
@@ -98,6 +101,13 @@ const edgeTitle = (edge: GraphLayout["edges"][number]): string => {
 <a class="talks-graph__skip" href="#talks-notes-title">{t(lang, "talksSkipGraph")}</a>
 
 <figure class="talks-graph">
+  {/* Переключатель подписей: чекбокс, а не скрипт. На десктопе подписи видны
+      всегда и сам переключатель скрыт; на телефоне по умолчанию компактный
+      обзор, а включение возвращает подписи вместе с масштабом 1:1. */}
+  <label class="talks-graph__labels-toggle" for="talks-graph-labels">
+    <input class="talks-graph__labels-check" id="talks-graph-labels" type="checkbox" />
+    {t(lang, "talksLabelsToggle")}
+  </label>
   <div class="talks-graph__canvas">
     <svg
       class="talks-graph__svg"
@@ -196,7 +206,7 @@ const edgeTitle = (edge: GraphLayout["edges"][number]): string => {
         }
         {
           trackLabels.map(({ hub, text, x, y, anchor }) => (
-            <>
+            <a class="talks-graph__hub-link" href={trackHrefs.get(hub.key) ?? "#talks-notes-title"}>
               <circle
                 class="talks-graph__hub talks-graph__hub--track"
                 cx={hub.x}
@@ -219,7 +229,7 @@ const edgeTitle = (edge: GraphLayout["edges"][number]): string => {
               >
                 {text}
               </text>
-            </>
+            </a>
           ))
         }
       </g>

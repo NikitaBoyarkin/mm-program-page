@@ -121,28 +121,90 @@
     display: block !important;
   }
 
-  .talks-view__tabs {
+  .talks-view__tabs,
+  .talks-picker {
     display: none;
   }
 }
 
-/* ── Под-вкладки: трек в заметках, тема в темах ───────────────────────────── */
-.talks-subtabs {
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--space-1) var(--space-3);
+/* ── Выбор под-раздела: кнопка с раскрывающимся списком ───────────────────── */
+/* Тринадцать имён лентой не вставали ни в строку, ни в две — на телефоне они
+   занимали пол-экрана до первой заметки. Нативный `details` даёт кнопку с
+   выбором без скрипта: состояние по-прежнему `:target` внутри списка, поэтому
+   глубокие ссылки `#track-<n>` работают. */
+.talks-picker {
   margin-block: 0 var(--space-5);
-  padding-block-end: var(--space-2);
-  border-block-end: 1px solid var(--border-color);
+}
+
+.talks-picker__button {
+  display: flex;
+  align-items: baseline;
+  gap: var(--space-2);
+  min-block-size: 44px;
+  padding: var(--space-2) var(--space-3);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  background: var(--card-background);
+  color: var(--text-normal);
+  font-size: 0.92rem;
+  cursor: pointer;
+  list-style: none;
+}
+
+.talks-picker__button::-webkit-details-marker {
+  display: none;
+}
+
+.talks-picker__kicker {
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+/* На кнопке живёт ровно один `span`: остальные — кандидаты, которые включает
+   сгенерированное из данных правило, когда их якорь в `:target`. */
+.talks-picker__current {
+  display: none;
+  font-weight: 600;
+}
+
+.talks-picker__caret {
+  margin-inline-start: auto;
+  color: var(--text-muted);
+  transition: transform 0.15s ease;
+}
+
+.talks-picker[open] .talks-picker__caret {
+  transform: rotate(180deg);
+}
+
+.talks-picker[open] .talks-picker__button {
+  border-end-end-radius: 0;
+  border-end-start-radius: 0;
+}
+
+/* Список — панель под кнопкой в потоке, а не всплывающий слой: перекрывать
+   92 заметки поповером на телефоне дороже, чем сдвинуть их на 13 строк. */
+.talks-picker .talks-subtabs {
+  display: flex;
+  flex-direction: column;
+  margin: 0;
+  padding: var(--space-1) 0;
+  border: 1px solid var(--border-color);
+  border-block-start: 0;
+  border-radius: 0 0 var(--radius-md) var(--radius-md);
+  background: var(--card-background);
 }
 
 .talks-subtab {
-  display: inline-flex;
-  align-items: center;
-  gap: var(--space-2);
-  min-block-size: 36px;
-  padding-inline: var(--space-1);
-  border-block-end: 2px solid transparent;
+  display: flex;
+  justify-content: space-between;
+  gap: var(--space-3);
+  min-block-size: 40px;
+  padding-inline: var(--space-3);
+  border-inline-start: 2px solid transparent;
   font-size: 0.88rem;
   color: var(--text-muted);
   text-decoration: none;
@@ -155,12 +217,17 @@
 }
 
 /* «Все» — состояние по умолчанию: пока ни один трек не в якоре, видны все
-   группы. Правила для выбранного трека генерирует TalksPage из данных. */
+   группы и на кнопке стоит «Все треки». Правила для выбранного трека
+   генерирует TalksPage из данных. */
 .talks-view__panel--notes:not(:has(.track-group:target)) .talks-subtab--all,
 .talks-view__panel--themes:not(:has(.theme-group:target)) .talks-subtab--all {
   color: var(--text-normal);
-  font-weight: 600;
-  border-block-end-color: var(--text-accent);
+  border-inline-start-color: var(--text-accent);
+}
+
+.talks-view__panel--notes:not(:has(.track-group:target)) .talks-picker__current--all,
+.talks-view__panel--themes:not(:has(.theme-group:target)) .talks-picker__current--all {
+  display: inline;
 }
 
 /* Один трек — одна группа: остальные гасятся, а не уезжают под бесконечный
@@ -377,32 +444,14 @@
   }
 
 
-  /* Тринадцать имён верхним регистром (одно — 41 знак) в строку не встают, а
-     горизонтальная лента прятала половину выбора за краем. Перенос на две-три
-     строки дешевле скролла: подпись обрезается по 13 знакам, а полное имя и
-     число уже стоят заголовком группы ниже — поэтому счётчик у чипа скрыт. */
-  .talks-subtabs {
-    flex-wrap: wrap;
-    overflow: visible;
+  /* Список выбора на телефоне — та же колонка, только кегль мельче: полное имя
+     больше не обрезается, потому что строка своя у каждого трека. */
+  .talks-picker__button {
+    font-size: 0.86rem;
   }
 
   .talks-subtab {
-    flex: 0 1 auto;
-    max-inline-size: 100%;
-    min-block-size: 36px;
-    font-size: 0.75rem;
-  }
-
-  .talks-subtab__label {
-    min-inline-size: 0;
-    max-inline-size: 11ch;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-  }
-
-  .talks-subtab__count {
-    display: none;
+    font-size: 0.82rem;
   }
 
   /* Плотность списка: 40 px воздуха между карточками на 92 заметках — это

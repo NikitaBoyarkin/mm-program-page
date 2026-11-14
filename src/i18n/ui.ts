@@ -47,6 +47,9 @@ const RU = {
   talksTabGraph: "Граф",
   talksTabNotes: "Заметки",
   talksTabThemes: "Темы",
+  talksPickTrack: "Трек",
+  talksPickTheme: "Тема",
+  talksLabelsToggle: "Подписи",
   talksNotesTitle: "Заметки по трекам",
   talksNotesIntro:
     "Атомарная единица программы — доклад. Адрес заметки постоянный: #t309 открывает её и в расписании дня, и здесь.",
@@ -153,6 +156,9 @@ const EN: Record<keyof typeof RU, string> = {
   talksTabGraph: "Graph",
   talksTabNotes: "Notes",
   talksTabThemes: "Themes",
+  talksPickTrack: "Track",
+  talksPickTheme: "Theme",
+  talksLabelsToggle: "Labels",
   talksNotesTitle: "Notes by track",
   talksNotesIntro:
     "The atomic unit of the program is one talk. Its address is permanent: #t309 opens the note both in the day schedule and here.",

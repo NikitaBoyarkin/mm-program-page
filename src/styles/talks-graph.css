@@ -250,6 +250,24 @@
   }
 }
 
+/* ── Переключатель подписей ───────────────────────────────────────────────── */
+/* Чекбокс, а не скрипт: у вида нет клиентского чанка, а `:has()` включает и
+   выключает тексты колец. На десктопе подписи видны всегда и кнопка скрыта —
+   там ей нечего решать. */
+.talks-graph__labels-toggle {
+  display: none;
+  align-items: center;
+  gap: var(--space-2);
+  min-block-size: 44px;
+  margin-block-end: var(--space-2);
+  padding-inline: var(--space-3);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-full);
+  font-size: 0.82rem;
+  color: var(--text-normal);
+  cursor: pointer;
+}
+
 @media (max-width: 767.98px) {
   /* Холст встаёт по ширине, скролла нет. Причина скролла была в геометрии:
      960-viewBox на 320 px — это масштаб 0.33, подпись 13 px рендерится в 4.3 px,
@@ -265,20 +283,70 @@
     inline-size: 100%;
   }
 
-  /* Подписи колец и числа в кругах в 0.33 масштабе нечитаемы, а выноска к
-     скрытой подписи — линия в пустоту. */
-  .talks-graph__label,
-  .talks-graph__leaders,
-  .talks-graph__hub-count {
+  .talks-graph__labels-toggle {
+    display: inline-flex;
+  }
+
+  /* Компактный обзор: подписи колец и числа в кругах в 0.33 масштабе нечитаемы,
+     а выноска к скрытой подписи — линия в пустоту. Обводки наоборот толще
+     отрисованных: 0.8 px ребра в масштабе 0.33 превращаются в 0.26 px и
+     пропадают вместе с формой, ради которой подписи и убраны. */
+  .talks-graph:not(:has(.talks-graph__labels-check:checked)) .talks-graph__label,
+  .talks-graph:not(:has(.talks-graph__labels-check:checked)) .talks-graph__leaders,
+  .talks-graph:not(:has(.talks-graph__labels-check:checked)) .talks-graph__hub-count {
     display: none;
+  }
+
+  .talks-graph:not(:has(.talks-graph__labels-check:checked)) .talks-graph__arcs path {
+    stroke-width: 2.6;
+    opacity: 0.4;
+  }
+
+  .talks-graph:not(:has(.talks-graph__labels-check:checked)) .talks-graph__edge--core {
+    stroke-width: 2.2;
+  }
+
+  .talks-graph:not(:has(.talks-graph__labels-check:checked)) .talks-graph__edge--topic {
+    stroke-width: max(2.4px, var(--edge-width));
+  }
+
+  .talks-graph:not(:has(.talks-graph__labels-check:checked)) .talks-graph__note circle:first-child {
+    opacity: 0.75;
+  }
+
+  /* Режим карты: подписи читаемы только в масштабе 1:1. Холст становится
+     скроллпортом внутри своей рамки, документ вбок не едет — ширина 320 px
+     остаётся шириной страницы. */
+  .talks-graph:has(.talks-graph__labels-check:checked) .talks-graph__canvas {
+    overflow-x: auto;
+  }
+
+  .talks-graph:has(.talks-graph__labels-check:checked) .talks-graph__svg {
+    inline-size: 960px;
+    max-inline-size: none;
   }
 
   .talks-graph__legend {
     display: flex;
   }
+}
 
-  /* Хит-круг r=18 из прошлой волны снят: точки идут по дуге с шагом ~12 CSS px,
-     поэтому увеличенный радиус не даёт цель 24 px, зато перекрывает соседей и
-     отдаёт клик не тому докладу. Эквивалент точки — та же заметка во вкладке
-     «Заметки». */
+@media print {
+  .talks-graph__labels-toggle {
+    display: none;
+  }
+
+  .talks-graph__label,
+  .talks-graph__leaders,
+  .talks-graph__hub-count {
+    display: revert;
+  }
+
+  .talks-graph__canvas {
+    overflow: visible;
+  }
+
+  .talks-graph__svg {
+    inline-size: 100%;
+  }
 }
