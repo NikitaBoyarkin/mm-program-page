@@ -20,8 +20,20 @@ const UTM_KEYS: readonly UtmKey[] = ["source", "medium", "campaign", "content", 
 // рекламной системы, который породит тысячу почти одинаковых строк в разбивке.
 const UTM_MAX = 100;
 
-/** Признак сайта в общем проекте PostHog. */
-export const SITE = "mm-program-page";
+// Разметка ссылок и источник заметки живут в `attribution.ts`. Реэкспорт —
+// чтобы импорты снаружи (`../lib/analytics`) не менялись.
+export {
+  PORTFOLIO_ORIGIN,
+  SITE,
+  classifyLink,
+  classifyNoteEntry,
+  portfolioHref,
+  utmHref,
+} from "./attribution";
+export type { LinkKind, LinkTarget, TalkNoteSurface } from "./attribution";
+
+import { SITE } from "./attribution";
+import type { LinkKind, TalkNoteSurface } from "./attribution";
 
 /**
  * Пять UTM-параметров из query-строки.
@@ -321,6 +333,55 @@ export interface AnalyticsEvents {
     track_id: number | null;
     track: string;
     day_id: number;
+    surface: TalkNoteSurface;
+    locale: AnalyticsLocale;
+    path: string;
+  };
+  /** Открытие диалога поиска. `surface` — где стоит триггер. */
+  search_open: {
+    surface: "nav";
+    locale: AnalyticsLocale;
+    path: string;
+  };
+  /** Выдача по запросу: только длина строки, сам запрос в аналитику не уходит. */
+  search_query: {
+    query_len: number;
+    results: number;
+    zone: "results" | "empty";
+    locale: AnalyticsLocale;
+    path: string;
+  };
+  /** Клик по результату поиска: CTR выдачи и позиция выбранного доклада. */
+  search_result_click: {
+    talk_id: number;
+    position: number;
+    results: number;
+    query_len: number;
+    locale: AnalyticsLocale;
+    path: string;
+  };
+  /**
+   * Смена фильтра программы. Без него `talk_open.position` читается на
+   * знаменателе «все доклады», хотя человек видел только отфильтрованный список.
+   */
+  filter_change: {
+    axis: "track" | "hall" | "favorites";
+    value: string | null;
+    source: "chip" | "menu" | "drawer" | "header";
+    locale: AnalyticsLocale;
+    path: string;
+  };
+  /** Закладка доклада — самый сильный интент «приду» из всех кликов страницы. */
+  favorite_toggle: {
+    talk_id: number;
+    on: boolean;
+    surface: "card" | "modal";
+    locale: AnalyticsLocale;
+    path: string;
+  };
+  /** Скачивание календаря: терминальный шаг воронки, до него её не было. */
+  ics_export: {
+    talks: number;
     locale: AnalyticsLocale;
     path: string;
   };
@@ -354,66 +415,6 @@ export function track<E extends AnalyticsEvent>(event: E, props: AnalyticsEvents
   } catch {
     // Молча: сломанный транспорт не должен ронять обработчик клика.
   }
-}
-
-export type LinkKind = "social" | "ticket" | "portfolio" | "source" | "cta" | "other";
-
-export interface LinkTarget {
-  /** Стабильный слаг для разбивки: у одного спикера и один, и второй клик — та же строка. */
-  link: string;
-  kind: LinkKind;
-  /** Сеть спикера для `social:*`; у остальных `null`. */
-  network: string | null;
-}
-
-const SOCIAL_CLASS = /\bsocial-link--([a-z]+)\b/;
-
-/**
- * Что за ссылку открыли — по разметке, хосту и UTM. Чистая функция: тайл
- * «топ ссылок» группирует по `link`, поэтому слаг не должен содержать
- * query-мусор и не должен зависеть от порядка карточек на странице.
- *
- * `utm_content` проверяется раньше хоста: ссылки в портфолио живут на том же
- * домене, что и сайт, и по хосту неотличимы от внутренних.
- *
- * CTA на сотрудничество тоже размечен UTM — с `utm_content`, потому что без
- * него бронь из новой сессии читается как прямой заход. Отличить его от
- * перехода в портфолио можно только по `utm_medium=cta`; без этой ветки клик
- * по кнопке «обсудить проект» попадал бы в тайл «переходы в портфолио» и
- * завышал единственную метрику, ради которой размечен весь остальной сайт.
- */
-export function classifyLink(input: {
-  className?: string;
-  hostname: string;
-  pathname: string;
-  utmContent?: string | null;
-  utmMedium?: string | null;
-  /** `data-cta-target` самой ссылки: единственный признак, который есть у обеих кнопок CTA. */
-  ctaTarget?: string | null;
-}): LinkTarget {
-  const social = SOCIAL_CLASS.exec(input.className ?? "");
-  if (social) {
-    return { link: `social:${social[1]}`, kind: "social", network: social[1] };
-  }
-  // Разметка CTA, а не URL: у кнопки Telegram нет UTM (query `t.me` уходит в
-  // текст сообщения), и без этой ветки она классифицировалась бы как `other`,
-  // а тайл «клики по CTA» считал бы только календарь.
-  if (input.ctaTarget) {
-    return { link: `cta:${input.utmContent || input.ctaTarget}`, kind: "cta", network: null };
-  }
-  if (input.utmMedium === "cta" && input.utmContent) {
-    return { link: `cta:${input.utmContent}`, kind: "cta", network: null };
-  }
-  if (input.utmContent) {
-    return { link: `portfolio:${input.utmContent}`, kind: "portfolio", network: null };
-  }
-  if (input.hostname === "matemarketing.ru" && input.pathname.startsWith("/tickets")) {
-    return { link: "ticket", kind: "ticket", network: null };
-  }
-  if (input.hostname === "lms.matemarketing.ru") {
-    return { link: "source", kind: "source", network: null };
-  }
-  return { link: `${input.hostname}${input.pathname}`, kind: "other", network: null };
 }
 
 /**

@@ -19,22 +19,17 @@ const dayRu = readFileSync(path.join(ROOT, "src/pages/day/[n].astro"), "utf8");
 const dayEn = readFileSync(path.join(ROOT, "src/pages/en/day/[n].astro"), "utf8");
 
 describe("UTM на брони", () => {
-  // Три параметра описывают кампанию целиком и не зависят от поверхности.
-  const fixed = [
-    "utm_source=mm-program-page",
-    "utm_medium=cta",
-    "utm_campaign=collab_slot",
-  ];
-
+  // Литералы кампании живут в `utmHref` (`src/lib/analytics.ts`): здесь важно,
+  // что компонент зовёт его именно с этой кампанией, а не собирает строку сам.
   test("кампания размечена полностью", () => {
-    for (const param of fixed) expect(component).toContain(param);
+    expect(component).toContain("utmHref(");
+    expect(component).toContain('medium: "cta"');
+    expect(component).toContain('campaign: "collab_slot"');
   });
 
   test("utm_content — из того же surface, что и событие", () => {
     // Не литерал на поверхность: одна переменная кормит и ссылку, и разметку.
-    // Проверяются оба места сразу — захардкоженный `utm_content=footer` ломает
-    // первую строку, а разъехавшийся атрибут — вторую.
-    expect(component).toContain("utm_content=${surface}");
+    expect(component).toContain("content: surface");
     expect(component.match(/data-cta-surface=\{surface\}/g)).toHaveLength(2);
   });
 

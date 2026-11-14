@@ -5,12 +5,20 @@
  * данные по запросу. Пока модалка закрыта, она `hidden` и не в a11y-дереве.
  */
 import { t, type Lang } from "../i18n/ui";
+import { utmHref } from "../lib/analytics";
 
 interface Props {
   lang: Lang;
 }
 
 const { lang } = Astro.props;
+
+// Билеты из модалки — отдельная поверхность: без `utm_content` переход
+// склеивался с подвальным, и «доклад привёл к покупке» не читалось.
+const ticketsHref = utmHref("https://matemarketing.ru/tickets/", {
+  campaign: "mm_program_to_tickets",
+  content: "modal-tickets",
+});
 ---
 
 <div class="talk-modal" data-modal hidden>
@@ -50,7 +58,7 @@ const { lang } = Astro.props;
         <a class="talk-modal__page" href="#" data-modal-page hidden>{t(lang, "talkPage")}</a>
         <a
           class="talk-modal__buy"
-          href="https://matemarketing.ru/tickets/"
+          href={ticketsHref}
           target="_blank"
           rel="noopener"
         >

@@ -11,6 +11,7 @@
 import TalksGraph from "./TalksGraph.astro";
 import { dayHrefFor, talkHrefFor } from "../i18n/paths";
 import { t, type Lang } from "../i18n/ui";
+import { portfolioHref as portfolioLink } from "../lib/analytics";
 import { hallLabel, localizeTalk, trackLabel } from "../lib/localize";
 import { PROGRAM, days } from "../lib/program";
 import {
@@ -54,10 +55,10 @@ const trackGroups = notesByTrack(graph);
 const themeGroups = notesByTheme(graph);
 const themeEdges = graph.edges.filter((edge) => edge.kind === "topic").length;
 
-const portfolioHref =
-  "https://nikitaboyarkin.github.io" +
-  (lang === "en" ? "/en/talks/" : "/talks/") +
-  "?utm_source=mm-program-page&utm_medium=referral&utm_campaign=mm_program_to_portfolio&utm_content=talks-footer";
+const portfolioHref = portfolioLink(
+  lang === "en" ? "/en/talks/" : "/talks/",
+  "talks-footer",
+);
 ---
 
 <header class="page-head">
@@ -186,7 +187,9 @@ const portfolioHref =
 <footer class="talks-footer">
   <p class="talks-footer__note">{t(lang, "talksPortfolioNote")}</p>
   <p class="talks-footer__links">
-    <a class="talks-footer__link" href={portfolioHref} rel="noopener">{t(lang, "talksPortfolio")}</a>
+    <a class="talks-footer__link" href={portfolioHref} rel="noopener" data-analytics="talks-footer"
+      >{t(lang, "talksPortfolio")}</a
+    >
     <a class="talks-footer__link" href={dayHrefFor(lang, 1)}>{t(lang, "talksToProgram")}</a>
   </p>
 </footer>

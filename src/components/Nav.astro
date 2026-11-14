@@ -6,6 +6,7 @@
 import { dayLabel } from "../i18n/format";
 import { dayHrefFor, switchLangHref, talksHrefFor } from "../i18n/paths";
 import { otherLang, t, type Lang } from "../i18n/ui";
+import { portfolioHref } from "../lib/analytics";
 import { STAR, TAG, PIN } from "../lib/icons";
 import NavDrawer from "./NavDrawer.astro";
 import { dayNameLabel, hallLabel, trackLabel } from "../lib/localize";
@@ -40,14 +41,6 @@ const {
   page = "day",
   langHref: langHrefProp,
 } = Astro.props;
-const portfolio = "https://nikitaboyarkin.github.io";
-
-// Переход на портфолио размечен: без UTM визит, начавшийся в новой сессии,
-// выглядит прямым заходом, и связка двух сайтов в отчёте теряется.
-const portfolioHref = (path: string, content: string) =>
-  `${portfolio}${path}?utm_source=mm-program-page&utm_medium=referral` +
-  `&utm_campaign=mm_program_to_portfolio&utm_content=${content}`;
-
 const dayLinks = days().map((day, index) => ({
   ordinal: index + 1,
   href: dayHrefFor(lang, index + 1),
@@ -57,7 +50,12 @@ const dayLinks = days().map((day, index) => ({
 // Один внешний пункт. «Главная» дублировала логотип (он ведёт туда же), а
 // «Проекты» в шапке программы конкурировали за место с фильтрами.
 const siteLinks = [
-  { href: portfolioHref("/contact/", "nav-contacts"), label: t(lang, "navContacts"), icon: "contacts" },
+  {
+    href: portfolioHref("/contact/", "nav-contacts"),
+    content: "nav-contacts",
+    label: t(lang, "navContacts"),
+    icon: "contacts",
+  },
 ];
 
 // «Граф докладов» — своя страница этого сайта, а не ссылка портфолио: та же
@@ -91,7 +89,12 @@ const langCode = targetLang.toUpperCase();
 ---
 
 <header class="nav-mobile">
-  <a class="nav-brand" href={portfolioHref("/", "brand-mobile")} aria-label={t(lang, "brandName")}>
+  <a
+    class="nav-brand"
+    href={portfolioHref("/", "brand-mobile")}
+    data-analytics="brand-mobile"
+    aria-label={t(lang, "brandName")}
+  >
     <span class="nav-brand-icon" aria-hidden="true"></span>
     <span class="nav-brand-text">
       <b>{t(lang, "brandName")}</b>
@@ -115,7 +118,9 @@ const langCode = targetLang.toUpperCase();
     {
       siteLinks.map((link) => (
         <li>
-          <a class={`nav-link--${link.icon}`} href={link.href} rel="noopener">{link.label}</a>
+          <a class={`nav-link--${link.icon}`} href={link.href} rel="noopener" data-analytics={link.content}
+            >{link.label}</a
+          >
         </li>
       ))
     }

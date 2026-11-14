@@ -13,6 +13,7 @@
  * события, — поэтому клик нельзя перепутать с другим блоком, если он появится.
  */
 import { t, type Lang } from "../i18n/ui";
+import { utmHref } from "../lib/analytics";
 
 interface Props {
   lang: Lang;
@@ -20,13 +21,14 @@ interface Props {
 
 const { lang } = Astro.props;
 
-/** Поверхность CTA: уходит и в UTM, и в `data-cta-surface`, и в событие. */
+/** Поверхность CTA: уходит и в UTM, и в `data-cta-surface`, и в `surface` события. */
 const surface = "footer";
 const titleId = "collab-title";
-const bookingHref =
-  "https://cal.com/lofinibo/bored-call-me" +
-  "?utm_source=mm-program-page&utm_medium=cta&utm_campaign=collab_slot" +
-  `&utm_content=${surface}`;
+const bookingHref = utmHref("https://cal.com/lofinibo/bored-call-me", {
+  medium: "cta",
+  campaign: "collab_slot",
+  content: surface,
+});
 const telegramHref = "https://t.me/lofinibo";
 ---
 
@@ -42,7 +44,7 @@ const telegramHref = "https://t.me/lofinibo";
       href={bookingHref}
       target="_blank"
       rel="noopener"
-      data-analytics="cta"
+      data-analytics={surface}
       data-cta-surface={surface}
       data-cta-target="cal">{t(lang, "collabPrimary")}</a
     >
@@ -51,7 +53,7 @@ const telegramHref = "https://t.me/lofinibo";
       href={telegramHref}
       target="_blank"
       rel="noopener"
-      data-analytics="cta"
+      data-analytics={surface}
       data-cta-surface={surface}
       data-cta-target="telegram">{t(lang, "collabSecondary")}</a
     >

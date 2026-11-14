@@ -9,6 +9,7 @@ import CollabCta from "../components/CollabCta.astro";
 import Nav from "../components/Nav.astro";
 import { dayHrefFor } from "../i18n/paths";
 import { t, type Lang } from "../i18n/ui";
+import { utmHref } from "../lib/analytics";
 import { BASE_URL } from "../lib/program";
 import type { BannerSources } from "../lib/images";
 import "../styles/tokens.css";
@@ -302,13 +303,21 @@ const [ticketsBefore, ticketsAfter = ""] = t(lang, "footerTickets").split("{link
       </p>
       <p>
         {sourceBefore}<a
-          href="https://lms.matemarketing.ru/events/all/6/program"
+          href={utmHref("https://lms.matemarketing.ru/events/all/6/program", {
+            campaign: "mm_program_to_source",
+            content: "footer",
+          })}
           target="_blank"
           rel="noopener">{t(lang, "footerSourceLink")}</a>{sourceAfter}
       </p>
       <p>
-        {ticketsBefore}<a href="https://matemarketing.ru/tickets/" target="_blank" rel="noopener"
-          >{t(lang, "footerTicketsLink")}</a
+        {ticketsBefore}<a
+          href={utmHref("https://matemarketing.ru/tickets/", {
+            campaign: "mm_program_to_tickets",
+            content: "footer",
+          })}
+          target="_blank"
+          rel="noopener">{t(lang, "footerTicketsLink")}</a
         >{ticketsAfter}
       </p>
       <p>{t(lang, "footerRights")}</p>

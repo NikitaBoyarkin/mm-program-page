@@ -665,9 +665,12 @@ origin (`https://nikitaboyarkin.github.io`) — файл оставлен заг
   (первый заход), `initial_referrer_class`, `landing_path` — и `site: "mm-program-page"`,
   по которому тайлы отличают этот сайт от портфолио в общем проекте PostHog.
 - Все свойства — супер-свойства, а не свойства `$pageview`: клик по билету обязан нести кампанию тоже.
+- `$pageview` уходит вручную, после `registerSuperProperties`: авто-захват внутри `init`
+  отправлял бы посадочный pageview без `site` и без UTM — то есть без атрибуции там, где она
+  нужнее всего.
 - SDK грузится только после первого взаимодействия и никогда на `localhost`/`127.0.0.1`.
 - Без `PUBLIC_POSTHOG_KEY` скрипт не рендерится; сборка и страница работают как раньше.
-- Сайт шлёт сам шесть событий; имена и свойства описаны типом `AnalyticsEvents` в
+- Сайт шлёт сам двенадцать событий; имена и свойства описаны типом `AnalyticsEvents` в
   `src/lib/analytics.ts`, а `tests/lib/analytics-contract.test.ts` держит код, карту и этот
   раздел в согласии. Словарь общий с портфолио: по нему тайл «топ докладов» склеивает два
   сайта, поэтому имя `talk_open` (а не `talk_opened`) и свойство `track` — не местная
@@ -693,6 +696,19 @@ origin (`https://nikitaboyarkin.github.io`) — файл оставлен заг
   - `cta_view {surface, locale, path}` / `cta_click {surface, target, locale, path}` — авторский
     CTA на сотрудничество (`CollabCta.astro`): показ по IntersectionObserver 50 %, клик с
     `target` ∈ `cal|telegram` и той же `surface`, которая ушла в `utm_content`.
+  - `search_open {surface, locale, path}` / `search_query {query_len, results, zone, locale, path}` /
+    `search_result_click {talk_id, position, results, query_len, locale, path}` — диалог поиска.
+    Сам запрос не уходит ни в одно событие: только его длина — `maskAllInputs` скрывает текст
+    и в записях сессии, так что сырой строки нет ни в одном канале.
+  - `filter_change {axis, value, source, locale, path}` — смена фильтра (`track` / `hall` /
+    `favorites`) с любого входа (`chip` / `menu` / `drawer` / `header`). Без него
+    `talk_open.position` читается на знаменателе «все доклады», хотя человек видел отфильтрованный.
+  - `favorite_toggle {talk_id, on, surface, locale, path}` — закладка доклада, `surface` ∈
+    `card|modal`: самый сильный интент «приду» из всех кликов страницы.
+  - `ics_export {talks, locale, path}` — скачивание календаря: терминальный шаг воронки.
+  - `talk_note_view` несёт `surface` ∈ `search|program|talks|talk|external|direct`: `?from=search`
+    ставит выдача поиска, остальное решает referrer (`classifyNoteEntry`). Без этого поля одна
+    страница склеивала поиск, граф и модалку в одну строку.
   Остальное — автозахват.
 - CTA на сотрудничество размечен UTM (`utm_medium=cta`, `utm_campaign=collab_slot`,
   `utm_content` — поверхность) и отличается в `classifyLink` по `utm_medium`: без этой ветки
@@ -707,9 +723,20 @@ origin (`https://nikitaboyarkin.github.io`) — файл оставлен заг
 - «Внешняя» ссылка — та, что ведёт за пределы base `/mm-program-page`, а не за пределы хоста:
   портфолио живёт на том же `nikitaboyarkin.github.io`, и проверка по хосту молча глушила
   клики в него.
-- Ссылки на портфолио размечены UTM (`utm_source=mm-program-page`,
-  `utm_medium=referral`, `utm_campaign=mm_program_to_portfolio`, `utm_content` — конкретная
-  ссылка). Без разметки переход, начавшийся в новой сессии, читается как прямой заход,
+- UTM несут три вида внешних ссылок; собирает их `utmHref` в `src/lib/analytics.ts`,
+  поэтому литерал кампании живёт в одном месте, а не в двух компонентах:
+  - портфолио — `utm_source=mm-program-page`, `utm_medium=referral`,
+    `utm_campaign=mm_program_to_portfolio`;
+  - CTA-календарь — `utm_medium=cta`, `utm_campaign=collab_slot`;
+  - ресурсы организатора — билеты `mm_program_to_tickets`, программа на LMS `mm_program_to_source`.
+- `utm_content` = `surface` события, одно значение на поверхность: `brand-mobile`,
+  `brand-drawer`, `nav-contacts`, `talks-footer` (портфолио), `footer` (CTA), `footer` и
+  `modal-tickets` (билеты), `footer` (источник). Поэтому срез по кампании и срез по `surface`
+  читаются одним словарём, а не двумя.
+- Без UTM намеренно: соцсети спикеров (хватает `outbound_click{kind, network, speaker,
+  talk_id}`, а query ломает часть сетей) и Telegram-кнопка CTA (query уходит в текст
+  сообщения). Внутренние ссылки кампанию не носят.
+- Разметка без UTM бесполезна: переход, начавшийся в новой сессии, читается как прямой заход,
   и связка двух сайтов в отчёте теряется.
 
 ## Отклонения от оригинала

@@ -227,18 +227,21 @@ const relatedByDay = [...related]
    * по `requestIdleCallback`, потому что иначе читатель, пришедший из поиска и
    * не тронувший ни мышь, ни скролл, не оставил бы вообще ничего.
    */
-  import { track } from "../lib/analytics";
+  import { classifyNoteEntry, track } from "../lib/analytics";
 
   const root = document.querySelector<HTMLElement>("article.talk-note[data-talk-id]");
   const talkId = Number(root?.dataset.talkId ?? "");
   const dayId = Number(root?.dataset.talkDayId ?? "");
   if (root && Number.isFinite(talkId) && Number.isFinite(dayId)) {
+    // `?from=search` ставит выдача поиска; у остальных входов источник — referrer.
+    const from = new URLSearchParams(window.location.search).get("from");
     track("talk_note_view", {
       talk_id: talkId,
       talk_title: root.dataset.talkTitle ?? "",
       track_id: Number(root.dataset.talkTrackId || "") || null,
       track: root.dataset.talkTrack ?? "",
       day_id: dayId,
+      surface: classifyNoteEntry(document.referrer, from, window.location.origin),
       locale: root.dataset.talkLocale === "en" ? "en" : "ru",
       path: window.location.pathname,
     });

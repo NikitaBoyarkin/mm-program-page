@@ -12,6 +12,7 @@
 import { describe, expect, test } from "bun:test";
 import { readdirSync, readFileSync, statSync } from "node:fs";
 import { dirname, join } from "node:path";
+import { classifyNoteEntry, SITE, utmHref } from "../../src/lib/analytics";
 
 const ROOT = dirname(dirname(dirname(import.meta.path)));
 const SRC = join(ROOT, "src");
@@ -90,5 +91,32 @@ describe("разметка, без которой события бесполе�
     const analytics = readFileSync(join(SRC, "components", "Analytics.astro"), "utf8");
     expect(analytics).not.toContain("/mm-program-page");
     expect(analytics).toContain("import.meta.env.BASE_URL");
+  });
+
+  test("каждое событие описано в CONTRACT.md", () => {
+    // Карта и контракт расходятся молча: тип знает событие, а раздел «Аналитика» — нет.
+    const contract = readFileSync(join(ROOT, "CONTRACT.md"), "utf8");
+    expect(declared.filter((name) => !contract.includes(name))).toEqual([]);
+  });
+});
+
+describe("UTM и источник заметки", () => {
+  test("utmHref несёт кампанию этого сайта", () => {
+    const url = new URL(utmHref("https://example.com/x", { campaign: "c", content: "footer" }));
+    expect(url.searchParams.get("utm_source")).toBe(SITE);
+    expect(url.searchParams.get("utm_medium")).toBe("referral");
+    expect(url.searchParams.get("utm_campaign")).toBe("c");
+    expect(url.searchParams.get("utm_content")).toBe("footer");
+  });
+
+  test("classifyNoteEntry: поиск важнее referrer'а, граф отличается от заметки", () => {
+    const origin = "https://nikitaboyarkin.github.io";
+    const base = `${origin}/mm-program-page`;
+    expect(classifyNoteEntry(`${base}/2`, "search", origin)).toBe("search");
+    expect(classifyNoteEntry(`${base}/talks`, null, origin)).toBe("talks");
+    expect(classifyNoteEntry(`${base}/talk/42`, null, origin)).toBe("talk");
+    expect(classifyNoteEntry(`${base}/2`, null, origin)).toBe("program");
+    expect(classifyNoteEntry("https://google.com/", null, origin)).toBe("external");
+    expect(classifyNoteEntry("", null, origin)).toBe("direct");
   });
 });

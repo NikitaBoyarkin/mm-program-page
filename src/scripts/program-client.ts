@@ -46,6 +46,9 @@ const MOBILE_QUERY = "(max-width: 767.98px)";
 /** Язык страницы ставит `Base.astro` в `data-lang`; прочее — русский. */
 const LANG: Lang = document.documentElement.dataset.lang === "en" ? "en" : "ru";
 
+/** Путь страницы: свойство `path` у всех событий, одно чтение. */
+const pagePath = (): string => window.location.pathname;
+
 const FOCUSABLE =
   'a[href], button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])';
 
@@ -569,8 +572,15 @@ function initFilter(): void {
 
   for (const chip of chips) {
     chip.addEventListener("click", () => {
-      const track = chip.dataset.track ?? "";
-      setActiveTrack(activeTrack === track ? null : track);
+      const name = chip.dataset.track ?? "";
+      setActiveTrack(activeTrack === name ? null : name);
+      track("filter_change", {
+        axis: "track",
+        value: activeTrack,
+        source: "chip",
+        locale: LANG,
+        path: pagePath(),
+      });
     });
   }
 
@@ -637,7 +647,17 @@ function initFavFilter(): void {
   // Состояние читаем до первого применения, иначе чип стартовал бы выключенным
   // и перезагрузка сбрасывала бы выбор.
   favoritesOnly = readStorage(FAV_FILTER_KEY, "session") === "1";
-  chip.addEventListener("click", () => setFavoritesOnly(!favoritesOnly));
+  chip.addEventListener("click", () => {
+    const next = !favoritesOnly;
+    setFavoritesOnly(next);
+    track("filter_change", {
+      axis: "favorites",
+      value: next ? "on" : "off",
+      source: "chip",
+      locale: LANG,
+      path: pagePath(),
+    });
+  });
   // В URL избранное не живёт, но трек из `?track=` уже мог примениться —
   // прогон выравнивает состояние и счётчик с разметкой.
   setFavoritesOnly(favoritesOnly);
@@ -682,6 +702,13 @@ function initDrawerFavorites(): void {
   button.addEventListener("click", () => {
     closeDrawer(false);
     setFavoritesOnly(true);
+    track("filter_change", {
+      axis: "favorites",
+      value: "on",
+      source: "drawer",
+      locale: LANG,
+      path: pagePath(),
+    });
     revealGrid();
   });
 }
@@ -694,7 +721,15 @@ function initHeaderFavorites(): void {
   const button = $<HTMLButtonElement>("button[data-fav-header]");
   if (!button) return;
   button.addEventListener("click", () => {
-    setFavoritesOnly(!favoritesOnly);
+    const next = !favoritesOnly;
+    setFavoritesOnly(next);
+    track("filter_change", {
+      axis: "favorites",
+      value: next ? "on" : "off",
+      source: "header",
+      locale: LANG,
+      path: pagePath(),
+    });
     revealGrid();
   });
 }
@@ -730,7 +765,15 @@ function initMenu(kind: "track" | "hall", pick: (value: string | null) => void):
 
   for (const option of $$<HTMLButtonElement>(`button[data-${kind}-option]`)) {
     option.addEventListener("click", () => {
-      pick(option.dataset[kind] || null);
+      const value = option.dataset[kind] || null;
+      pick(value);
+      track("filter_change", {
+        axis: kind,
+        value,
+        source: "menu",
+        locale: LANG,
+        path: pagePath(),
+      });
       setMenuOpen(menu, false);
       // Фокус на кнопку, а не в список: панель закрылась, и следующий Tab должен
       // идти дальше по шапке, а не в скрытые пункты.
@@ -870,15 +913,23 @@ function syncFavorites(): void {
   if (favoritesOnly) applyFilter();
 }
 
-function toggleFavorite(id: number): void {
+function toggleFavorite(id: number, surface: "card" | "modal"): void {
   if (!Number.isFinite(id)) return;
   // Перечитываем хранилище перед записью: вторая вкладка могла добавить своё,
   // и `saveFavorites()` ниже затёр бы её набор своим (last-writer-wins).
   loadFavorites();
-  if (favorites.has(id)) favorites.delete(id);
-  else favorites.add(id);
+  const on = !favorites.has(id);
+  if (on) favorites.add(id);
+  else favorites.delete(id);
   saveFavorites();
   syncFavorites();
+  track("favorite_toggle", {
+    talk_id: id,
+    on,
+    surface,
+    locale: LANG,
+    path: pagePath(),
+  });
 }
 
 function initFavorites(): void {
@@ -895,13 +946,13 @@ function initFavorites(): void {
   for (const button of $$<HTMLButtonElement>("button[data-fav][data-talk-id]")) {
     button.addEventListener("click", (event) => {
       event.stopPropagation();
-      toggleFavorite(Number(button.dataset.talkId));
+      toggleFavorite(Number(button.dataset.talkId), "card");
     });
   }
 
   $<HTMLButtonElement>("button[data-modal-fav]")?.addEventListener("click", (event) => {
     event.stopPropagation();
-    if (modalTalk) toggleFavorite(modalTalk.id);
+    if (modalTalk) toggleFavorite(modalTalk.id, "modal");
   });
 }
 
@@ -1545,6 +1596,7 @@ function exportIcs(): void {
         PROGRAM_CALENDAR_FILENAME,
         buildProgramCalendar(program.days, talks, new Date(), t(LANG, "brandEvent")),
       );
+      track("ics_export", { talks: talks.length, locale: LANG, path: pagePath() });
       toast(
         t(LANG, "toastExported", {
           count: `${talks.length} ${pluralTalks(talks.length, LANG)}`,
@@ -1585,6 +1637,7 @@ function openSearch(): void {
   const dialog = searchDialog();
   if (!dialog || !dialog.hidden) return;
 
+  track("search_open", { surface: "nav", locale: LANG, path: pagePath() });
   searchTrigger()?.setAttribute("aria-expanded", "true");
   // Та же запись истории, что у модалки и drawer'а: системная «Назад»
   // закрывает поиск, а не уводит со страницы.
@@ -1655,12 +1708,15 @@ function renderResults(program: Program, query: string): void {
   if (hint) hint.hidden = true;
 
   const found = searchTalks(program, query);
-  for (const talk of found) {
+  const queryLen = query.trim().length;
+  for (const [position, talk] of found.entries()) {
     const item = document.createElement("li");
     const link = document.createElement("a");
     link.className = "search-result";
     // Единственный адрес доклада — постоянная страница, без `?talk=`.
-    link.href = talkHrefFor(LANG, talk.id);
+    // `?from=search` доносит источник до `talk_note_view`: referrer у обеих
+    // страниц свой сайт и сам по себе «поиск» не выдаёт.
+    link.href = `${talkHrefFor(LANG, talk.id)}?from=search`;
 
     const day = document.createElement("span");
     day.className = "search-result__day";
@@ -1675,6 +1731,16 @@ function renderResults(program: Program, query: string): void {
     meta.textContent = `${talk.start} · ${talk.hall}`;
 
     link.append(day, title, meta);
+    link.addEventListener("click", () => {
+      track("search_result_click", {
+        talk_id: talk.id,
+        position,
+        results: found.length,
+        query_len: queryLen,
+        locale: LANG,
+        path: pagePath(),
+      });
+    });
     item.appendChild(link);
     list.appendChild(item);
   }
@@ -1683,6 +1749,15 @@ function renderResults(program: Program, query: string): void {
   // Живая область: без неё скринридер не узнаёт ни числа результатов,
   // ни «ничего не найдено» — визуальная выдача для него не меняется.
   announceSearch(found.length);
+  // Длина строки, а не сама строка: `maskAllInputs` скрывает её и в записях
+  // сессии, так что сырой запрос в аналитику не уходит ни одним каналом.
+  track("search_query", {
+    query_len: queryLen,
+    results: found.length,
+    zone: found.length ? "results" : "empty",
+    locale: LANG,
+    path: pagePath(),
+  });
 }
 
 function runSearch(query: string): void {
