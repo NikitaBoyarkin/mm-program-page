@@ -282,7 +282,9 @@ test("37 · клик по результату поиска ведёт на по
   await expect(first).toBeVisible();
   await first.click();
 
-  await page.waitForURL(/\/mm-program-page\/talk\/\d+\/$/);
+  // `?from=search` — часть контракта: без него `talk_note_view` не отличает
+  // читателя из выдачи от пришедшего из графа (см. `classifyNoteEntry`).
+  await page.waitForURL(/\/mm-program-page\/talk\/\d+\/(\?from=search)?$/);
   const title = page.locator("h1.talk-note__title");
   await expect(title).toBeVisible();
   expect((await title.innerText()).trim().length).toBeGreaterThan(0);
