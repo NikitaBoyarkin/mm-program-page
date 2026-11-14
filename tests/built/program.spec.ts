@@ -16,7 +16,7 @@ const BASE = "/mm-program-page";
 
 const DAY1_DATE = "2026-11-26";
 const DAY1_TALKS = 39;
-const TOTAL_TALKS = 91;
+const TOTAL_TALKS = 92;
 
 /**
  * Открыть путь и дождаться `load`. `load` наступает после выполнения
@@ -157,11 +157,11 @@ test("01 · / — 39 карточек, 3 таба дней, 11 чипов, сч�
   await expect(page.locator("a.day-tab").first()).toHaveAttribute("aria-current", "page");
 });
 
-test("02 · /day/2/ — 37 карточек и второй таб; /day/3/ — 15 карточек и третий таб", async ({
+test("02 · /day/2/ — 38 карточек и второй таб; /day/3/ — 15 карточек и третий таб", async ({
   page,
 }) => {
   await open(page, "/day/2/");
-  await expect(page.locator("article.talk-card")).toHaveCount(37);
+  await expect(page.locator("article.talk-card")).toHaveCount(38);
   await expect(page.locator("a.day-tab[aria-current='page']")).toHaveCount(1);
   await expect(page.locator("a.day-tab").nth(1)).toHaveAttribute("aria-current", "page");
 
@@ -171,7 +171,7 @@ test("02 · /day/2/ — 37 карточек и второй таб; /day/3/ — 
   await expect(page.locator("a.day-tab").nth(2)).toHaveAttribute("aria-current", "page");
 });
 
-test("03 · сумма уникальных data-talk-id по трём страницам = 91", async ({ page }) => {
+test("03 · сумма уникальных data-talk-id по трём страницам = 92", async ({ page }) => {
   const ids = new Set<number>();
 
   for (const path of ["/", "/day/2/", "/day/3/"]) {
@@ -950,7 +950,7 @@ test.describe("мобильный 320×700", () => {
   });
 });
 
-test("12 · /program.json — 200, application/json, 91 доклад, 3 дня", async ({ request }) => {
+test("12 · /program.json — 200, application/json, 92 доклада, 3 дня", async ({ request }) => {
   const response = await request.get(BASE + "/program.json");
   expect(response.status()).toBe(200);
   expect(response.headers()["content-type"] ?? "").toContain("application/json");

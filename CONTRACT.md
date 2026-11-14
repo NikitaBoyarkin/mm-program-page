@@ -20,7 +20,7 @@
 | Путь | Владелец | Назначение |
 | --- | --- | --- |
 | `src/data/program.json` | data | нормализованный слепок API — единственный источник данных |
-| `src/data/socials.json` | data | overlay соцсетей лекторов: имя → `telegram/linkedin/youtube/site`. Отдельный файл: `data:fetch` пересобирает `program.json` побайтово и стёр бы поле. Ключ — полное имя из слепка (все 94 уникальны), значение — только подтверждённые `https`-ссылки |
+| `src/data/socials.json` | data | overlay соцсетей лекторов: имя → `telegram/linkedin/youtube/site`. Отдельный файл: `data:fetch` пересобирает `program.json` побайтово и стёр бы поле. Ключ — полное имя из слепка (все 99 уникальны), значение — только подтверждённые `https`-ссылки |
 | `src/lib/socials.ts` | core | сети и подписи — один источник для Astro-разметки и клиента. Геометрии иконок здесь нет: пути соцсетей живут в `src/styles/site.css` (`--social-*`), декоративные — в `src/styles/program.css` (`--icon-*`), оба как CSS-маски |
 | `src/data/materials.json` | data | overlay материалов спикеров: `speakers` (имя → до 2 записей `{kind: video\|article, title, url}`) и `talks` (id доклада → 1 запись). Отдельный файл: `data:fetch` пересобирает `program.json` побайтово. Только абсолютные `https`-ссылки, только то, что опубликовал сам автор |
 | `src/lib/materials.ts` | core | `sanitizeMaterials` (https, непустой заголовок, дедуп по URL, лимит) и `materialsForTalk(talk)` → `{topic, bySpeaker}`. В `program.ts` не вмердживается: join по имени делает страница |
@@ -73,7 +73,7 @@
 | `tests/built/talks.spec.ts` | verify | 10 тестов графа: заметки и якоря, SVG на билде, хабы тем, вход в шапке на трёх ширинах (включая 768 px — иконка), EN-копия, скролл только внутри графа |
 | `tests/built/talk-pages.spec.ts` | verify | 17 тестов заметки доклада: адрес и пара языков, факты, связанные ссылки резолвятся, EN-переключатель, вход из модалки; вместе 66 тестов × 3 проекта = 198 прогонов |
 | `src/content.config.ts` | core | коллекции `talks` / `talks-en`: zod-схема фактов заметки, `.strict()` ловит опечатку в ключе |
-| `src/content/talks/<id>.md`, `src/content/talks-en/<id>.md` | data | по заметке на доклад в каждой локали (91 + 91); frontmatter производится генератором, тело — seed из описания и ручная правка |
+| `src/content/talks/<id>.md`, `src/content/talks-en/<id>.md` | data | по заметке на доклад в каждой локали (92 + 92); frontmatter производится генератором, тело — seed из описания и ручная правка |
 | `src/lib/talk-note.ts` | core | детерминированный frontmatter-форматер и разбор файла: один источник для генератора и тестов |
 | `scripts/generate-talk-notes.ts` | data | seed / `--check` / `--dry-run`; тело существующего файла не перезаписывает никогда |
 | `src/components/TalkNote.astro` | view | тело заметки доклада: факты из `PROGRAM`, спикеры, темы, «Связанные», слот из `.md` |
@@ -122,9 +122,9 @@
   }],
   "talks": [{
     "id": 267, "dayId": 10, "hall": "Молекула",
-    "track": "ТРАНСФОРМАЦИЯ", "trackId": null,      // null у 27 докладов
+    "track": "ТРАНСФОРМАЦИЯ", "trackId": null,      // null у 23 докладов
     "title": "…", "start": "11:00", "end": "12:10", // "HH:MM", МСК
-    "image": "https://… | null",                     // null у 13 докладов
+    "image": "https://… | null",                     // null у 15 докладов
     "lectors": [{ "name": "…", "role": "…", "photo": "https://… | null" }],
     "short": "…",                                    // текст карточки; "" только у id 362
     "description": "…",                              // полный текст; может быть ""
@@ -316,7 +316,7 @@ span.search-result__day + span.search-result__title + span.search-result__meta`;
    обратной ссылки «← К расписанию» и адресом локатора `a.talk-note__where`; параметра
    `?talk=309` больше нет. Один идентификатор — одна сущность.
 2. **Связи вместо иерархии.** Ребро `трек ↔ тема` весит столько докладов, сколько их реально
-   несут оба. Рёбер «доклад ↔ доклад» в графе нет намеренно: 91 узел в force-раскладке
+   несут оба. Рёбер «доклад ↔ доклад» в графе нет намеренно: 92 узла в force-раскладке
    слипается (проверено в портфолио), а смысловая связь читается по общим темам.
 3. **Обратные ссылки.** Хаб темы перечисляет все заметки, которые на него ссылаются, включая
    чужие треки. У каждой заметки — до четырёх «связанных» (общие темы с IDF-весом, тот же
@@ -336,11 +336,11 @@ main#main.page
     h2.talks-section__title
     figure.talks-graph
       div.talks-graph__canvas > svg.talks-graph__svg[role=group][aria-label]
-        g.talks-graph__spokes > line × 91            ← членство: хаб ↔ заметка
+        g.talks-graph__spokes > line × 92            ← членство: хаб ↔ заметка
         g.talks-graph__edges > line.talks-graph__edge--core|topic
         g.talks-graph__hubs > circle.talks-graph__hub--event|theme|track + text.talks-graph__label
         g.talks-graph__notes > a.talks-graph__note[href=/talk/<id>/] > circle + circle.talks-graph__note-hit + title
-                                                             ← 91 ссылка; роль `group`, а не `img`:
+                                                             ← 92 ссылки; роль `group`, а не `img`:
                                                                 `img` сделал бы поддерево презентационным
       figcaption.talks-graph__caption
   section.talks-section
@@ -382,7 +382,7 @@ main#main.page
 
 ## Заметки докладов (`/talk/<id>/`, `/en/talk/<id>/`)
 
-Одна `.md` на доклад и язык — 182 файла в `src/content/{talks,talks-en}`. Факты во
+Одна `.md` на доклад и язык — 184 файла в `src/content/{talks,talks-en}`. Факты во
 frontmatter — проверяемая копия слепка: `bun run talks:check` падает, если копия
 устарела (сравнивается только frontmatter-блок, строкой; тело не сравнивается —
 его правит человек). `bun run talks:generate` создаёт недостающее и переписывает
@@ -397,7 +397,7 @@ frontmatter — проверяемая копия слепка: `bun run talks:c
 `bun run test` и `bun run test:built`: красный тест блокирует деплой
 (`.github/workflows/deploy.yml`). Обнаружимость
 даёт sitemap: `@astrojs/sitemap` в `astro.config.mjs` пишет на билде
-`dist/sitemap-index.xml` → `dist/sitemap-0.xml` со всеми 190 страницами (182 заметки,
+`dist/sitemap-index.xml` → `dist/sitemap-0.xml` со всеми 192 страницами (184 заметки,
 6 дней, 2 графа) под `base`; `404` и JSON-эндпоинты в карту не попадают. Автопоиска
 карты нет: `sitemap-index.xml` нужно добавить в Search Console и Яндекс.Вебмастер
 руками. `public/robots.txt` попадает в подкаталог `base`
@@ -425,11 +425,13 @@ origin (`https://nikitaboyarkin.github.io`) — файл оставлен заг
 тест `talk-pages.spec.ts` берёт доклад из данных, поэтому краснеет только при
 поломке рендера, а не при пустом overlay.
 
-Срез на 2026-11-14: 51 спикер и 54 материала, 12 докладов с материалом по теме,
-секция есть на 50 из 91 русской страницы. Соцсети в `socials.json` — 63 из 94
-лекторов. Каждая ссылка перед записью в файл проверена `curl`: только `200`,
-отброшены `302` на `vkvideo.ru/?errorCode=…` (удалённое видео) и `401` от
-`companies.rbc.ru`.
+Срез на 2026-11-14 (вторая волна, веер по всем непокрытым): 56 спикеров и 72
+материала (60 спикерских + 12 тематических), 12 докладов с материалом по теме,
+секция есть на 54 из 92 русских страниц. Соцсети в `socials.json` — 74 из 99
+лекторов. Каждая ссылка перед записью в файл проверена `curl`: только `200`;
+`999` от LinkedIn принят как «страница есть, но бот-блок»; отброшены `000` у
+`habr.com/ru/users/pileyan/` (не отвечает и после `--http1.1`), `302` на
+`vkvideo.ru/?errorCode=…` (удалённое видео) и `401` от `companies.rbc.ru`.
 
 ## Мобильная модель (≤ 767.98 px)
 

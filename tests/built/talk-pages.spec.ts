@@ -175,7 +175,7 @@ test("на /en/talk/<id>/ заголовки связанных докладов
 });
 
 test("пустое тело не рендерит секцию «О докладе», непустое — рендерит", async ({ page }) => {
-  for (const id of [267, 292, 361, 362]) {
+  for (const id of [267, 362]) {
     for (const path of [`/talk/${id}/`, `/en/talk/${id}/`]) {
       await open(page, path);
       expect(await page.locator(".talk-note__about").count(), `${path}: секция пустого тела`).toBe(0);
@@ -225,7 +225,7 @@ test("описание на всех собранных страницах до�
     for (const path of [`talk/${id}`, `en/talk/${id}`]) {
       const html = readFileSync(join(DIST, path, "index.html"), "utf8");
       const description = metaDescription(html);
-      // 27 из 91 доклада приходят без трека: сегмент выпадает целиком, а не
+      // 23 из 92 докладов приходят без трека: сегмент выпадает целиком, а не
       // оставляет `— ,` в начале перечисления.
       expect(description, `${path}: нет <meta name="description">`).toBeTruthy();
       expect(description, `${path}: пустой сегмент в описании`).not.toMatch(/—\s*,|,\s*,|,\s*\.$/);

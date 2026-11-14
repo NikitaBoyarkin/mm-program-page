@@ -4,14 +4,14 @@
  * `astro preview` и ничего не мокает; идёт в тех же трёх проектах.
  *
  * Три вещи, которые здесь важны и которые нельзя проверить юнит-тестом:
- * 1) SVG реально отрендерен, и все 91 точка ведут на существующие якоря;
+ * 1) SVG реально отрендерен, и все 92 точки ведут на существующие якоря;
  * 2) на 320 px вбок скроллится только рамка графа, а не документ;
  * 3) вход в граф есть на каждой ширине — полосой шапки, иконкой или меню.
  */
 import { expect, test, type Page } from "playwright/test";
 
 const BASE = "/mm-program-page";
-const TALKS = 91;
+const TALKS = 92;
 const TRACKS = 12;
 const THEMES = 11;
 
@@ -28,7 +28,7 @@ test.beforeEach(async ({ context }) => {
   });
 });
 
-test("31 · /talks/ — 91 заметка с постоянными адресами, 12 треков, 11 тем", async ({ page }) => {
+test("31 · /talks/ — 92 заметки с постоянными адресами, 12 треков, 11 тем", async ({ page }) => {
   await open(page, "/talks/");
 
   await expect(page.locator("h1.page-title")).toHaveText("Граф докладов");
@@ -68,14 +68,14 @@ test("31 · /talks/ — 91 заметка с постоянными адреса
   }
 });
 
-test("32 · граф отрендерен на билде: SVG, 91 точка, все точки ведут на канон /talk/<id>/", async ({
+test("32 · граф отрендерен на билде: SVG, 92 точки, все точки ведут на канон /talk/<id>/", async ({
   page,
 }) => {
   await open(page, "/talks/");
 
   const svg = page.locator("svg.talks-graph__svg");
   await expect(svg).toBeVisible();
-  // `group`, а не `img`: внутри 91 ссылка-точка, и `img` сделал бы всё
+  // `group`, а не `img`: внутри 92 ссылки-точки, и `img` сделал бы всё
   // поддерево презентационным для скринридера.
   await expect(svg).toHaveAttribute("role", "group");
   await expect(svg).toHaveAttribute("aria-label", /Граф связей/);
@@ -92,7 +92,7 @@ test("32 · граф отрендерен на билде: SVG, 91 точка, �
       /^\/mm-program-page\/(?:en\/)?talk\/\d+\/$/,
     );
   }
-  // 91 точка = 91 доклад: ни дублей, ни потерянных адресов.
+  // 92 точки = 92 доклада: ни дублей, ни потерянных адресов.
   expect(new Set(noteHrefs).size).toBe(TALKS);
 
   // Оставшиеся `#`-ссылки страницы (хабы тем внутри текста заметок) по-прежнему
@@ -264,7 +264,7 @@ test("37 · на телефоне вбок скроллится только р�
   }));
   expect(doc.scrollWidth).toBeLessThanOrEqual(doc.clientWidth + 1);
 
-  // Сам граф — собственный скроллпорт: 91 точка и 22 подписи в 320 px не
+  // Сам граф — собственный скроллпорт: 92 точки и 22 подписи в 320 px не
   // влезают, и это осознанно: подписи остаются читаемыми.
   const canvas = await page.locator(".talks-graph__canvas").evaluate((node) => ({
     scrollWidth: (node as HTMLElement).scrollWidth,

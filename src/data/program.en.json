@@ -31,10 +31,10 @@
   "talks": {
     "267": {
       "title": "How progress in modern multimodal models affects the DS/DA/ML profession",
-      "short": "Valery Babushkin, senior chief boss at BP.",
+      "short": "Valery Babushkin, author of the book Machine Learning System Design With End-to-End Examples",
       "description": "",
       "lectorRoles": [
-        "Senior chief boss, BP"
+        "Author of the book Machine Learning System Design With End-to-End Examples"
       ]
     },
     "268": {
@@ -48,7 +48,7 @@
     "269": {
       "title": "Antifragile metrics: when analytics starts to drive decisions",
       "short": "The main result of analytics is expressed not by the accuracy of numbers, but by which decisions the company makes on their basis. What to do when familiar product metrics have stopped reflecting the long-term health of the product, and different teams understand differently what exactly counts as success? You will learn how to change the approach to product measurement and influence real business decisions",
-      "description": "The main result of analytics is expressed not by the accuracy of numbers, but by which decisions the company makes on their basis. The talk is about what to do when familiar product metrics have stopped reflecting the long-term health of the product, and different teams understand differently what exactly counts as success? You will learn how to change the approach to product measurement and influence real business decisions",
+      "description": "What drives product growth, and does that growth bring it closer to strategic goals? Answers to these questions can change the team's understanding of what product it is building. Using VK Video as an example, the talk examines how a study of growth sources and value for users helps to revisit development priorities. You will learn how antifragile metrics become the foundation for aligning team goals and making product decisions with the long-term effect in mind.",
       "lectorRoles": [
         "Director of the media platform analytics department, VK offline"
       ]
@@ -115,7 +115,7 @@
       "short": "The speaker shares SQL code that lets you check whether your attribution model is honest on your own data, plus a faster marker of incorrect source evaluation in one-touch models. Attendees will get a reusable analytical framework for quickly quantifying problems with one-touch attribution, which distorts the real contribution of advertising channels in B2B products and services with long deal cycles.",
       "description": "In B2B products and services with a long deal cycle, standard one-touch attribution models (first touch / last touch) predictably distort the real contribution of advertising channels. At M2, the hypothesis that such models were inadequate led to an attempt to implement multi-touch attribution. However, instead of a classic story of successful development, the speaker will walk through a case where building a multi-touch model initially failed — but it was precisely this failure that exposed fundamental problems in the traffic evaluation system.\n\nInstead of weeks of designing custom algorithmic models, the team spent only two days on diagnostics using a standard stack: the Yandex Metrica Logs API and any DBMS. The talk examines the logic of this research in detail. The speaker will show the specific SQL query used in the study and will also share an even faster marker that your standard attribution models are evaluating sources incorrectly. This is an engineering breakdown of how to \"cut the corner\" and cheaply verify the problem without over-engineering and ML models.\n\nAttendees will get a reusable analytical framework for quickly quantifying problems with one-touch attribution. The talk will show how the results of this short study at the level of raw logs forced the business to reconsider its strategy: to stop scaling classic performance acquisition and shift focus toward brandformance. You will take away a ready-made SQL template that lets you check the honesty of your current attribution on your own data",
       "lectorRoles": [
-        "Marketing analyst, M2"
+        "Lead marketing analyst, M2"
       ]
     },
     "278": {
@@ -147,7 +147,7 @@
       "short": "Approaches and methods for analyzing cohorts, plans, lifecycle stages, behavior, reasons for leaving and more.",
       "description": "Customer churn is often perceived by the business as a single flat metric, which inevitably leads to wrong product decisions. Treating churn rate as an unambiguous evil hides the real dynamics: looking at the overall number, a company cannot see the difference between failed onboarding, a downgrade by loyal users and the natural departure of a non-target audience. The talk breaks down a research approach to deep churn segmentation that lets you find the true points of revenue loss in SaaS products.\n\nThe speaker will present a methodology for decomposing churn into nine key analytical cuts. You will learn how to properly cross-analyze cohorts, pricing plans, lifecycle stages and the behavioral patterns of churning users. The mechanics of working with qualitative data on reasons for leaving will be shown, along with ways to link it to quantitative product metrics. Special attention is paid to the concept of «good churn» — situations where losing a customer is mathematically and strategically good for the business, and attempts to retain them bring more losses than value.\n\nListeners will get a ready-made analytical framework for diagnosing churn. The talk will help move from passively watching an overall figure to targeted work with segments: you will start to clearly understand which users need to be won back by any means and which are better let go.",
       "lectorRoles": [
-        "Chief Customer Office, Dynamic Yield and Algolia (IT consulting)"
+        "Co-founder, Nochurn"
       ]
     },
     "282": {
@@ -163,7 +163,7 @@
       "short": "Turning a data catalog from a \"registry of tables\" into an internal product at the ecosystem level, building an architectural frame, and then \"sewing\" into it the logic that closes real user scenarios of analysts, engineers and data owners.",
       "description": "How to turn a data catalog from a \"registry of tables\" into an internal product at the ecosystem level: digitize the main data flows and objects across the holding, build an architectural frame, and then \"sew\" into it the logic that closes real user scenarios of analysts, engineers and data owners. Which product principles are important in this process, how to build synergy of functions and how to scale data management.",
       "lectorRoles": [
-        "OneData"
+        "Product Owner OneData, VK"
       ]
     },
     "285": {
@@ -199,7 +199,7 @@
       ]
     },
     "289": {
-      "title": "How AI is changing BI: where we stumble, what works and where we run next",
+      "title": "Little horses in the AI fog — a year of BI transformation",
       "short": "Dashboards stop being someone's job, while semantics and context have not yet become someone's job. How BI at Авито lived through 2026 in this fog: data content certification, domain AI readiness, skills and knowledge bases, prerequisites for an AI analyst, solved and unsolved problems. No success stories, but with a therapeutic effect",
       "description": "Dashboards stop being someone's job, while semantics and context have not yet become someone's job. The focus of BI has shifted from «a factory of reports as products» to governance, metrics and the knowledge graph. Self-service BI has been reborn as agentic self-service.\n\nI will tell how at Авито we lived through 2026 in this fog, what we changed over the year and which expectations turned out to be overestimated. I will break down why certification of marts, metrics and dashboards has returned to focus and whether everyone can afford the prerequisites of an AI analyst. I will show how we grow the AI readiness of domains through federated data governance, metadata generation and a network of BI partners. There will also be problems that we cannot solve yet.\n\nA talk without success stories, but with a therapeutic effect. It is for BI developers, leads and heads who do not yet feel new ground under their feet, those who are deciding what to do with BI in the AI world. You will compare your vision with the experience of Авито, take away working ideas and leave with the feeling that you are not running in the fog alone.",
       "lectorRoles": [
@@ -211,7 +211,7 @@
       "short": "Eight steps from an analytical task to an accepted agent answer with checks at different stages: transferability is determined not by the complexity of the task, but by whether the decisions it requires are declared; an undeclared decision will still be made — by a layer, a mart or a model; acceptance depends on the image of the result, and acceptance itself has a blind spot.",
       "description": "The use of AI analysts is becoming a mass trend, but there is almost nothing to verify their work on real data with: without a manual duplicate query, the correctness of a calculation is not confirmed. So you can approach from the other side — not \"what the agent can do\", but \"what needs to be done with the task, the data and the scaffolding so that a correct answer becomes more likely\".\n\nThe result is a framework of eight steps from statement to accepted result, and at each step there is a check and a typical failure that occurs regardless of model and domain.\n\nA live analytical backlog is laid out by image of the result - what appears when a task is closed: a number, an export, a dashboard, a pipeline cell, an edit to a report, a study, an agreement on a metric definition, an A/B test.\n\nThe first conclusion: transferability is determined not by the complexity of the task, but by whether the decisions it requires are declared. An undeclared decision will still be made: by a layer, a mart or a model, each time anew. And declaring is not enough. Between \"we described this\" and \"the agent sees this\" lies the scaffolding, and it loses: a significant part of the decisions recorded in model comments and tests does not reach the agent's context, and including a layer with table descriptions in one of the measurements actually narrowed the input.\n\nHence the second conclusion, less obvious: the answer is not the only outcome of the work.\n\nAn agent can stop and list what is missing, and each non-answer has its own party to blame: the framing of the question, the absence of an object in the data, the semantic layer, or the discipline of recording results.\n\nIt turns out that not everything is fixed by prompt and context.\n\nWork must be accepted by image of the result: a number has its own truth, an export has another — a set of rows and a control aggregate, a study has none at all, and there the stability of the conclusion is checked, not correctness.\n\nThe talk examines several techniques with measured boundaries: comparison with a known answer, decomposition of a number into summands, checking that nothing extra was affected, addition in two ways, reading what the agent decided itself, recalculation with a different decision.\n\nAttendees will get a sequence of actions that raises the share of correct answers, and a way to check each step for themselves: whether the declared decisions reach the agent, what changes in the input when a layer is enabled, and what to accept each image of the result with.\n\nAnd separately - how to check your own check.",
       "lectorRoles": [
-        "Head of product analytics for commercial products, Samokat.tech"
+        "Head of product analytics, Kontur"
       ]
     },
     "291": {
@@ -224,10 +224,10 @@
     },
     "292": {
       "title": "How much context does AI really need?",
-      "short": "We will compare how AI works with a database schema, data, technical metadata and a full semantic layer. We will look at which part of business context AI can recover from the schema and the data itself, and which part it must be given explicitly by the company, without turning the construction of a semantic layer into a multi-year project of describing the entire company.",
-      "description": "",
+      "short": "Using a single case, we will break down why an AI analyst makes mistakes because of unverifiable context, which rules to describe in the semantic layer and where the boundary of agent autonomy lies.",
+      "description": "AI has sped up analysis but not verification: an agent's answer appears within seconds, while understanding whether it is correct takes hours. In an end-to-end case — a single wrong answer about conversion — Victoria will show what context AI really needs, how the semantic layer is structured from the inside, where the boundary of agent autonomy lies and how to build proactive analytics on simple rules on that basis. The main takeaway: human judgment cannot be sped up, but it can be moved into the model — once, not in every answer.",
       "lectorRoles": [
-        "Head of the analytics and data infrastructure department"
+        "CPO, Discover labs"
       ]
     },
     "293": {
@@ -389,8 +389,8 @@
       "short": "Deploying AI does not protect against leaks if, for the sake of speed, a user copies the whole trade secret into the prompt and grants the app access to the entire disk. The talk examines the architecture for restricting AI services' access to corporate data and two vulnerability mechanisms: providers' open logs and the transmission of hidden instructions into active sessions. The speakers will show how to build a \"green corridor\" for typical tasks, introduce AI solution passports and test security through simulation of work processes.",
       "description": "Even after corporate AI is officially rolled out and training is conducted, data leaks continue. Facing tight deadlines, employees tend to optimize their work at the expense of security: they copy a manager's assignment in full, along with closed financial terms, and give third-party AI services excessive access to the whole work disk instead of selecting specific files. A copy of confidential information is created on the external provider's side at the moment of transfer, that is, long before any actual cyberattack. The talk is about moving from a formal ban to an architecture that limits what AI assistants can do at the hardware and process level.\n\nThe talk examines technical leak mechanisms in detail using two scenarios: access to stored copies (exposure of database logs, on the DeepSeek example) and data extraction inside an active session (the RovoBlast vulnerability). The speakers will show how to build a perimeter in which an employee's right to read a document does not mean the AI application's right to receive and process it. The process of configuring the target logic will be covered: token control, management of the actual access scope (restriction to specific files) and monitoring of request logs. Separately, the course of action for the security team when data transfer has already happened is considered.\n\nAttendees will learn how to design a \"green corridor\" for securely performing typical tasks and how to record the rules in an AI solution passport (owner, data sources, available actions). The talk will give a methodology for secure prompting: how to split a request into generating the document structure and the subsequent addition of sensitive numbers in a protected environment. You will get a framework for testing employee skills through simulation of work processes with dummy data, which makes it possible to assess how secure the work really is, and not just whether blocks fired.",
       "lectorRoles": [
-        "AI consultant, VkusVill",
-        "Information security methodologist, TechVill"
+        "Information security methodologist, TechVill",
+        "Online customer journey manager, lead of the AI expertise center, VkusVill"
       ]
     },
     "325": {
@@ -446,14 +446,16 @@
       "short": "We break down the architecture of an agent system: the task contract, agent management, data and tools, calculations and checks. I'll show how the task, calculation results and check statuses are transferred, when rework is needed and where a human makes the decision. On our cases I'll break down ambiguous metrics, the link between model quality and business KPIs and the impact of drift. The checks will cover data, the applicability of the method, the validity of conclusions and the robustness of recommendations to assumptions: rules and recalculation, the agent searching for contradictions, review by a specialist. I'll show how we plan to apply the architecture in Alfa-Bank's experimentation and Data Science platform",
       "description": "Introducing AI agents into industrial analytics and Data Science processes requires a strict architectural base. If you hand a business task to a neural network without strict boundaries, the cost of a mistake can turn out to be critical. The talk examines the engineering scheme of an agent system based on Alfa-Bank's experience: from drawing up the task contract to managing agents, routing data and choosing tools. Special emphasis is placed on synchronization points — exactly how calculation results are transferred, in which cases the process is sent for automatic rework, and where the decision is made by a human with no alternative (human-in-the-loop).\n\nThe speaker will use real banking cases to show the mechanics of working with ambiguous metrics, the link between ML model quality and business KPIs and the impact of data drift. You will learn how to build a multi-level system of checks: from the validity of the source data and the applicability of the chosen method to the robustness of the final recommendations to the initial assumptions. Ivan will break down in detail the process in which the agent itself looks for logical contradictions in its conclusions before passing the result to a specialist for review.\n\nAttendees will see how this architecture is embedded in Alfa-Bank's experimentation and Data Science platform. The talk will give data team leaders and DS engineers a ready-made framework for launching their own pilots, allowing them to accurately estimate the expected financial effect of introducing agents taking into account the costs of tokens, infrastructure and specialists' time.",
       "lectorRoles": [
-        "Product Owner, Alfa-Bank"
+        "A/B Testing Platform Lead, Alfa-Bank"
       ]
     },
     "332": {
-      "title": "How much a proprietary LLM costs: how to choose an approach and calculate the full cost of the product",
-      "short": "A breakdown of industry practice in creating and using LLMs. The speaker shares a \"ladder of options\" and a transparent estimate for each scenario: using models via API, running an open model on your own infrastructure, adapting to a specific task or domain, a company's central model, proprietary pretrain and developing a frontier model. We break down which needs each scenario covers and which requirements really justify moving to a more complex solution. What each estimate consists of and the phasing method that allows buying step-by-step hypothesis checks with decision points.",
-      "description": "A breakdown of industry practice in creating and using LLMs. The speaker shares a \"ladder of options\" and a transparent estimate for each scenario: using models via API, running an open model on your own infrastructure, adapting to a specific task or domain, a company's central model, proprietary pretrain and developing a frontier model. We break down which needs each scenario covers and which requirements really justify moving to a more complex solution. What each estimate consists of and the phasing method that allows buying step-by-step hypothesis checks with decision points",
-      "lectorRoles": []
+      "title": "Seven circles of LLM development: how to avoid buying a Godzilla-scale program when all you need is a hamster via API",
+      "short": "The price range for LLM adoption runs from hundreds of thousands of rubles to billions of dollars. The talk covers seven scenarios for building LLM products: from ready-made APIs to sovereign pretraining. You will get a transparent cost estimate for each stage and learn how hardware, data and infrastructure shape the final price. We break down the phasing method: how to test AI hypotheses step by step, unlocking budgets through proven value. Attendees receive a checklist of questions for auditing vendors and internal teams, to tell the price of a demo from that of a real production solution and avoid overpaying for unnecessary technology",
+      "description": "\"How much does a proprietary LLM cost?\" is a question businesses often get answered with an error of several orders of magnitude. The market has at least seven radically different scenarios for building an LLM product: from calling a ready-made model via API and local inference on your own hardware to adaptation for a specific domain, creating a central corporate model and proprietary pretraining.\n\nKirill Kaymakov breaks down the \"ladder of options\" in LLM development with transparent estimates for each stage — from hundreds of thousands of rubles to billions. We look under the hood of cost formation: how much hardware, the team and data centers actually cost. We discuss why the economics of experiments, quality data and infrastructure matter more than simply buying GPUs, and where hidden timelines usually hide in estimates.\n\nListeners (CPOs and product managers) get a budget phasing method: how to structure an AI initiative so that you buy step-by-step hypothesis validation instead of blindly committing to a multibillion program. The talk provides a rigorous checklist of questions for your team or vendors that helps you understand which scenario is being sold to you and whether the price of an experimental demo is being passed off as the cost of a finished product",
+      "lectorRoles": [
+        ""
+      ]
     },
     "333": {
       "title": "How we identify future customers: next best action at a state bank",
@@ -489,10 +491,10 @@
     },
     "337": {
       "title": "Changes in product analyst skills through the lens of global research agenda analysis",
-      "short": "Assessing trends in product analyst skills based on an analysis of the global and Russian research agenda. Semantic maps, trends, development drivers and barriers are presented. Attendees will get acquainted with changes in the product analyst profession (how demand for skills and competencies is changing and how and what the refocusing is).",
-      "description": "Assessing trends in product analyst skills based on an analysis of the global and Russian research agenda. Semantic maps, trends, development drivers and barriers are presented. Attendees will get acquainted with changes in the product analyst profession (how demand for skills and competencies is changing and how and what the refocusing is)",
+      "short": "Assessing trends in product analyst skills based on an analysis of the global and Russian research agenda. Semantic maps, trends, development drivers and barriers built with the iFora system are presented. Attendees will learn about the changes in the product analyst profession (how demand for skills and competencies is shifting and how the refocusing happens)",
+      "description": "Requirements for product analysts are transforming rapidly under the pressure of AI technologies and new privacy standards. Relying only on current job postings means looking in the rear-view mirror. The talk covers an HSE University study that used the iFORA big data intelligence system to forecast the evolution of the profession from 2021 to 2026 (its source base already includes more than 850 million documents — research publications, patents, regulations, market analytics, industry media, materials from international organizations, job postings and more — and keeps growing).\n\nThe speaker shows semantic maps of changing demand for specific competencies identified by a machine algorithm. You will learn about fundamental shifts in the industry: why there is a mass move away from public external analytics services toward in-house solutions (especially to keep data inside the perimeter when deploying AI), and how the focus is shifting from macro quantitative indicators to deep qualitative metrics with detail down to each user. The paradox of modern content strategies is examined separately: how to combine work for a broad audience with the requirements of hyper-personalization of experience.\n\nAttendees will see an objective data-driven picture of the profession's barriers and drivers. The talk gives product analysts a research-backed roadmap for rebuilding their own skill stack in order to remain in-demand and well-paid specialists in a fast-changing market",
       "lectorRoles": [
-        "Chief researcher, professor at HSE University"
+        "Chief Researcher at ISSEK / Professor at HSE Graduate School of Business"
       ]
     },
     "338": {
@@ -574,15 +576,6 @@
         "T-Bank"
       ]
     },
-    "348": {
-      "title": "From labeling to launching an A/B test in 60 minutes",
-      "short": "Participants will go through the cycle from labeling user actions to forming product hypotheses and launching an A/B test on a real ecom client of the uxrocket.ru platform. Participants will also perform post-analysis and learn to form hypotheses that lead to growth 3 times more often.",
-      "description": "Participants will go through the cycle from labeling user actions to forming product hypotheses and launching an A/B test on a real ecom client of the uxrocket.ru platform. Participants will also perform post-analysis and learn to form hypotheses that lead to growth 3 times more often",
-      "lectorRoles": [
-        "CEO, Excite Kit",
-        "Professor, dr. of economics and founder of the “Center for Statistical Analysis”."
-      ]
-    },
     "349": {
       "title": "Т-Банк 100к1: analytics versus intuition",
       "short": "We are used to testing hypotheses and trusting data. But what if today you need to guess not the exact answer, but the one the majority chose? We guess the most popular answers, dig into the industry's pain points and check how well our ideas about users match reality. Only logic, intuition and collective intelligence.",
@@ -606,11 +599,11 @@
       ]
     },
     "352": {
-      "title": "Whydra: a Causal Discovery library for identifying and analyzing causal dependencies in data",
-      "short": "The talk is devoted to the development of the Whydra library for identifying causal dependencies, optimizing Causal Discovery algorithms and evaluating their accuracy and performance. Practical cases of applying the library in banking are considered: analyzing the impact of credit decisions and marketing campaigns on customer metrics, as well as studying the relationship between the launch of new businesses and their subsequent revenue",
-      "description": "The talk is devoted to the development of the Whydra library for identifying causal dependencies, optimizing Causal Discovery algorithms and evaluating their accuracy and performance. Practical cases of applying the library in banking are considered: analyzing the impact of credit decisions and marketing campaigns on customer metrics, as well as studying the relationship between the launch of new businesses and their subsequent revenue",
+      "title": "Causal discovery library for finding business metric drivers",
+      "short": "The talk covers the development of the Whydra library for identifying causal dependencies, optimizing causal discovery algorithms and evaluating their accuracy and performance. Practical cases of applying the library in banking are considered: analyzing the impact of credit decisions and marketing campaigns on customer metrics, as well as studying the relationship between the launch of new businesses and their subsequent revenue",
+      "description": "The search for true causal relationships in business data goes beyond classical correlation computation. However, applying causal discovery methods to large data volumes and time series often runs into extreme computational complexity. The talk covers the experience of Sber's Causal AI team in developing a specialized Whydra library built for automated recovery of causal graphs and precise identification of business metric drivers.\n\nThe speaker reveals the tool's architecture and shows how classical and temporal algorithms are implemented under the hood. You will learn what made it possible to radically improve the computational efficiency of the pipelines (through parallelization and pruning redundant computations) without losing quality on benchmark datasets. A separate focus is on practical cases of applying graphs in banking: from analyzing the impact of credit decisions and marketing campaigns on LTV to studying non-obvious links between the opening of new businesses and their subsequent revenue.\n\nAttendees will see the direct value of embedding causal discovery algorithms into regular analytical processes. The talk gives product analysts and data scientists a ready framework for moving from intuitive hypothesis generation to a mathematically grounded search for the causal relationships that drive the product",
       "lectorRoles": [
-        "Data scientist, Causal AI, Сбер"
+        "Data scientist, Causal AI, Sber"
       ]
     },
     "353": {
@@ -618,16 +611,16 @@
       "short": "A talk about building a system for evaluating advertising effectiveness based on Marketing Mix Modeling. Using the X5 Digital approach as an example, we look at how to combine advertising and business data, choose a model, evaluate a future campaign and compare budget allocation options in a single service. Data preparation, the model and the user process work together. This approach helps consistently evaluate and compare media plans while preserving the model's constraints and human responsibility for the final decision.",
       "description": "A talk about building a system for evaluating advertising effectiveness based on Marketing Mix Modeling. Using the X5 Digital approach as an example, we look at how to combine advertising\n\nand business data, choose a model, evaluate a future campaign and compare budget allocation options in a single service. Data preparation, the model and\n\nthe user process work together. This approach helps consistently evaluate and compare media plans while preserving the model's constraints and human responsibility for the final decision",
       "lectorRoles": [
-        "Senior Product Analyst, X5 Tech"
+        "Senior Product Analyst, X5 Digital"
       ]
     },
     "355": {
-      "title": "How to build an A/B platform the ecosystem trusts from scratch",
-      "short": "Т-Банк's A/B platform (Hippo) combines expertise in mathematics and work with internal data into a single fault-tolerant pipeline. Hippo includes Multi-CUPED (x2.2 speedup), experiment validity checks and sequential methods for early detection of broken experiments (x3.5 speedup at the cost of 1% power). We will discuss how to find the balance between adoption and quality in practice.",
-      "description": "Т-Банк's A/B platform (Hippo) combines expertise in mathematics and work with internal data into a single fault-tolerant pipeline. Hippo includes Multi-CUPED (x2.2 speedup), experiment validity checks and sequential methods for early detection of broken experiments (x3.5 speedup at the cost of 1% power). We will discuss how to find the balance between adoption and quality in practice",
+      "title": "How to build an analytical product teams trust at ecosystem scale",
+      "short": "How do you scale A/B testing to 50+ products in an ecosystem while keeping analytics quality and teams' trust in the results? Using the in-house Hippo platform as an example, we show how T-Bank built a fault-tolerant experimentation system, introduced Multi-CUPED to speed up tests by 2.2x and automated the detection of invalid experiments and data quality control",
+      "description": "An A/B platform: bottleneck or scaled chaos? The talk's key framing is real-world practice of finding a compromise between broad adoption and a high bar for analytics quality. The speakers show how to strike that balance in a large ecosystem of 50+ products.\n\nBuilding an in-house A/B platform is less about writing code or mathematical methods than about building trust. If product teams doubt the calculations, even the most advanced math won't make the tool widespread. The talk covers T-Bank's experience building the in-house Hippo platform, which combined rigorous analytical expertise and work with large-scale internal data into a single fault-tolerant pipeline.\n\nThe speakers reveal Hippo's mathematical and architectural inner workings in detail. You will learn about the practical implementation of the Multi-CUPED method, which delivered a 2.2x speedup in tests, and about original algorithms for detecting broken experiments and controlling data quality across the ecosystem",
       "lectorRoles": [
         "PhD in Physics and Mathematics, head of the applied statistics lab",
-        "Т-Банк"
+        "Product Lead of analytical products, T-Bank"
       ]
     },
     "356": {
@@ -667,7 +660,7 @@
     "361": {
       "title": "Automating product development with AI agents",
       "short": "Can the path from an idea to launching a ready feature in production be combined into a single process managed by AI agents? We'll tell how we created a product for end-to-end development automation: from the arrival of a feature request and elaboration of requirements to implementation, testing and publication of a ready solution. We'll clearly show exactly how AI agents interact with each other, take on tasks at different stages of development and help manage the entire process in a single system. Using our solution as an example, we'll break down how the familiar development process changes, what role a human plays in it and how to move from individual AI tools to full-fledged agent automation",
-      "description": "",
+      "description": "Can the path from an idea to launching a ready feature in production be combined into a single process managed by AI agents?\n\nWe'll tell how we created a product for end-to-end development automation: from the arrival of a feature request and elaboration of requirements to implementation, testing and publication of a ready solution. We'll clearly show exactly how AI agents interact with each other, take on tasks at different stages of development and help manage the entire process in a single system. Using our solution as an example, we'll break down how the familiar development process changes, what role a human plays in it and how to move from individual AI tools to full-fledged agent automation",
       "lectorRoles": [
         "AI Engineering Lead, Yandex",
         "Head of the Gena product"
@@ -748,6 +741,29 @@
         "ML team lead, Trust and Safety, Циан",
         "Head of Trust & Safety, Мамба",
         "Analytics lead, Trust & Safety, hh.ru"
+      ]
+    },
+    "373": {
+      "title": "How companies develop A/B platforms and what value they create for business",
+      "short": "— What is an A/B platform and how is it embedded in the company's processes? — Which platform mechanisms ensure experiment validity? — How to measure and prove the value of an A/B platform for the business? — Does an A/B platform remain necessary in the LLM era?",
+      "description": "— What is an A/B platform and how is it embedded in the company's processes?\n\n— Which platform mechanisms ensure experiment validity?\n\n— How to measure and prove the value of an A/B platform for the business?\n\n— Does an A/B platform remain necessary in the LLM era?",
+      "lectorRoles": [
+        "Analyst community curator, Tochka Bank",
+        "A/B analyst, Tochka Bank",
+        "Head of Data Science, X5",
+        "Head of On-Shelf Availability, MAGNIT TECH",
+        "Team Lead of marketing analytics, Uzum",
+        "Product Lead of analytical products, T-Bank",
+        "Head of A/B platform methodology, Ecom Tech"
+      ]
+    },
+    "374": {
+      "title": "From data to decision: how to design an A/B test you can trust",
+      "short": "How do you run more than 1000 A/B tests a year across 50+ product teams and still keep trust in the results? In this master class, Ecom Tech (Kuper) experts walk through the full experiment journey: from design and data preparation to analyzing results and making a decision. We discuss the non-obvious problems at each stage: how to design valid and sensitive experiments, ensure data quality and detect violations in time. Using Kuper's A/B platform as an example, we show how methodology runs through the entire platform — from processes to tools — and helps prevent errors, automate routine work and make experimentation easier for product teams",
+      "description": "Running an A/B test is easy. Making its results trustworthy is much harder. A platform can compute statistics flawlessly, but that is not enough: data quality or experiment design problems can lead to wrong product decisions. And when more than 1000 experiments from 50+ product teams go through the platform every year, you can no longer rely on analysts' attentiveness alone.\n\nUsing Kuper's A/B platform as an example, we walk through the full experiment journey: from test design and data preparation to analyzing results and making a decision. We show which non-obvious problems arise at each stage, how they affect the reliability of results and which engineering and methodological solutions help deal with them.\n\nWe discuss how to increase experiment sensitivity, account for parallel tests, ensure data and metric quality and detect violations during an experiment in time.\n\nA/B testing methodology is at the foundation of our entire platform. With real examples, we show how it is implemented in the platform's tools and helps prevent errors, automate routine operations and make experimentation easier for product teams",
+      "lectorRoles": [
+        "Head of A/B platform methodology, Ecom Tech",
+        "Technical lead of the A/B platform, Ecom Tech"
       ]
     }
   }

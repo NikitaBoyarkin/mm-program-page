@@ -69,7 +69,7 @@ const TALK_KEYS = [
 
 const DAY_NAMES = ["1 день", "2 день", "Онлайн-день"];
 const DAY_DATES = ["2026-11-26", "2026-11-27", "2026-11-17"];
-const DAY_COUNTS = [39, 37, 15];
+const DAY_COUNTS = [39, 38, 15];
 const STAGE_HALLS = ["Молекула", "Атом", "Архангельск", "Физика", "Кинетика"];
 const ONLINE_HALLS = ["Онлайн-зал №1", "Онлайн-зал №2", "Онлайн-зал №3"];
 
@@ -87,9 +87,9 @@ function allStrings(node: unknown, out: string[] = []): string[] {
 }
 
 describe("program.json — контракт нормализованного слепка", () => {
-  test("объёмы: 3 дня, 91 доклад, 11 треков, 9 залов", () => {
+  test("объёмы: 3 дня, 92 доклада, 11 треков, 9 залов", () => {
     expect(PROGRAM.days).toHaveLength(3);
-    expect(PROGRAM.talks).toHaveLength(91);
+    expect(PROGRAM.talks).toHaveLength(92);
     expect(PROGRAM.tracks).toHaveLength(11);
     expect(PROGRAM.halls).toHaveLength(9);
   });
@@ -132,7 +132,7 @@ describe("program.json — контракт нормализованного с�
     }
   });
 
-  test("доклады распределены по дням 39 / 37 / 15", () => {
+  test("доклады распределены по дням 39 / 38 / 15", () => {
     const counts = PROGRAM.days.map((day) => talksOfDay(day).length);
     expect(counts).toEqual(DAY_COUNTS);
     expect(counts.reduce((sum, value) => sum + value, 0)).toBe(PROGRAM.talks.length);
@@ -263,7 +263,7 @@ describe("program.json — контракт нормализованного с�
     expect(PROGRAM.talks.filter((talk) => talk.lectors.length === 0).length).toBeGreaterThanOrEqual(8);
     expect(
       PROGRAM.talks.filter((talk) => talk.description.trim() === "").length,
-    ).toBeGreaterThanOrEqual(3);
+    ).toBeGreaterThanOrEqual(2);
   });
 });
 

@@ -179,9 +179,9 @@ describe("localize: overlay переводов контента", () => {
   const coreIds = PROGRAM.talks.map((talk) => String(talk.id));
   const coreIdSet = new Set(coreIds);
 
-  test("у каждого доклада есть запись в overlay (91/91)", () => {
-    expect(PROGRAM.talks.length).toBe(91);
-    expect(Object.keys(OVERLAY.talks).length).toBe(91);
+  test("у каждого доклада есть запись в overlay (92/92)", () => {
+    expect(PROGRAM.talks.length).toBe(92);
+    expect(Object.keys(OVERLAY.talks).length).toBe(92);
     for (const id of coreIds) {
       expect(OVERLAY.talks[id], `нет перевода доклада ${id}`).toBeDefined();
     }
@@ -223,7 +223,10 @@ describe("localize: overlay переводов контента", () => {
     for (const talk of PROGRAM.talks) {
       const roles = OVERLAY.talks[String(talk.id)]!.lectorRoles ?? [];
       expect(roles.length, `роли доклада ${talk.id}`).toBe(talk.lectors.length);
-      for (const role of roles) {
+      for (const [index, role] of roles.entries()) {
+        // Пустая роль допустима, только если в слепке роли тоже нет: у 332
+        // API не отдал роль спикера, переводить нечего.
+        if (talk.lectors[index]!.role.trim() === "") continue;
         expect(role.trim().length, `пустая роль доклада ${talk.id}`).toBeGreaterThan(0);
       }
     }
@@ -261,7 +264,7 @@ describe("localize: overlay переводов контента", () => {
   test("localizeProgram(en) переводит справочники, но не состав", () => {
     const translated = localizeProgram("en");
 
-    expect(translated.talks.length).toBe(91);
+    expect(translated.talks.length).toBe(92);
     expect(translated.days.length).toBe(3);
     expect(translated.halls.length).toBe(PROGRAM.halls.length);
     expect(translated.tracks.length).toBe(PROGRAM.tracks.length);

@@ -1,12 +1,5 @@
 {
   "speakers": {
-    "Александр Абрамов": [
-      {
-        "kind": "video",
-        "title": "RuCenter Podcast: Alexander Abramov (VkusVill). Evangelism, волонтёрство",
-        "url": "https://www.youtube.com/watch?v=TGkALkzCUHw"
-      }
-    ],
     "Александр Бараков": [
       {
         "kind": "video",
@@ -28,11 +21,16 @@
         "url": "https://habr.com/ru/companies/X5Tech/articles/1005410/"
       }
     ],
-    "Александр Сорокин": [
+    "Александр Сахнов": [
       {
         "kind": "video",
-        "title": "Презентация курсов SPSS (канал @assorokin)",
-        "url": "https://www.youtube.com/playlist?list=PL73BBE3CEF2506839"
+        "title": "Александр Сахнов — Почему вам не стоит использовать байесовское A/B-тестирование",
+        "url": "https://www.youtube.com/watch?v=F8Ts6br_BGQ"
+      },
+      {
+        "kind": "article",
+        "title": "Стратификация. Как разбиение выборки повышает чувствительность A/B теста",
+        "url": "https://habr.com/ru/companies/X5Tech/articles/596279/"
       }
     ],
     "Алексей Лукацкий": [
@@ -166,13 +164,6 @@
         "url": "https://podcasts.apple.com/us/podcast/%D1%81%D1%82%D0%B0%D1%82%D0%B7%D0%BD%D0%B0%D1%87%D0%B8%D0%BC%D1%8B%D0%B9-%D0%BF%D0%BE%D0%B4%D0%BA%D0%B0%D1%81%D1%82/id6807773381"
       }
     ],
-    "Денис Платонов": [
-      {
-        "kind": "video",
-        "title": "Снижение стоимости HADI-цикла",
-        "url": "https://www.youtube.com/watch?v=coOt7_TN7rI"
-      }
-    ],
     "Дмитрий Тамаров": [
       {
         "kind": "article",
@@ -222,11 +213,32 @@
         "url": "https://www.youtube.com/watch?v=kGEszJxwi9s"
       }
     ],
+    "Кирилл Зиняков": [
+      {
+        "kind": "video",
+        "title": "Митап hh.ru: AI в продуктах AdTech",
+        "url": "https://www.youtube.com/watch?v=JJ4qS86FMUc"
+      }
+    ],
+    "Максим Калацкий": [
+      {
+        "kind": "article",
+        "title": "Построение рекламной аналитики с нуля в Retail Media",
+        "url": "https://vc.ru/marketing/2706635-postroenie-reklamnoy-analitiki-v-retail-media"
+      }
+    ],
     "Максим Коматовский": [
       {
         "kind": "article",
         "title": "Что умеет Data Science: 4 нескучные лекции с митапа Альфа-Банка",
         "url": "https://vc.ru/alfabank/515510-chto-umeet-data-science-4-neskuchnye-lekcii-s-mitapa-alfa-banka"
+      }
+    ],
+    "Максим Кочетков": [
+      {
+        "kind": "article",
+        "title": "Как подготовить интернет к обучению LLM: архитектура пайплайна на сотнях миллиардов документов",
+        "url": "https://highload.ru/moscow/2026/abstracts/11169778"
       }
     ],
     "Максим Кочуров": [
@@ -241,6 +253,13 @@
         "kind": "article",
         "title": "Как мы заменили сотни Join'ов на один РТ-процессинг",
         "url": "https://habr.com/ru/companies/oleg-bunin/articles/884560/"
+      }
+    ],
+    "Марк Хабаров": [
+      {
+        "kind": "article",
+        "title": "Как мы подружили LLM с А/Б-тестами: от сломанного BI до HTML-отчётов с ИИ-аналитиком внутри",
+        "url": "https://habr.com/ru/companies/vk/articles/1063862/"
       }
     ],
     "Михаил Рязанский": [
@@ -269,6 +288,13 @@
         "kind": "article",
         "title": "Как увлечения помогают строить личный бренд в BigTech",
         "url": "https://habr.com/ru/articles/1051126/"
+      }
+    ],
+    "Никита Зеленский": [
+      {
+        "kind": "article",
+        "title": "ИИ в аналитике — отчеты уже не будут прежними",
+        "url": "https://ainativeconf.ru/talks/ai-analytics-reports/"
       }
     ],
     "Николай Голов": [
@@ -316,6 +342,13 @@
         "kind": "video",
         "title": "Машинное обучение 1. Introduction. Naive Bayes, kNN",
         "url": "https://www.youtube.com/watch?v=8s9073kNXgY"
+      }
+    ],
+    "Роман Будылин": [
+      {
+        "kind": "video",
+        "title": "Роман Будылин — «Как делать чувствительные метрики для АБ-тестирования», AIC Analytics Day",
+        "url": "https://www.youtube.com/watch?v=PE29k3CP72U"
       }
     ],
     "Роман Бунин": [
@@ -370,6 +403,13 @@
         "kind": "article",
         "title": "Платформа дата-приложений для быстрой проверки гипотез",
         "url": "https://datawarrior.ru/talks/matemarketing-2024/"
+      }
+    ],
+    "Ян Пиле": [
+      {
+        "kind": "article",
+        "title": "Доступность товара в «Магните»: от эвристик до CUSUM и GEE-тестов",
+        "url": "https://habr.com/ru/companies/magnit/articles/1027032/"
       }
     ]
   },

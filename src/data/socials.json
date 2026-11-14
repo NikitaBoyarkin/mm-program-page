@@ -1,7 +1,4 @@
 {
-  "Александр Абрамов": {
-    "telegram": "https://t.me/dealerai"
-  },
   "Александр Бараков": {
     "telegram": "https://t.me/alexbarakov",
     "linkedin": "https://www.linkedin.com/in/alexanderbarakov/",
@@ -18,8 +15,15 @@
   "Александр Кореньков": {
     "site": "https://habr.com/ru/users/AYUKor/"
   },
-  "Александр Сорокин": {
-    "site": "https://alsorokin.ru/"
+  "Александр Линников": {
+    "linkedin": "https://www.linkedin.com/in/aleksandr-linnikov/"
+  },
+  "Александр Сахнов": {
+    "telegram": "https://t.me/amsakhnov",
+    "site": "https://habr.com/ru/users/amsakhnov/"
+  },
+  "Александр Тихоиванов": {
+    "youtube": "https://www.youtube.com/watch?v=N8X55Y8GW5w"
   },
   "Алексей Лукацкий": {
     "telegram": "https://t.me/alukatsky",
@@ -29,6 +33,9 @@
     "telegram": "https://t.me/alexei_savvateev",
     "youtube": "https://www.youtube.com/channel/UCWk8OxsylgmZ_VgY7jC9pjQ",
     "site": "https://savvateev.xyz/"
+  },
+  "Андрей Королев": {
+    "linkedin": "https://www.linkedin.com/in/andrei-korolev-b7795b6a/"
   },
   "Андрей Романов": {
     "telegram": "https://t.me/AB_romanov_AB"
@@ -78,6 +85,9 @@
   "Виталий Шатилов": {
     "linkedin": "https://linkedin.com/in/vitaly-shatilov-459b0473"
   },
+  "Владислав Слесарев": {
+    "youtube": "https://www.youtube.com/watch?v=TN6mGGVDIjw"
+  },
   "Галина Блонская": {
     "linkedin": "https://ru.linkedin.com/in/%D0%B3%D0%B0%D0%BB%D0%B8%D0%BD%D0%B0-%D0%B1%D0%BB%D0%BE%D0%BD%D1%81%D0%BA%D0%B0%D1%8F-6baa121b9"
   },
@@ -90,12 +100,11 @@
   "Дарья Чиркина": {
     "telegram": "https://t.me/just_mind_it"
   },
+  "Денис Гнатенко": {
+    "youtube": "https://www.youtube.com/watch?v=HKOYJ2yiv-s"
+  },
   "Денис Пехтерев": {
     "telegram": "https://t.me/reflexions_pekhterev"
-  },
-  "Денис Платонов": {
-    "telegram": "https://t.me/denplaton",
-    "linkedin": "https://www.linkedin.com/in/denis-platonov-923b2713"
   },
   "Дмитрий Тамаров": {
     "telegram": "https://t.me/DTamarov",
@@ -106,8 +115,17 @@
     "linkedin": "https://www.linkedin.com/in/emkuznetsov",
     "site": "https://datahints.ru"
   },
+  "Евгений Финогеев": {
+    "linkedin": "https://www.linkedin.com/in/evgenii-finogeev-208ab71bb"
+  },
+  "Евгений Цапников": {
+    "youtube": "https://www.youtube.com/watch?v=giBN0_KDpYM"
+  },
   "Екатерина Владек": {
     "telegram": "https://t.me/velekaterin"
+  },
+  "Иван Ворфоломеев": {
+    "linkedin": "https://www.linkedin.com/in/ivan-vorfolomeev-850b59424"
   },
   "Ирина Говорова": {
     "linkedin": "https://www.linkedin.com/in/irina-govorova-b83b28233"
@@ -125,6 +143,9 @@
   "Кирилл Зиняков": {
     "telegram": "https://t.me/respicefinem",
     "linkedin": "https://www.linkedin.com/in/kirill-zinyakov"
+  },
+  "Кирилл Соколов": {
+    "site": "https://getmentor.dev/mentor/sokolov-kirill-4163"
   },
   "Курамагомед Алиев": {
     "linkedin": "https://www.linkedin.com/in/kurah-aliev"
@@ -144,6 +165,10 @@
   "Мария Рымарь": {
     "linkedin": "https://www.linkedin.com/in/rymarmary"
   },
+  "Михаил Комаров": {
+    "linkedin": "https://www.linkedin.com/in/mikhail-komarov-57975b39/",
+    "site": "https://www.hse.ru/staff/mkomarov/"
+  },
   "Михаил Понежда": {
     "linkedin": "https://www.linkedin.com/in/mikhail-ponezhda"
   },
@@ -152,6 +177,10 @@
   },
   "Наталья Цветкова": {
     "linkedin": "https://linkedin.com/in/natalya-tsvetkova-01aab259"
+  },
+  "Наталья Цеберс": {
+    "youtube": "https://www.youtube.com/watch?v=isPpLsyh1Os",
+    "site": "https://rb.ru/author/natalya-cebers/"
   },
   "Никита Гурьянов": {
     "linkedin": "https://linkedin.com/in/nikita-gurianov",
@@ -166,6 +195,9 @@
   },
   "Николай Голов": {
     "linkedin": "https://www.linkedin.com/in/golov-nikolay-data"
+  },
+  "Олеся Норицына": {
+    "site": "https://habr.com/ru/users/OlesyaNori/"
   },
   "Ольга Чумакина": {
     "telegram": "https://t.me/OlgaChumakina",
@@ -217,5 +249,8 @@
     "telegram": "https://t.me/datawarrior",
     "linkedin": "https://linkedin.com/in/fedor-kholkin-535a70230",
     "site": "https://datawarrior.ru/"
+  },
+  "Ян Пиле": {
+    "linkedin": "https://www.linkedin.com/in/ian-pil%C3%A9-a6078a75/"
   }
 }
