@@ -49,6 +49,11 @@ export interface GraphLayout {
   edges: PlacedEdge[];
 }
 
+/** Координата с двумя знаками: без округления в SVG уходили хвосты вида
+ *  `552.9865103565057`, и «побайтово» держалось только в пределах одного
+ *  движка — JSC и V8 расходятся в последнем ulp. */
+const round2 = (value: number): number => Math.round(value * 100) / 100;
+
 export function layoutGraph(graph: TalksGraph): GraphLayout {
   const width = 960;
   const height = 720;
@@ -57,14 +62,37 @@ export function layoutGraph(graph: TalksGraph): GraphLayout {
   const themeRing = 128;
   const trackRing = 246;
   const noteRing = 296;
+  // Зазор между секторами треков. Без него последняя точка трека A стоит от
+  // первой точки трека B на те же 20 px, что и соседи внутри трека, и кольцо
+  // читается сплошным пунктиром, а не двенадцатью группами.
+  const gutter = (2.5 * Math.PI) / 180;
 
   const themes = graph.hubs.filter((hub) => hub.kind === "theme");
   const tracks = graph.hubs.filter((hub) => hub.kind === "track");
   const placed = new Map<string, PlacedHub>();
 
+  // Радиус — линейная шкала по числу заметок, а не корень: у sqrt-шкалы 7 и 8
+  // докладов давали 19.4 и 19.9 px, то есть ранг читался только по краям.
+  const themeMax = Math.max(1, ...themes.map((theme) => theme.count));
+  const trackMax = Math.max(1, ...tracks.map((track) => track.count));
+  const themeRadius = (count: number): number => round2(13 + 13 * (count / themeMax));
+  const trackRadius = (count: number): number => round2(14 + 14 * (count / trackMax));
+
   const eventHub = graph.hubs.find((hub) => hub.kind === "event");
   if (eventHub) {
-    placed.set(eventHub.key, { ...eventHub, x: cx, y: cy, radius: 20, angle: -Math.PI / 2, ring: 0 });
+    // Центр — самый крупный круг: у него весь граф, а не срез. Раньше событие
+    // было 20 px при темах до 25.3 — корень читался мельче своих категорий.
+    const biggest = Math.max(0, ...[...themes, ...tracks].map((hub) =>
+      hub.kind === "theme" ? themeRadius(hub.count) : trackRadius(hub.count),
+    ));
+    placed.set(eventHub.key, {
+      ...eventHub,
+      x: cx,
+      y: cy,
+      radius: round2(biggest + 4),
+      angle: -Math.PI / 2,
+      ring: 0,
+    });
   }
 
   // Темы — внутреннее кольцо: это общий словарь, на который ссылается каждый
@@ -73,9 +101,9 @@ export function layoutGraph(graph: TalksGraph): GraphLayout {
     const angle = -Math.PI / 2 + (index / Math.max(1, themes.length)) * Math.PI * 2;
     placed.set(theme.key, {
       ...theme,
-      x: cx + Math.cos(angle) * themeRing,
-      y: cy + Math.sin(angle) * themeRing,
-      radius: 9 + Math.sqrt(theme.count) * 2.2,
+      x: round2(cx + Math.cos(angle) * themeRing),
+      y: round2(cy + Math.sin(angle) * themeRing),
+      radius: themeRadius(theme.count),
       angle,
       ring: 1,
     });
@@ -85,22 +113,23 @@ export function layoutGraph(graph: TalksGraph): GraphLayout {
   // равна всем: иначе 27 докладов «Без трека» и 2 кейноута получили бы по
   // одинаковому сектору, и точки слиплись бы в одном месте.
   const total = Math.max(1, graph.notes.length);
+  const usable = Math.PI * 2 - gutter * tracks.length;
   const placedNotes: PlacedNote[] = [];
   let cursor = -Math.PI / 2;
 
   tracks.forEach((track) => {
     const count = Math.max(1, track.count);
-    const span = (count / total) * Math.PI * 2;
+    const span = (count / total) * usable;
     const arcStart = cursor;
     const arcEnd = cursor + span;
     const angle = (arcStart + arcEnd) / 2;
-    cursor = arcEnd;
+    cursor = arcEnd + gutter;
 
     placed.set(track.key, {
       ...track,
-      x: cx + Math.cos(angle) * trackRing,
-      y: cy + Math.sin(angle) * trackRing,
-      radius: 12 + Math.sqrt(track.count) * 2.8,
+      x: round2(cx + Math.cos(angle) * trackRing),
+      y: round2(cy + Math.sin(angle) * trackRing),
+      radius: trackRadius(track.count),
       angle,
       ring: 2,
       arcStart,
@@ -114,8 +143,8 @@ export function layoutGraph(graph: TalksGraph): GraphLayout {
         ...note,
         angle: noteAngle,
         hubKey: track.key,
-        x: cx + Math.cos(noteAngle) * noteRing,
-        y: cy + Math.sin(noteAngle) * noteRing,
+        x: round2(cx + Math.cos(noteAngle) * noteRing),
+        y: round2(cy + Math.sin(noteAngle) * noteRing),
       });
     });
   });

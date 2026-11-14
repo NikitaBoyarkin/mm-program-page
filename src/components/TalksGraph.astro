@@ -5,7 +5,9 @@
  * `lib/talks-graph.ts`), поэтому один слепок даёт один и тот же рисунок.
  *
  * Точка на дуге — это ссылка на заметку (`/talk/309/`), а не декоративная
- * точка: единственный интерактив графа — переход к тексту доклада. */
+ * точка: переход к тексту доклада — единственный интерактив, который требует
+ * браузера. Подсветка трека при наведении и фокусе сделана на `:has()` и без
+ * скрипта: заметки сгруппированы по хабу, `g.talks-graph__cluster`. */
 import { themeLabel, themeShortLabel, type GraphLayout } from "../lib/talks-graph";
 import { trackLabel } from "../lib/localize";
 import { t, type Lang } from "../i18n/ui";
@@ -22,20 +24,24 @@ const { layout, lang, titles } = Astro.props;
 
 /** Подпись хаба: у темы словарь один, у трека имя приходит из слепка и
  *  переводится overlay'ем. */
-const hubLabel = (hub: GraphLayout["hubs"][number]): string =>
-  hub.kind === "theme" ? themeLabel(hub.key.replace("theme:", ""), lang) : trackLabel(lang, hub.kind === "track" ? hub.label : "");
+const hubLabel = (hub: GraphLayout["hubs"][number]): string => {
+  if (hub.kind === "event") return hub.label;
+  if (hub.kind === "theme") return themeLabel(hub.key.replace("theme:", ""), lang);
+  return trackLabel(lang, hub.label);
+};
 
 /** Подпись на кольце: у темы — короткая форма, у трека — имя целиком (оно
  *  короче и живёт на внешнем кольце, где места больше). */
 const ringLabel = (hub: GraphLayout["hubs"][number]): string =>
   hub.kind === "theme" ? themeShortLabel(hub.key.replace("theme:", ""), lang) : hubLabel(hub);
 
-/** Текст ложится по нормали от центра: справа — влево от узла, слева — вправо,
- *  у полюсов — по центру. Без этого подписи наезжают на свои же круги. */
-const anchorOf = (angle: number): "start" | "middle" | "end" => {
-  const cos = Math.cos(angle);
-  if (Math.abs(cos) < 0.25) return "middle";
-  return cos > 0 ? "start" : "end";
+/** Якорь считается по знаку реального смещения точки привязки относительно
+ *  центра хаба, а не по стороне света. Раньше знак брался у косинуса и затем
+ *  инвертировался «чтобы текст уходил от центра», но у тем смещение идёт
+ *  наружу — и подпись разворачивалась внутрь, ложась на собственный круг. */
+const anchorFor = (dx: number): "start" | "middle" | "end" => {
+  if (Math.abs(dx) < 0.25) return "middle";
+  return dx > 0 ? "start" : "end";
 };
 
 const themeHubs = layout.hubs.filter((hub) => hub.kind === "theme");
@@ -57,19 +63,26 @@ interface Box {
   y1: number;
 }
 
+interface Claim {
+  box: Box;
+  /** Хаб, которому принадлежит прямоугольник: свой круг подпись не обходит. */
+  key?: string;
+}
+
 // Оценка ширины знака. Капитель 11px с трекингом 0.06em в кириллице — это
 // ~8.2 px, строчные 12px в полужирном — ~7.6 px. Одно число на оба кольца
 // занижало коробку темы, и пакер пропускал подписи, которые на экране
 // перекрывались. Замер в SVG на билде недоступен, поэтому запас лучше в плюс.
-const THEME_CHAR_W = 8.2;
-const TRACK_CHAR_W = 7.6;
-const LABEL_H = 13;
-const placedBoxes: Box[] = [];
+const THEME_CHAR_W = 8.6;
+const TRACK_CHAR_W = 8.8;
+const LABEL_H = 14;
 
-const intersects = (box: Box): boolean =>
-  placedBoxes.some(
-    (other) => !(box.x1 < other.x0 || box.x0 > other.x1 || box.y1 < other.y0 || box.y0 > other.y1),
-  );
+/** Координата с двумя знаками — тот же приём, что в `talks-layout.ts`: без
+ *  округления в разметку уходили хвосты вида `564.8083003999432`. */
+const round2 = (value: number): number => Math.round(value * 100) / 100;
+
+const overlaps = (a: Box, b: Box): boolean =>
+  !(a.x1 < b.x0 || a.x0 > b.x1 || a.y1 < b.y0 || a.y0 > b.y1);
 
 /** Длинное имя («Семантический слой и аналитические агенты» — 254 px,
  *  «Безопасность и приватность» — 160 px) не влезает ни на одну полосу между
@@ -84,68 +97,126 @@ const shorten = (text: string, max: number): string => {
 
 /**
  * Раскладка подписей: подпись садится на первый радиус из списка, чей
- * прямоугольник не пересекает уже занятые. Смещение идёт по нормали к кругу, а
- * не только по X: у полюсов косинус равен нулю, и «сдвиг вглубь» по X не двигал
- * подпись вовсе — так KEYNOTES и HR-трек садились друг на друга на верхушке.
+ * прямоугольник не пересекает уже занятые. Занятые — круги хабов (кроме своего)
+ * и уже посаженные подписи; без кругов подпись ложилась на чужой узел.
+ * Смещения отсчитываются от радиуса своего круга: фиксированные 7 и 10 px были
+ * меньше самого круга (14.8–25.4), и первая полоса у всех 23 хабов попадала
+ * внутрь диска.
  */
 function placeLabels(
   hubs: GraphLayout["hubs"],
-  options: { direction: 1 | -1; maxLength: number; offsets: number[]; charWidth: number },
+  options: { direction: 1 | -1; maxLength: number; charWidth: number },
+  claimed: Claim[],
 ): Array<{ hub: GraphLayout["hubs"][number]; text: string; x: number; y: number; anchor: string }> {
-  return hubs.map((hub) => {
+  // Длинные подписи садятся первыми: короткая найдёт свободное место где угодно,
+  // а 170-пиксельная у нижнего полюса упиралась в занятые полосы и падала на
+  // самый дальний радиус поверх соседа.
+  const order = [...hubs].sort(
+    (a, b) => ringLabel(b).length - ringLabel(a).length || a.key.localeCompare(b.key),
+  );
+
+  const placed = order.map((hub) => {
     const text = shorten(ringLabel(hub), options.maxLength);
     const width = text.length * options.charWidth;
-    const side = anchorOf(hub.angle);
-    const anchor = side === "start" ? "end" : side === "end" ? "start" : "middle";
     const ux = Math.cos(hub.angle);
     const uy = Math.sin(hub.angle);
+    const dx = options.direction * ux;
+    const anchor = anchorFor(dx);
 
-    // Точка привязки и коробка считаются от одного смещения: подпись уходит
-    // от узла в сторону от центра (`start` справа, `end` слева), поэтому
-    // текст занимает свободную полосу, а не ложится на свой же круг.
-    const at = (offset: number) => {
-      const x = hub.x + options.direction * ux * offset;
-      const y = hub.y + options.direction * uy * offset + 4;
+    // Сдвиг по касательной: трёх радиальных полос мало — четыре подписи
+    // садились друг на друга. Угловое смещение двигает подпись вдоль кольца,
+    // не меняя полосы.
+    const at = (offset: number, shift = 0) => {
+      const x = round2(hub.x + options.direction * ux * offset - uy * shift);
+      const y = round2(hub.y + options.direction * uy * offset + ux * shift + 4);
       const box: Box =
         anchor === "start"
-          ? { x0: x, x1: x + width, y0: y - LABEL_H, y1: y + 3 }
+          ? { x0: x, x1: x + width, y0: y - LABEL_H, y1: y + 4 }
           : anchor === "end"
-            ? { x0: x - width, x1: x, y0: y - LABEL_H, y1: y + 3 }
-            : { x0: x - width / 2, x1: x + width / 2, y0: y - LABEL_H, y1: y + 3 };
+            ? { x0: x - width, x1: x, y0: y - LABEL_H, y1: y + 4 }
+            : { x0: x - width / 2, x1: x + width / 2, y0: y - LABEL_H, y1: y + 4 };
       return { x, y, box };
     };
 
-    for (const offset of options.offsets) {
-      const { x, y, box } = at(offset);
-      if (intersects(box)) continue;
-      placedBoxes.push(box);
+    // Полосы между кольцами конечны: темы живут в 134–180, треки — в 196–242
+    // от центра, поэтому третья полоса упирается в границу своей полосы, а не
+    // уезжает на чужое кольцо. Шаг 20 px при коробке 18 px — это зазор 2 px;
+    // шаг 16 при высоте 16 давал подписи впритык, и они читались слипшимися.
+    const near = Math.min(30, hub.radius + 5);
+    // У треков четвёртая полоса глубже: две длинные подписи у нижнего полюса
+    // не разводились тремя.
+    const offsets = [near, Math.min(50, near + 20), options.direction === 1 ? 52 : 50, 64];
+
+    // ±56…±98 нужны длинным подписям у полюсов: две подписи по ~120 px с
+    // центрами в 50 px друг от друга по x не разводятся сдвигом ±42.
+    const slots = offsets.flatMap((offset) =>
+      [0, 14, -14, 28, -28, 42, -42, 56, -56, 70, -70, 84, -84, 98, -98].map((shift) => ({ offset, shift })),
+    );
+
+    for (const slot of slots) {
+      const { x, y, box } = at(slot.offset, slot.shift);
+      // Свой круг тоже препятствие: угловой сдвиг может завести подпись назад
+      // на собственный диск. Полоса `radius + 5` без сдвига проходит всегда.
+      if (claimed.some((claim) => claim.key !== `label:${hub.key}` && overlaps(box, claim.box))) continue;
+      claimed.push({ box, key: `label:${hub.key}` });
       return { hub, text, x, y, anchor };
     }
 
     // Все полосы заняты — подпись всё равно нужна: садится на самый дальний
-    // радиус и перекрывает соседа, а не исчезает.
-    const farthest = at(options.offsets[options.offsets.length - 1] as number);
+    // радиус и перекрывает соседа, а не исчезает. Прямоугольник всё равно
+    // занимается, иначе следующая подпись встанет ровно туда же.
+    const farthest = at(offsets[offsets.length - 1] as number);
+    claimed.push({ box: farthest.box, key: `label:${hub.key}` });
     return { hub, text, x: farthest.x, y: farthest.y, anchor };
   });
+
+  // Рендер идёт в исходном порядке хабы (по числу заметок), не в порядке посадки.
+  return hubs.map((hub) => placed.find((label) => label.hub.key === hub.key) as (typeof placed)[number]);
 }
+
+// Круги хабов занимают место до подписей: иначе подпись садилась поверх узла.
+const claimed: Claim[] = layout.hubs.map((hub) => ({
+  key: hub.key,
+  box: { x0: hub.x - hub.radius, x1: hub.x + hub.radius, y0: hub.y - hub.radius, y1: hub.y + hub.radius },
+}));
 
 // Темы первыми: их подписи короче и живут на внутреннем кольце, треки
 // обходят уже занятые прямоугольники.
-const themeLabels = placeLabels(themeHubs, {
-  direction: 1,
-  // Темы уже пришли короткой формой (`themeShortLabel`), резать почти нечего.
-  maxLength: 14,
-  offsets: [7, 26, 45],
-  charWidth: THEME_CHAR_W,
-});
+const themeLabels = placeLabels(
+  themeHubs,
+  { direction: 1, maxLength: 14, charWidth: THEME_CHAR_W },
+  claimed,
+);
 
-const trackLabels = placeLabels(trackHubs, {
-  direction: -1,
-  maxLength: 24,
-  offsets: [10, 32, 54, 76],
-  charWidth: TRACK_CHAR_W,
-});
+const trackLabels = placeLabels(
+  trackHubs,
+  // 20, а не 24: «Маркетинговая аналитика» занимала 176 px у нижнего полюса и
+  // перекрывала все полосы соседей — полное имя остаётся в `<title>` и в
+  // заголовке трека ниже.
+  { direction: -1, maxLength: 20, charWidth: TRACK_CHAR_W },
+  claimed,
+);
+
+// Заметки сгруппированы по треку: `:has()` на этом и держит подсветку кластера.
+// Порядок — порядок раскладки (трек за треком), поэтому итерация `Map`
+// детерминирована.
+const notesByHub = new Map<string, GraphLayout["notes"]>();
+for (const note of layout.notes) {
+  const bucket = notesByHub.get(note.hubKey);
+  if (bucket) bucket.push(note);
+  else notesByHub.set(note.hubKey, [note]);
+}
+
+const hubByKey = new Map(layout.hubs.map((hub) => [hub.key, hub]));
+const edgeTitle = (edge: GraphLayout["edges"][number]): string => {
+  const from = hubByKey.get(edge.from);
+  const to = hubByKey.get(edge.to);
+  if (!from || !to) return String(edge.weight);
+  return `${hubLabel(from)} — ${hubLabel(to)} · ${edge.weight}`;
+};
 ---
+
+<a class="talks-graph__skip" href="#talks-notes-title">{t(lang, "talksSkipGraph")}</a>
 
 <figure class="talks-graph">
   <div class="talks-graph__canvas">
@@ -168,19 +239,25 @@ const trackLabels = placeLabels(trackHubs, {
         }
       </g>
 
-      {/* Рёбра: тонкие — иерархия «событие → трек», акцентные — пересечение
+      {/* Рёбра: тонкий пунктир — иерархия «событие → трек», акцентные — пересечение
           «трек ↔ тема», толщина которого равна числу общих докладов. */}
       <g class="talks-graph__edges" aria-hidden="true">
         {
           layout.edges.map((edge) => (
             <line
-              class:list={["talks-graph__edge", `talks-graph__edge--${edge.kind}`]}
+              class:list={[
+                "talks-graph__edge",
+                `talks-graph__edge--${edge.kind}`,
+                edge.weight === 1 && "talks-graph__edge--single",
+              ]}
               x1={edge.x1}
               y1={edge.y1}
               x2={edge.x2}
               y2={edge.y2}
               style={`--edge-width:${edge.width.toFixed(2)}`}
-            />
+            >
+              <title>{edgeTitle(edge)}</title>
+            </line>
           ))
         }
       </g>
@@ -189,13 +266,13 @@ const trackLabels = placeLabels(trackHubs, {
         {
           eventHub && (
             <circle class="talks-graph__hub talks-graph__hub--event" cx={eventHub.x} cy={eventHub.y} r={eventHub.radius}>
-              <title>{eventHub.label}</title>
+              <title>{`${eventHub.label} · ${eventHub.count}`}</title>
             </circle>
           )
         }
         {
           themeLabels.map(({ hub, text, x, y, anchor }) => (
-            <>
+            <a class="talks-graph__hub-link" href={`#theme-${hub.key.replace("theme:", "")}`}>
               <circle
                 class="talks-graph__hub talks-graph__hub--theme"
                 cx={hub.x}
@@ -212,7 +289,7 @@ const trackLabels = placeLabels(trackHubs, {
               >
                 {text}
               </text>
-            </>
+            </a>
           ))
         }
         {
@@ -244,12 +321,16 @@ const trackLabels = placeLabels(trackHubs, {
 
       <g class="talks-graph__notes">
         {
-          layout.notes.map((note) => (
-            <a class="talks-graph__note" href={note.hrefTalk} aria-label={titles.get(note.id) ?? note.title}>
-              <circle cx={note.x} cy={note.y} r="4.5" />
-              <circle class="talks-graph__note-hit" cx={note.x} cy={note.y} r="13" />
-              <title>{`${note.start} · ${titles.get(note.id) ?? note.title}`}</title>
-            </a>
+          [...notesByHub.entries()].map(([hubKey, bucket]) => (
+            <g class="talks-graph__cluster" data-hub={hubKey}>
+              {bucket.map((note) => (
+                <a class="talks-graph__note" href={note.hrefTalk}>
+                  <title>{`${note.start} · ${titles.get(note.id) ?? note.title}`}</title>
+                  <circle cx={note.x} cy={note.y} r="4.5" />
+                  <circle class="talks-graph__note-hit" cx={note.x} cy={note.y} r="13" />
+                </a>
+              ))}
+            </g>
           ))
         }
       </g>

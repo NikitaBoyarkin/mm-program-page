@@ -41,7 +41,8 @@ const RU = {
   talksGraphTitle: "Темы и треки",
   talksGraphAria: "Граф связей: темы программы внутри, треки снаружи, доклады на дугах",
   talksGraphCaption:
-    "Точка на внешней дуге — один доклад: ссылка ведёт к его заметке. Толщина ребра — сколько докладов несут и трек, и тему; редкая тема весит больше частой.",
+    "Точка на внешней дуге — один доклад: ссылка ведёт к его заметке. Размер круга — сколько докладов несёт трек или тема, толщина ребра — сколько докладов несут и трек, и тему; пунктир — связь в один доклад. Наведение или фокус на точке подсвечивает её трек.",
+  talksSkipGraph: "Перейти к списку заметок",
   talksNotesTitle: "Заметки по трекам",
   talksNotesIntro:
     "Атомарная единица программы — доклад. Адрес заметки постоянный: #t309 открывает её и в расписании дня, и здесь.",
@@ -141,7 +142,8 @@ const EN: Record<keyof typeof RU, string> = {
   talksGraphTitle: "Themes and tracks",
   talksGraphAria: "Relation graph: program themes inside, tracks outside, talks on the arcs",
   talksGraphCaption:
-    "A dot on the outer arc is one talk: the link leads to its note. Edge width is how many talks carry both the track and the theme; a rare theme weighs more than a common one.",
+    "A dot on the outer arc is one talk: the link leads to its note. Circle size is how many talks a track or theme carries, edge width is how many talks carry both; a dashed edge is a single-talk link. Hovering or focusing a dot highlights its track.",
+  talksSkipGraph: "Skip to the note list",
   talksNotesTitle: "Notes by track",
   talksNotesIntro:
     "The atomic unit of the program is one talk. Its address is permanent: #t309 opens the note both in the day schedule and here.",

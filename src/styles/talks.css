@@ -50,8 +50,8 @@
    рёбрами за внимание. Отсюда opacity ниже, а ширина фиксирована. */
 .talks-graph__spokes line {
   stroke: var(--text-normal);
-  stroke-width: 0.4;
-  opacity: 0.14;
+  stroke-width: 0.6;
+  opacity: 0.2;
 }
 
 .talks-graph__edge {
@@ -59,14 +59,24 @@
   stroke-linecap: round;
 }
 
+/* Контраст на карточке: при opacity 0.3 / 0.38 рёбра давали 1.6–2.1:1 —
+   ниже 3:1, которые нужны несущей смысл графике (WCAG 1.4.11). Тип ребра
+   добавлен пунктиром: толщина сама с ним не справлялась. */
 .talks-graph__edge--core {
   stroke: var(--text-muted);
-  opacity: 0.3;
+  stroke-dasharray: 2 3;
+  opacity: 0.55;
 }
 
 .talks-graph__edge--topic {
   stroke: var(--text-accent);
-  opacity: 0.38;
+  opacity: 0.6;
+}
+
+/* Связь из одного доклада — не факт о пересечении треков, а шум: 26 из 87
+   рёбер. Пунктир отличает её от веса 2+ без отдельного цвета. */
+.talks-graph__edge--topic.talks-graph__edge--single {
+  stroke-dasharray: 1 3;
 }
 
 .talks-graph__hub--event {
@@ -148,6 +158,43 @@
     fill: var(--text-accent);
     opacity: 1;
   }
+}
+
+/* Заметки сгруппированы по треку (`.talks-graph__cluster`), поэтому наведение
+   или фокус на одной точке подсвечивает весь её трек и гасит остальные 11.
+   Сделано на `:has()`, без скрипта: в браузере без поддержки подсветки просто
+   нет, граф читается как прежде. */
+.talks-graph__cluster {
+  transition: opacity 0.15s ease;
+}
+
+.talks-graph__notes:has(.talks-graph__cluster:is(:hover, :focus-within))
+  .talks-graph__cluster:not(:hover):not(:focus-within) {
+  opacity: 0.22;
+}
+
+/* Хаб темы — ссылка на её обратные ссылки ниже. 92 точки идут подряд в
+   табуляции, поэтому перед графом стоит выход к списку заметок. */
+.talks-graph__hub-link:focus-visible {
+  outline: 2px solid var(--text-accent);
+  outline-offset: 2px;
+}
+
+.talks-graph__skip {
+  position: absolute;
+  inset-inline-start: -9999px;
+}
+
+.talks-graph__skip:focus-visible {
+  position: static;
+  display: inline-block;
+  margin-block-end: var(--space-2);
+  padding-block: var(--space-1);
+  padding-inline: var(--space-3);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-sm);
+  background: var(--card-background);
+  color: var(--text-normal);
 }
 
 .talks-graph__caption {
@@ -356,10 +403,18 @@
   .talks-graph__label--track {
     font-size: 14px;
   }
+
+  /* На 640 px холсте, ужатом до 320 px экрана, хит r=13 даёт 17 CSS px —
+     меньше 24 px из WCAG 2.5.8. Радиус задан свойством `r`: атрибут пришлось
+     бы дублировать в разметке, а он должен остаться детерминированным. */
+  .talks-graph__note .talks-graph__note-hit {
+    r: 18px;
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .talks-graph__note circle {
+  .talks-graph__note circle,
+  .talks-graph__cluster {
     transition: none;
   }
 }

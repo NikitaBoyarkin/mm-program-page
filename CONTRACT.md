@@ -336,12 +336,15 @@ main#main.page
     dl.facts > div.facts__item × 4 > dt + dd
   section.talks-section
     h2.talks-section__title
+    a.talks-graph__skip[href=#talks-notes-title]      ← выход из 92 остановок табуляции
     figure.talks-graph
       div.talks-graph__canvas > svg.talks-graph__svg[role=group][aria-label]
         g.talks-graph__spokes > line × 92            ← членство: хаб ↔ заметка
-        g.talks-graph__edges > line.talks-graph__edge--core|topic
-        g.talks-graph__hubs > circle.talks-graph__hub--event|theme|track + text.talks-graph__label
-        g.talks-graph__notes > a.talks-graph__note[href=/talk/<id>/] > circle + circle.talks-graph__note-hit + title
+        g.talks-graph__edges > line.talks-graph__edge--core|topic[--single] > title
+        g.talks-graph__hubs > circle.talks-graph__hub--event|track + text.talks-graph__label
+                           > a.talks-graph__hub-link[href=#theme-<id>] > circle.talks-graph__hub--theme + text
+        g.talks-graph__notes > g.talks-graph__cluster[data-hub=track:<имя>] × 12
+                                > a.talks-graph__note[href=/talk/<id>/] > title + circle + circle.talks-graph__note-hit
                                                              ← 92 ссылки; роль `group`, а не `img`:
                                                                 `img` сделал бы поддерево презентационным
       figcaption.talks-graph__caption
@@ -374,7 +377,17 @@ main#main.page
   «Приватность»), потому что 11 полных названий (~190 px каждое) физически не влезают на
   окружность внутреннего кольца (~800 px); полное имя остаётся в `<title>` узла и в заголовке
   хаба темы ниже. Обе группы подписей проходят через один пакер: подпись садится на первый
-  свободный радиус, иначе соседние треки сажали подписи друг на друга у полюсов.
+  свободный радиус, иначе соседние треки сажали подписи друг на друга у полюсов. Смещения
+  отсчитываются от **радиуса своего круга** (`radius + 5`), а занятые прямоугольники включают
+  круги хабов: подпись не ложится ни на свой диск, ни на чужой узел;
+- подписи и координаты округлены до сотых: `552.99`, а не `552.9865103565057` — иначе
+  «побайтово» держится только в пределах одного JS-движка;
+- подсветка трека — **CSS без скрипта**: заметки сгруппированы по хабу
+  (`g.talks-graph__cluster[data-hub]`), наведение или `:focus-within` на одной точке гасит
+  остальные 11 групп через `:has()`. В браузере без поддержки `:has()` подсветки нет, граф
+  читается как прежде — деградация мягкая, JS-фолбэка не появляется;
+- рёбра читаемы: контраст ≥ 3:1 к `--card-background` (WCAG 1.4.11), тип закодирован и
+  толщиной, и штрихом — иерархия `core` пунктиром, связь в один доклад тоже пунктиром.
 
 Внешняя ссылка «Полная версия графа — в портфолио» размечена UTM
 (`utm_content=talks-footer`) — единственный внешний переход **внутри содержимого**

@@ -91,7 +91,9 @@ const portfolioHref = portfolioLink(
 </section>
 
 <section class="talks-section" aria-labelledby="talks-notes-title">
-  <h2 class="talks-section__title" id="talks-notes-title">{t(lang, "talksNotesTitle")}</h2>
+  {/* `tabindex="-1"` — цель skip-link из графа: после перехода фокус стоит на
+      заголовке, а не остаётся на 92-й ссылке. */}
+  <h2 class="talks-section__title" id="talks-notes-title" tabindex="-1">{t(lang, "talksNotesTitle")}</h2>
   <p class="talks-section__intro">{t(lang, "talksNotesIntro")}</p>
 
   {
