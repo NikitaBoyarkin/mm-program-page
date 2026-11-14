@@ -147,7 +147,7 @@ const subtabActive = [
     {
       trackGroups.map((group, index) => (
         <a class:list={["talks-subtab", `talks-subtab--track-${index + 1}`]} href={`#track-${index + 1}`}>
-          {trackName(group.hub.label)}
+          <span class="talks-subtab__label">{trackName(group.hub.label)}</span>
           <span class="talks-subtab__count">{group.notes.length}</span>
         </a>
       ))
@@ -228,7 +228,7 @@ const subtabActive = [
           class:list={["talks-subtab", `talks-subtab--theme-${group.theme.id}`]}
           href={`#theme-${group.theme.id}`}
         >
-          {themeLabel(group.theme.id, lang)}
+          <span class="talks-subtab__label">{themeLabel(group.theme.id, lang)}</span>
           <span class="talks-subtab__count">{group.notes.length}</span>
         </a>
       ))

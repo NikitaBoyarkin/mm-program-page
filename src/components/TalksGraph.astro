@@ -241,5 +241,24 @@ const edgeTitle = (edge: GraphLayout["edges"][number]): string => {
       </g>
     </svg>
   </div>
+  {/* На телефоне подписи колец скрыты (0.33 масштаба — 4 px кегля), поэтому
+      имена и числа тем живут в чипах. Ссылка ведёт на `#theme-<id>`, то есть
+      сразу раскрывает панель тем, а не просто листает страницу. */}
+  <nav class="talks-graph__legend" aria-label={t(lang, "factsThemes")}>
+    {
+      themeHubs.map((hub, index) => {
+        const id = hub.key.replace("theme:", "");
+        return (
+          <>
+            <a class="talks-graph__chip" href={`#theme-${id}`}>
+              {themeLabel(id, lang)}
+              <span class="talks-graph__chip__count">{hub.count}</span>
+            </a>
+            {index < themeHubs.length - 1 && <span class="talks-graph__sep" aria-hidden="true">·</span>}
+          </>
+        );
+      })
+    }
+  </nav>
   <figcaption class="talks-graph__caption">{t(lang, "talksGraphCaption")}</figcaption>
 </figure>

@@ -5,7 +5,7 @@
  *
  * Три вещи, которые здесь важны и которые нельзя проверить юнит-тестом:
  * 1) SVG реально отрендерен, и все 92 точки ведут на существующие якоря;
- * 2) на 320 px вбок скроллится только рамка графа, а не документ;
+ * 2) на 320 px не скроллится вбок ни граф, ни документ;
  * 3) вход в граф есть на каждой ширине — полосой шапки, иконкой или меню.
  */
 import { expect, test, type Page } from "playwright/test";
@@ -260,7 +260,7 @@ test("36 · /en/talks/ — английская копия: html[lang], h1, ка
   );
 });
 
-test("37 · на телефоне вбок скроллится только рамка графа, документ стоит", async ({ page }) => {
+test("37 · на телефоне ни граф, ни документ не скроллятся вбок", async ({ page }) => {
   await page.setViewportSize({ width: 320, height: 700 });
   await open(page, "/talks/");
 
@@ -270,15 +270,19 @@ test("37 · на телефоне вбок скроллится только р�
   }));
   expect(doc.scrollWidth).toBeLessThanOrEqual(doc.clientWidth + 1);
 
-  // Сам граф — собственный скроллпорт: 92 точки и 22 подписи в 320 px не
-  // влезают, и это осознанно: подписи остаются читаемыми.
+  // Раньше холст держал минимум 640 px под подписи колец, и это был
+  // обязательный горизонтальный скролл. Компактный вид его отменяет: SVG встаёт
+  // по ширине, а имена и числа тем показывает легенда-чипы.
   const canvas = await page.locator(".talks-graph__canvas").evaluate((node) => ({
     scrollWidth: (node as HTMLElement).scrollWidth,
     clientWidth: (node as HTMLElement).clientWidth,
     overflowX: getComputedStyle(node).overflowX,
   }));
-  expect(canvas.overflowX).toBe("auto");
-  expect(canvas.scrollWidth).toBeGreaterThan(canvas.clientWidth);
+  expect(canvas.overflowX).not.toBe("auto");
+  expect(canvas.scrollWidth).toBeLessThanOrEqual(canvas.clientWidth + 1);
+
+  const svg = await page.locator("svg.talks-graph__svg").boundingBox();
+  expect(svg?.width ?? 0).toBeLessThanOrEqual(320);
 
   // Пункты «Граф докладов» и «К расписанию» достижимы и не обрезаны.
   await expect(page.locator("a.talks-footer__link").first()).toBeVisible();

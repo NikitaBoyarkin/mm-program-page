@@ -212,43 +212,69 @@
   color: var(--text-muted);
 }
 
+/* Ключ тем под графом — мобильная поверхность имён и чисел. На десктопе не
+   нужен: подписи колец читаются на месте. Строчный ключ, а не пилюли: одиннадцать
+   имён в пилюлях давали 432 px высоты и вытесняли сам граф из кадра. */
+.talks-graph__legend {
+  display: none;
+  flex-wrap: wrap;
+  gap: 0 var(--space-2);
+  margin-block-start: var(--space-2);
+  font-size: 0.82rem;
+  line-height: 1.7;
+}
+
+.talks-graph__chip {
+  color: var(--text-normal);
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-decoration-color: color-mix(in srgb, var(--text-accent) 50%, transparent);
+  text-underline-offset: 0.18em;
+}
+
+.talks-graph__chip__count {
+  margin-inline-start: 0.35em;
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  color: var(--text-accent);
+}
+
+.talks-graph__sep {
+  color: var(--text-muted);
+  opacity: 0.6;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .talks-graph__chip:hover {
+    color: var(--text-accent-hover);
+  }
+}
+
 @media (max-width: 767.98px) {
-  /* Граф на телефоне: кольца остаются читаемыми только в полную ширину, а
-     подписи тем на 320 px мельчают до 8 px. Поэтому граф скроллится по
-     горизонтали в собственной рамке — фиксированная минимальная ширина держит
-     подписи, а `overflow` не даёт странице получить горизонтальный скролл. */
+  /* Холст встаёт по ширине, скролла нет. Причина скролла была в геометрии:
+     960-viewBox на 320 px — это масштаб 0.33, подпись 13 px рендерится в 4.3 px,
+     и ширину держал только минимальный 640 px. Компактный вариант честнее:
+     граф остаётся обзором формы (кольца, дуги, рёбра, точки), а имена и числа
+     переезжают в чипы под ним. */
   .talks-graph__canvas {
-    overflow-x: auto;
-    overscroll-behavior-x: contain;
-    /* Тень у краёв — единственный признак, что граф листается: на 320 px видно
-       меньше половины холста, а системный скроллбар на iOS поверхностный и
-       появляется только в движении. Слой `local` уезжает с содержимым,
-       `scroll` стоит на месте — границы гасятся сами. */
-    background:
-      linear-gradient(to right, var(--card-background) 40%, transparent) left center / 40px 100%
-        no-repeat local,
-      linear-gradient(to left, var(--card-background) 40%, transparent) right center / 40px 100%
-        no-repeat local,
-      radial-gradient(farthest-side at 0 50%, var(--shadow-color), transparent) left center / 16px
-        100% no-repeat scroll,
-      radial-gradient(farthest-side at 100% 50%, var(--shadow-color), transparent) right center / 16px
-        100% no-repeat scroll,
-      var(--card-background);
+    overflow: visible;
+    background: var(--card-background);
   }
 
-  /* `max()` — чтобы на 640–767.98 px (ландшафт) холст занимал рамку целиком,
-     а не оставлял справа пустую полосу. */
   .talks-graph__svg {
-    inline-size: max(100%, 640px);
-    max-inline-size: none;
+    inline-size: 100%;
   }
 
-  .talks-graph__label--theme {
-    font-size: 13px;
+  /* Подписи колец и числа в кругах в 0.33 масштабе нечитаемы, а выноска к
+     скрытой подписи — линия в пустоту. */
+  .talks-graph__label,
+  .talks-graph__leaders,
+  .talks-graph__hub-count {
+    display: none;
   }
 
-  .talks-graph__label--track {
-    font-size: 14px;
+  .talks-graph__legend {
+    display: flex;
   }
 
   /* Хит-круг r=18 из прошлой волны снят: точки идут по дуге с шагом ~12 CSS px,

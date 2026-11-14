@@ -68,6 +68,15 @@ test("40 · вкладки графа: три панели, глубокие с�
 test("41 · подписи колец не наезжают друг на друга ни на одной ширине", async ({ page }) => {
   await open(page, "/talks/");
 
+  // На телефоне подписей нет вовсе: в масштабе 0.33 кегль выходит 4 px. Условие
+  // проверяется отдельно, иначе замер прямоугольников проходил бы по нулям и
+  // ничего не доказывал.
+  if ((page.viewportSize()?.width ?? 1280) < 768) {
+    await expect(page.locator("text.talks-graph__label").first()).toBeHidden();
+    await expect(page.locator(".talks-graph__leaders line").first()).toBeHidden();
+    return;
+  }
+
   // Пакер считает ширину по числу знаков (точный замер на билде недоступен),
   // поэтому договор — «прямоугольники не пересекаются». Проверяется реальный
   // рендер: допуск 3 px покрывает разницу метрик движков, а не наезд.
@@ -120,4 +129,45 @@ test("42 · под-вкладки: трек в заметках, тема в т�
 
   await page.locator("#talks-panel-themes a.talks-subtab--all").click();
   await expect(page.locator("section.theme-group:visible")).toHaveCount(THEMES);
+});
+
+
+test("43 · телефон: граф без скролла, имена тем — в чипах, под-вкладки переносятся", async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 320, height: 700 });
+  await open(page, "/talks/");
+
+  // Легенда заменяет подписи колец: один чип на тему, и он же — deep-link.
+  const chips = page.locator("nav.talks-graph__legend a.talks-graph__chip");
+  await expect(chips).toHaveCount(THEMES);
+  await expect(chips.first()).toBeVisible();
+  await expect(chips.first()).toHaveAttribute("href", /^#theme-[a-z]+$/);
+
+  await chips.first().click();
+  await expect(page.locator("#talks-panel-themes")).toBeVisible();
+
+  // Лента под-вкладок переносится, а не листается: 13 треков и 12 тем целиком
+  // видны без горизонтального скролла, полное имя — в заголовке группы ниже.
+  // Каждая лента меряется на своей видимой панели: у скрытой ширина нулевая, и
+  // проверка прошла бы вхолостую.
+  const measure = async (panel: string) => {
+    await open(page, `/talks/${panel}`);
+    const box = await page.locator(`${panel} nav.talks-subtabs`).evaluate((node) => ({
+      scrollWidth: (node as HTMLElement).scrollWidth,
+      clientWidth: (node as HTMLElement).clientWidth,
+      overflowX: getComputedStyle(node).overflowX,
+    }));
+    expect(box.clientWidth, `${panel}: лента не отрисована`).toBeGreaterThan(0);
+    expect(box.overflowX, `${panel}: лента не должна быть скроллпортом`).not.toBe("auto");
+    expect(box.scrollWidth, `${panel}: лента шире контейнера`).toBeLessThanOrEqual(
+      box.clientWidth + 1,
+    );
+  };
+
+  await measure("#talks-panel-themes");
+  await measure("#talks-panel-notes");
+
+  await expect(page.locator("#talks-panel-notes a.talks-subtab")).toHaveCount(TRACKS + 1);
+  await expect(page.locator("#talks-panel-themes a.talks-subtab")).toHaveCount(THEMES + 1);
 });

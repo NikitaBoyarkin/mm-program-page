@@ -377,19 +377,32 @@
   }
 
 
-  /* Двенадцать имён треков в 320 px переносились бы на шесть строк и съедали
-     экран до первого доклада. Одна лента с горизонтальным скроллом: подпись
-     целиком, прокрутка внутри полосы, документ не уезжает. */
+  /* Тринадцать имён верхним регистром (одно — 41 знак) в строку не встают, а
+     горизонтальная лента прятала половину выбора за краем. Перенос на две-три
+     строки дешевле скролла: подпись обрезается по 13 знакам, а полное имя и
+     число уже стоят заголовком группы ниже — поэтому счётчик у чипа скрыт. */
   .talks-subtabs {
-    flex-wrap: nowrap;
-    overflow-x: auto;
-    overscroll-behavior-x: contain;
-    scrollbar-width: none;
+    flex-wrap: wrap;
+    overflow: visible;
   }
 
   .talks-subtab {
-    flex: none;
-    min-block-size: 40px;
+    flex: 0 1 auto;
+    max-inline-size: 100%;
+    min-block-size: 36px;
+    font-size: 0.75rem;
+  }
+
+  .talks-subtab__label {
+    min-inline-size: 0;
+    max-inline-size: 11ch;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .talks-subtab__count {
+    display: none;
   }
 
   /* Плотность списка: 40 px воздуха между карточками на 92 заметках — это
