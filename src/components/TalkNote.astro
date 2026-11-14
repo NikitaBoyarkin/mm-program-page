@@ -10,6 +10,7 @@
 import { t, type Lang } from "../i18n/ui";
 import { dayLabel } from "../i18n/format";
 import type { Talk } from "../lib/program-core";
+import type { TalkMaterials } from "../lib/materials";
 import { SOCIAL_LABELS } from "../lib/socials";
 import type { RelatedNote } from "../lib/talks-graph";
 import "../styles/talk.css";
@@ -22,6 +23,8 @@ interface Props {
   themes: Array<{ id: string; label: string }>;
   related: RelatedNote[];
   backHref: string;
+  /** Видео и статьи авторов: overlay `src/data/materials.json`, join по имени. */
+  materials: TalkMaterials;
   /**
    * Есть ли у заметки тело. У докладов без описания (267, 292, 361, 362) в
    * `.md` только frontmatter, и секция «О докладе» превращалась бы в пустой
@@ -30,7 +33,7 @@ interface Props {
   hasBody?: boolean;
 }
 
-const { talk, lang, dayName, dayDate, themes, related, backHref, hasBody = true } = Astro.props;
+const { talk, lang, dayName, dayDate, themes, related, backHref, materials, hasBody = true } = Astro.props;
 const time = `${talk.start}–${talk.end}`;
 ---
 
@@ -86,6 +89,50 @@ const time = `${talk.start}–${talk.end}`;
             )}
           </li>
         ))}
+      </ul>
+    </section>
+  )}
+
+  {(materials.topic.length > 0 || materials.bySpeaker.length > 0) && (
+    <section class="talk-note__materials" aria-labelledby="talk-note-materials">
+      <h2 id="talk-note-materials">{t(lang, "talkMaterials")}</h2>
+      <ul class="talk-note__material-list">
+        {materials.topic.map((item) => (
+          <li class="talk-note__material">
+            <span class="talk-note__material-kind">
+              {t(lang, item.kind === "video" ? "materialVideo" : "materialArticle")}
+            </span>
+            <a
+              class="talk-note__material-link"
+              href={item.url}
+              target="_blank"
+              rel="noopener noreferrer nofollow"
+              data-analytics="talk-material"
+            >
+              {item.title}
+            </a>
+            <span class="talk-note__material-by">{t(lang, "materialTopic")}</span>
+          </li>
+        ))}
+        {materials.bySpeaker.map((group) =>
+          group.items.map((item) => (
+            <li class="talk-note__material">
+              <span class="talk-note__material-kind">
+                {t(lang, item.kind === "video" ? "materialVideo" : "materialArticle")}
+              </span>
+              <a
+                class="talk-note__material-link"
+                href={item.url}
+                target="_blank"
+                rel="noopener noreferrer nofollow"
+                data-analytics="talk-material"
+              >
+                {item.title}
+              </a>
+              <span class="talk-note__material-by">{group.name}</span>
+            </li>
+          )),
+        )}
       </ul>
     </section>
   )}

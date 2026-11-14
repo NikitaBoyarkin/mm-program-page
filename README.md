@@ -42,8 +42,8 @@
 | `index.html` и 3 файла, запуск двойным кликом по `file://` | Astro: 191 страница = 190 `index.html` (три дня × две локали, два графа — `/talks/`, `/en/talks/`, заметка на каждый из 91 доклада — `/talk/<id>/`, `/en/talk/<id>/`) + `404.html`; JSON-эндпоинты (`/program.json`, `/en/program.json`) в счёт билда не входят; `bun run build` |
 | Браузер рисует сетку из `window.MM_PROGRAM`                | Сетка **лежит в HTML**: три страницы по 39 / 37 / 15 карточек, у каждого дня свой URL                                                                                                                                                                                            |
 | День переключается на клиенте, состояние живёт в памяти    | День — это адрес: `/`, `/day/2/`, `/day/3/` (в EN — `/en/`, `/en/day/2/`, `/en/day/3/`) — ссылки, история, шаринг                                                                                                                                                                |
-| `app.js` — IIFE на 780 строк без типов                     | `src/lib/program.ts` и `src/lib/ics.ts` — типизированное ядро и 219 юнит-тестов без браузера                                                                                                                                                                                     |
-| Тесты — Python и headless Chrome                           | `bun test` (219 тестов) и Playwright на собранной странице, включая прогон с выключенным JS                                                                                                                                                                                      |
+| `app.js` — IIFE на 780 строк без типов                     | `src/lib/program.ts` и `src/lib/ics.ts` — типизированное ядро и 229 юнит-тестов без браузера                                                                                                                                                                                     |
+| Тесты — Python и headless Chrome                           | `bun test` (229 тестов) и Playwright на собранной странице, включая прогон с выключенным JS                                                                                                                                                                                      |
 | Только русский интерфейс, нет поиска                       | Словарь RU/EN + overlay перевода контента; поиск по названию, спикеру, треку и залу                                                                                                                                                                                              |
 | Свой CSS на 2381 строку с фиолетовым брендом               | Токены портфельной дизайн-системы: три темы, Inter и Cormorant, кремовые баннеры                                                                                                                                                                                                 |
 
@@ -107,6 +107,7 @@ src/
   data/program.json              слепок API, источник данных
   data/program.en.json           overlay перевода контента (EN)
   data/socials.json              overlay соцсетей лекторов (telegram/linkedin/…)
+  data/materials.json            overlay материалов: видео и статьи спикеров и по теме доклада
   data/copy.ru.json              overlay текста карточки: редакция `short` по id доклада
   data/photos.json               карта «оригинал аватарки → локальный WebP» (bun run photos)
   i18n/ui.ts                     словарь оболочки RU/EN
@@ -115,6 +116,7 @@ src/
   lib/program.ts                 слепок PROGRAM и функции над ним (реэкспорт ядра)
   lib/program-core.ts            чистое ядро без данных: типы, BASE_URL, firstParagraph
   lib/socials.ts                 сети и подписи соцсетей — один источник для view и клиента
+  lib/materials.ts               проекция «материалы доклада»: спикер + тема, лимиты и https-валидация
   lib/analytics.ts               UTM-атрибуция, единственный канал в PostHog, карта событий
   lib/ics.ts                     RFC 5545: экранирование, VTIMEZONE
   lib/theme.ts                   три темы, meta theme-color
@@ -165,7 +167,7 @@ scripts/generate-talk-notes.ts   182 заметки из слепка, --check
 scripts/optimize-photos.ts       аватарки 144×144 WebP в public/media (не коммитится)
 scripts/generate-og.mjs          превью-баннер из SVG-шаблона (rsvg-convert)
 scripts/og-fonts/                шрифты для генератора баннера
-tests/lib/*.test.ts              219 юнит-тестов (bun test, 12 файлов)
+tests/lib/*.test.ts              229 юнит-тестов (bun test, 13 файлов)
 tests/built/program.spec.ts      браузерные (Playwright)
 tests/built/i18n-search.spec.ts  EN и поиск (Playwright)
 tests/built/talks.spec.ts        граф докладов (Playwright)
@@ -189,8 +191,8 @@ bun run build              # статика в dist/ (prebuild → bun run photo
 bun run preview            # посмотреть сборку
 
 bun run check              # типы в .astro и .ts
-bun test                   # 219 юнит-тестов ядра
-bun run test:built         # браузерные тесты: 65 тестов × 3 проекта
+bun test                   # 229 юнит-тестов ядра
+bun run test:built         # браузерные тесты: 66 тестов × 3 проекта
 bun run talks:check        # 182 заметки совпадают со слепком
 
 bun run talks:generate     # перегенерировать заметки докладов
@@ -255,8 +257,8 @@ GET https://lms.matemarketing.ru/api/event-program/event/6/
 ## Проверка
 
 ```bash
-bun test                  # 219 pass
-bun run test:built        # 65 тестов × 3 проекта = 195 прогонов
+bun test                  # 229 pass
+bun run test:built        # 66 тестов × 3 проекта = 198 прогонов
 bun run data:check        # слепок сходится с сырым ответом
 bun run talks:check       # 182 заметки сходятся со слепком
 ```
@@ -373,8 +375,8 @@ origin (`https://nikitaboyarkin.github.io`), поэтому файл — заг�
 
 Деплой (`.github/workflows/deploy.yml`) не проходит с красным гейтом. Шаги идут так:
 `bun install --frozen-lockfile` → `bun run check` (типы) → `bun run talks:check` →
-`bun run test` (219 юнит-тестов) → `bun run build` с `PUBLIC_POSTHOG_KEY` из секрета →
-установка Chromium и WebKit → `bun run test:built` (65 тестов × 3 проекта = 195 прогонов).
+`bun run test` (229 юнит-тестов) → `bun run build` с `PUBLIC_POSTHOG_KEY` из секрета →
+установка Chromium и WebKit → `bun run test:built` (66 тестов × 3 проекта = 198 прогонов).
 Только после этого `dist/` уходит в Pages.
 
 ### Аналитика

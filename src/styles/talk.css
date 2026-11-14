@@ -128,6 +128,46 @@
   text-underline-offset: 3px;
 }
 
+/* Материалы: строка «вид · ссылка · автор». Вид и автор — служебные подписи,
+   поэтому muted; смысл несёт ссылка. */
+.talk-note__material-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.talk-note__material {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0 var(--space-2);
+  font-size: 0.9375rem;
+}
+
+.talk-note__material-kind,
+.talk-note__material-by {
+  font-size: 0.8125rem;
+  color: var(--text-muted);
+}
+
+.talk-note__material-kind::after {
+  content: "·";
+}
+
+.talk-note__material-link {
+  color: var(--text-accent);
+  text-underline-offset: 3px;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .talk-note__material-link:hover {
+    color: var(--text-normal);
+  }
+}
+
 /* Соцсети спикера. Геометрия (24px маска, 20px зазор, 44px зона нажатия)
    объявлена в program.css рядом с карточками, но страница заметки program.css
    не грузит — без правил ниже ссылка схлопывалась в текст 64–75×20 px без

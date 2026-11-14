@@ -338,3 +338,33 @@ test.describe("мобильный 320×700: страница доклада", ()
     }
   });
 });
+
+/**
+ * Материалы спикера: секция строится из overlay `src/data/materials.json`.
+ * Доклад берётся из данных, а не хардкодится: файл наполняется постепенно, и
+ * тест не должен краснеть от того, что у конкретного спикера ссылок нет.
+ */
+test("материалы спикера: секция есть, ссылки внешние и https", async ({ page }) => {
+  const overlay = JSON.parse(
+    readFileSync(join(process.cwd(), "src", "data", "materials.json"), "utf8"),
+  ) as { speakers: Record<string, unknown[]> };
+  const program = JSON.parse(
+    readFileSync(join(process.cwd(), "src", "data", "program.json"), "utf8"),
+  ) as { talks: Array<{ id: number; lectors: Array<{ name: string }> }> };
+  const talk = program.talks.find((item) =>
+    item.lectors.some((lector) => (overlay.speakers[lector.name] ?? []).length > 0),
+  );
+  test.skip(!talk, "в materials.json пока нет спикеров с материалами");
+
+  await open(page, `/talk/${talk!.id}/`);
+  const section = page.locator(".talk-note__materials");
+  await expect(section).toBeVisible();
+  const links = section.locator("a.talk-note__material-link");
+  expect(await links.count()).toBeGreaterThan(0);
+  const hrefs = await links.evaluateAll((nodes) =>
+    nodes.map((node) => (node as HTMLAnchorElement).href),
+  );
+  for (const href of hrefs) expect(href.startsWith("https://")).toBe(true);
+  await expect(links.first()).toHaveAttribute("target", "_blank");
+  await expect(links.first()).toHaveAttribute("rel", /noopener/);
+});

@@ -60,6 +60,10 @@ const RU = {
   talkAbout: "О докладе",
   talkSpeakers: "Спикеры",
   talkHall: "Зал",
+  talkMaterials: "Материалы",
+  materialVideo: "Видео",
+  materialArticle: "Статья",
+  materialTopic: "По теме доклада",
   talkMetaDescription: "{title} — {track}, {day}, {start}–{end}, {hall}.",
   talkMetaDescriptionNoTrack: "{title} — {day}, {start}–{end}, {hall}.",
   metaTalks:
@@ -156,6 +160,10 @@ const EN: Record<keyof typeof RU, string> = {
   talkAbout: "About the talk",
   talkSpeakers: "Speakers",
   talkHall: "Hall",
+  talkMaterials: "Materials",
+  materialVideo: "Video",
+  materialArticle: "Article",
+  materialTopic: "On the talk's topic",
   talkMetaDescription: "{title} — {track}, {day}, {start}–{end}, {hall}.",
   talkMetaDescriptionNoTrack: "{title} — {day}, {start}–{end}, {hall}.",
   metaTalks:

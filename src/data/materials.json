@@ -1,0 +1,462 @@
+{
+  "speakers": {
+    "Александр Абрамов": [
+      {
+        "kind": "video",
+        "title": "RuCenter Podcast: Alexander Abramov (VkusVill). Evangelism, волонтёрство",
+        "url": "https://www.youtube.com/watch?v=TGkALkzCUHw"
+      }
+    ],
+    "Александр Бараков": [
+      {
+        "kind": "video",
+        "title": "Встреча с Александром Бараковым (Head of BI Avito, Data Nature)",
+        "url": "https://www.youtube.com/watch?v=S638VNOaYe8"
+      }
+    ],
+    "Александр Давыдов": [
+      {
+        "kind": "article",
+        "title": "Как я перестал бояться и полюбил операционные отчёты",
+        "url": "https://habr.com/ru/companies/citydrive/articles/759676/"
+      }
+    ],
+    "Александр Кореньков": [
+      {
+        "kind": "article",
+        "title": "Как мы научились честно считать эффект промокодов",
+        "url": "https://habr.com/ru/companies/X5Tech/articles/1005410/"
+      }
+    ],
+    "Александр Сорокин": [
+      {
+        "kind": "video",
+        "title": "Презентация курсов SPSS (канал @assorokin)",
+        "url": "https://www.youtube.com/playlist?list=PL73BBE3CEF2506839"
+      }
+    ],
+    "Алексей Лукацкий": [
+      {
+        "kind": "article",
+        "title": "Не конкурируй с ИИ — управляй им",
+        "url": "https://habr.com/ru/companies/pt/articles/1076702/"
+      }
+    ],
+    "Алексей Савватеев": [
+      {
+        "kind": "video",
+        "title": "Mathematics for Economists. Part 1. Introduction",
+        "url": "https://www.youtube.com/watch?v=dQwuLW4XTvU"
+      }
+    ],
+    "Андрей Романов": [
+      {
+        "kind": "video",
+        "title": "Do you rely on randomness when dividing into test-control",
+        "url": "https://www.youtube.com/watch?v=ObItikhLllU"
+      }
+    ],
+    "Анна Амброзевич": [
+      {
+        "kind": "article",
+        "title": "Персонализация в диджитал-маркетинге: 10 мифов",
+        "url": "https://vc.ru/marketing/151726-personalizaciya-v-didzhital-marketinge-10-mifov-v-kotorye-mnogie-veryat"
+      }
+    ],
+    "Анна Бочканова": [
+      {
+        "kind": "video",
+        "title": "Анна Бочканова — Анонс нового аналитического продукта",
+        "url": "https://www.youtube.com/watch?v=OAOAv4d7GGM"
+      }
+    ],
+    "Анна Ставнийчук": [
+      {
+        "kind": "article",
+        "title": "Эффекты антимонопольной политики на рынках нефтепродуктов России",
+        "url": "https://cyberleninka.ru/article/n/effekty-antimonopolnoy-politiki-na-rynkah-nefteproduktov-rossii"
+      }
+    ],
+    "Артем Прокопенко": [
+      {
+        "kind": "video",
+        "title": "Что меняется при росте до 1000 экспериментов в год: опыт Циана",
+        "url": "https://academy.productsense.io/videos/epic-expf-prokopenko"
+      }
+    ],
+    "Беслан Курашов": [
+      {
+        "kind": "video",
+        "title": "Аналитика и любовь 7: Беслан Курашов",
+        "url": "https://www.youtube.com/watch?v=z5GrhwayRtQ"
+      }
+    ],
+    "Валентин Борисов": [
+      {
+        "kind": "article",
+        "title": "Нейрослоп не пройдёт: отбор в первую Школу аналитиков hh",
+        "url": "https://habr.com/ru/companies/hh/articles/1094450/"
+      }
+    ],
+    "Валерий Бабушкин": [
+      {
+        "kind": "video",
+        "title": "Валерий Бабушкин | 5 мыслей о карьере с высоты",
+        "url": "https://www.youtube.com/watch?v=cNdL6rxrDCU"
+      }
+    ],
+    "Виктория Дочкина": [
+      {
+        "kind": "video",
+        "title": "Виктория Дочкина | Тестирование систем машинного обучения",
+        "url": "https://www.youtube.com/watch?v=y-uXDlS-jpY"
+      }
+    ],
+    "Виктория Пролетарская": [
+      {
+        "kind": "article",
+        "title": "Data Coffee, 3-й сезон — гостья 81-го эпизода",
+        "url": "https://datacoffee.link/guest-season-3/"
+      }
+    ],
+    "Виталий Шатилов": [
+      {
+        "kind": "article",
+        "title": "ИАД x Сайбокс",
+        "url": "https://habr.com/ru/companies/T1Holding/articles/1069672/"
+      }
+    ],
+    "Галина Блонская": [
+      {
+        "kind": "video",
+        "title": "Яндекс Метрика: настраиваем и анализируем контекстную рекламу",
+        "url": "https://www.youtube.com/watch?v=ab0squEAiCE"
+      }
+    ],
+    "Григорий Засько": [
+      {
+        "kind": "article",
+        "title": "Как мы перераспределили альфу в A/B-тестах",
+        "url": "https://habr.com/ru/companies/tbank/articles/1089482/"
+      },
+      {
+        "kind": "video",
+        "title": "Когда локальная оптимизация перестала работать",
+        "url": "https://m.vk.ru/video-151223562_456240325"
+      }
+    ],
+    "Григорий Мельников": [
+      {
+        "kind": "article",
+        "title": "KillBot: защита от ботов и DDoS — два года разработки",
+        "url": "https://habr.com/ru/articles/1086974/"
+      }
+    ],
+    "Дарья Чиркина": [
+      {
+        "kind": "video",
+        "title": "Множественное тестирование в теории и на практике",
+        "url": "https://www.youtube.com/watch?v=DjYwQHxLtYs"
+      }
+    ],
+    "Денис Пехтерев": [
+      {
+        "kind": "article",
+        "title": "Статзначимый подкаст — выпуск с Денисом Пехтеревым",
+        "url": "https://podcasts.apple.com/us/podcast/%D1%81%D1%82%D0%B0%D1%82%D0%B7%D0%BD%D0%B0%D1%87%D0%B8%D0%BC%D1%8B%D0%B9-%D0%BF%D0%BE%D0%B4%D0%BA%D0%B0%D1%81%D1%82/id6807773381"
+      }
+    ],
+    "Денис Платонов": [
+      {
+        "kind": "video",
+        "title": "Снижение стоимости HADI-цикла",
+        "url": "https://www.youtube.com/watch?v=coOt7_TN7rI"
+      }
+    ],
+    "Дмитрий Тамаров": [
+      {
+        "kind": "article",
+        "title": "124 КБ → 18 КБ: как не скармливать мусор ИИ-агенту",
+        "url": "https://vc.ru/ai/2763542-kak-umenshit-razmer-teksta-dlya-ii"
+      }
+    ],
+    "Евгений Кузнецов": [
+      {
+        "kind": "article",
+        "title": "SEO 2025: создание контента, прогноз трафика, анализ данных",
+        "url": "https://ppc.world/articles/seo-2025-sozdanie-kontenta-prognoz-trafika-analiz-dannyh/"
+      }
+    ],
+    "Евгений Цапников": [
+      {
+        "kind": "video",
+        "title": "Analyst Days 18 — как следить за качеством виртуального ассистента",
+        "url": "https://www.youtube.com/watch?v=giBN0_KDpYM"
+      }
+    ],
+    "Екатерина Владек": [
+      {
+        "kind": "video",
+        "title": "Лагерь КручуВерчу на BDD 2026: интервью с Екатериной Владек",
+        "url": "https://www.youtube.com/watch?v=DbQyCDsTX5c"
+      }
+    ],
+    "Ирина Говорова": [
+      {
+        "kind": "article",
+        "title": "Как мы сделали фильтр «бабушкин ремонт»",
+        "url": "https://habr.com/ru/companies/cian/articles/656425/"
+      }
+    ],
+    "Ирина Голощапова": [
+      {
+        "kind": "video",
+        "title": "Ирина Голощапова | Data-роли и где они обитают",
+        "url": "https://www.youtube.com/watch?v=C7FCmCEMbcQ"
+      }
+    ],
+    "Ишан Гоэл": [
+      {
+        "kind": "video",
+        "title": "Statistical Significance Explained In-Depth",
+        "url": "https://www.youtube.com/watch?v=kGEszJxwi9s"
+      }
+    ],
+    "Максим Коматовский": [
+      {
+        "kind": "article",
+        "title": "Что умеет Data Science: 4 нескучные лекции с митапа Альфа-Банка",
+        "url": "https://vc.ru/alfabank/515510-chto-umeet-data-science-4-neskuchnye-lekcii-s-mitapa-alfa-banka"
+      }
+    ],
+    "Максим Кочуров": [
+      {
+        "kind": "video",
+        "title": "Bayesian Statistical Modelling in Python",
+        "url": "https://ok.ru/video/4150176517719"
+      }
+    ],
+    "Максим Стаценко": [
+      {
+        "kind": "article",
+        "title": "Как мы заменили сотни Join'ов на один РТ-процессинг",
+        "url": "https://habr.com/ru/companies/oleg-bunin/articles/884560/"
+      }
+    ],
+    "Михаил Рязанский": [
+      {
+        "kind": "article",
+        "title": "Как мы подружили LLM с А/Б-тестами (соавтор)",
+        "url": "https://habr.com/ru/companies/vk/articles/1063862/"
+      }
+    ],
+    "Наталья Цветкова": [
+      {
+        "kind": "article",
+        "title": "Платформы моделирования маркетингового микса: прорыв или разочарование",
+        "url": "https://www.sostav.ru/publication/platformy-modelirovaniya-marketingovogo-miksa-proryv-ili-razocharovanie-73615.html"
+      }
+    ],
+    "Никита Гурьянов": [
+      {
+        "kind": "article",
+        "title": "Антихрупкие метрики: как сегодня развивать зрелые метрики",
+        "url": "https://adindex.ru/publication/analitics/100380/2026/08/20/348158.phtml"
+      }
+    ],
+    "Никита Егоров": [
+      {
+        "kind": "article",
+        "title": "Как увлечения помогают строить личный бренд в BigTech",
+        "url": "https://habr.com/ru/articles/1051126/"
+      }
+    ],
+    "Николай Голов": [
+      {
+        "kind": "article",
+        "title": "Postgres Professional — Tengri Data Platform",
+        "url": "https://www.cnews.ru/book/Postgres_Professional_-_Tengri_Data_Platform"
+      }
+    ],
+    "Олеся Норицына": [
+      {
+        "kind": "video",
+        "title": "Олеся Норицына | Как выжать максимум из ML-моделей",
+        "url": "https://www.youtube.com/watch?v=M9FPg2BJbHo"
+      },
+      {
+        "kind": "article",
+        "title": "Блог Cube: как верифицировать marketing mix models",
+        "url": "https://www.sostav.ru/blogs/271196"
+      }
+    ],
+    "Ольга Чумакина": [
+      {
+        "kind": "video",
+        "title": "CordisON: Ольга Чумакина о HR-менеджменте",
+        "url": "https://www.youtube.com/watch?v=ggP-nTxG9Nw"
+      }
+    ],
+    "Павел Дубинин": [
+      {
+        "kind": "video",
+        "title": "Yandex DataLens: Why and How to Use It",
+        "url": "https://www.youtube.com/watch?v=ntlppg2JhxU"
+      }
+    ],
+    "Павел Злобин": [
+      {
+        "kind": "article",
+        "title": "Маркетологам-новичкам не выжить в 2026 году",
+        "url": "https://www.sostav.ru/blogs/281190/74776"
+      }
+    ],
+    "Радослав Нейчев": [
+      {
+        "kind": "video",
+        "title": "Машинное обучение 1. Introduction. Naive Bayes, kNN",
+        "url": "https://www.youtube.com/watch?v=8s9073kNXgY"
+      }
+    ],
+    "Роман Бунин": [
+      {
+        "kind": "video",
+        "title": "Зачем нужны аналитики в мире победившего ИИ",
+        "url": "https://www.youtube.com/watch?v=zP3KbQznbmo"
+      },
+      {
+        "kind": "video",
+        "title": "BI-рай: про DataLens, дата-культуру и эмиграцию",
+        "url": "https://www.youtube.com/watch?v=dqgKzq0rb0o"
+      }
+    ],
+    "Сергей Кноль": [
+      {
+        "kind": "article",
+        "title": "Дерево метрик: как связать вклад маркетинга с бизнес-целями",
+        "url": "https://habr.com/ru/companies/m2tech/articles/1088550/"
+      }
+    ],
+    "Сергей Кукуруз": [
+      {
+        "kind": "video",
+        "title": "Cloud ML technologies from Yandex Cloud",
+        "url": "https://www.youtube.com/watch?v=EMVBkIouNgs"
+      }
+    ],
+    "Станислав Дробышевский": [
+      {
+        "kind": "video",
+        "title": "Достающее звено",
+        "url": "https://dostoverno.ru/video/dostayushchee-zveno"
+      }
+    ],
+    "Степан Медведев": [
+      {
+        "kind": "article",
+        "title": "Мобильный маркетинг: итоги года",
+        "url": "https://adindex.ru/specprojects/talks2025/mobile_marketing/questions/"
+      }
+    ],
+    "Тимур Мерлин": [
+      {
+        "kind": "article",
+        "title": "«Полезно работать в кросс-функциональных командах»",
+        "url": "https://adindex.ru/tv/interview/345875.phtml"
+      }
+    ],
+    "Фёдор Холькин": [
+      {
+        "kind": "article",
+        "title": "Платформа дата-приложений для быстрой проверки гипотез",
+        "url": "https://datawarrior.ru/talks/matemarketing-2024/"
+      }
+    ]
+  },
+  "talks": {
+    "267": [
+      {
+        "kind": "video",
+        "title": "Как AI меняет профессию дата-сайентиста — с Валерием Бабушкиным",
+        "url": "https://www.youtube.com/watch?v=OgZTEX8olA0"
+      }
+    ],
+    "270": [
+      {
+        "kind": "video",
+        "title": "Теория игр: равновесие Нэша и доминирование",
+        "url": "https://www.youtube.com/watch?v=HM4o4HrxVxI"
+      }
+    ],
+    "271": [
+      {
+        "kind": "video",
+        "title": "Путь к разуму",
+        "url": "https://www.youtube.com/watch?v=zxMlXej3hyQ"
+      }
+    ],
+    "280": [
+      {
+        "kind": "video",
+        "title": "Проверь себя: запускаем и анализируем рекламу с Яндекс.Метрикой",
+        "url": "https://www.youtube.com/watch?v=JIBLizR9s4U"
+      }
+    ],
+    "288": [
+      {
+        "kind": "video",
+        "title": "SMILES-2024: Радослав Нейчев, Яндекс — мультиагентные системы на LLM",
+        "url": "https://www.youtube.com/watch?v=zQWabapG1TM"
+      }
+    ],
+    "290": [
+      {
+        "kind": "article",
+        "title": "Саша Давыдов — AI-first аналитика",
+        "url": "https://davydov.my/"
+      }
+    ],
+    "307": [
+      {
+        "kind": "article",
+        "title": "Автоматизация маркетинга: ИИ-агенты",
+        "url": "https://www.sostav.ru/blogs/281190/112742"
+      }
+    ],
+    "323": [
+      {
+        "kind": "article",
+        "title": "Алексей Лукацкий — о суверенности ИИ и защите данных",
+        "url": "https://www.kommersant.ru/doc/8957334"
+      }
+    ],
+    "336": [
+      {
+        "kind": "article",
+        "title": "Как работают боты для скликивания в рекламных сетях",
+        "url": "https://habr.com/ru/articles/1092590/"
+      }
+    ],
+    "353": [
+      {
+        "kind": "video",
+        "title": "Marketing Mix Modeling: единая система оценки охватной рекламы",
+        "url": "https://rutube.ru/video/dc6130902fb541eeb05bc8fa70e6c771/"
+      }
+    ],
+    "370": [
+      {
+        "kind": "article",
+        "title": "Как измерять видимость бренда в AI-выдаче",
+        "url": "https://habr.com/ru/articles/978520/"
+      }
+    ],
+    "371": [
+      {
+        "kind": "article",
+        "title": "От иллюзии self-service к управляемому исполнению",
+        "url": "https://centercio.ru/ot-illyuzii-self-service-k-realnomu-upravlyaemomu-ispolneniyu/"
+      }
+    ]
+  }
+}
