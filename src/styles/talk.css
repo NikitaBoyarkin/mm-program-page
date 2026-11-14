@@ -72,8 +72,7 @@
 }
 
 .talk-note__speaker-list,
-.talk-note__chips,
-.talk-note__related-list {
+.talk-note__chips {
   margin: 0;
   padding: 0;
   list-style: none;
@@ -118,14 +117,118 @@
   hyphens: manual;
 }
 
-.talk-note__related-list {
-  flex-direction: column;
-  gap: 6px;
+/* Глобальный reset (`* { margin: 0; padding: 0 }`) обнуляет отступ списка:
+   маркер свисает левее колонки, а каждый `<li><p>` получает абзацную маржу
+   от правила выше. Список в прозе — один блок с ровным ритмом. */
+.talk-note__prose ul {
+  margin: 0 0 1em;
+  padding-inline-start: 1.25em;
 }
 
-.talk-note__related-list a {
+.talk-note__prose li > p {
+  margin: 0;
+}
+
+.talk-note__prose li + li {
+  margin-top: 0.35em;
+}
+
+/* «Связанные» — доска: колонка на день, карточка на доклад. Шесть фактов
+   в 320 px не влезают, поэтому прокручивается обёртка, а не документ:
+   мобильный тест требует нулевого горизонтального скролла страницы. */
+.talk-note__related-scroll {
+  overflow-x: auto;
+  /* Тот же приём, что у сетки расписания (`program.css`): тонкий скроллбар и
+     containment, чтобы прокрутка доски не тянула за собой страницу. */
+  overscroll-behavior-inline: contain;
+  scrollbar-width: thin;
+  padding-block-end: var(--space-2);
+}
+
+/* Колонки по дню, а не сетка карточек: `minmax(10.5rem, 1fr)` — три дня
+   влезают в колонку прозы (--prose-measure: 66ch) без прокрутки. */
+.talk-note__related-board {
+  display: grid;
+  grid-auto-flow: column;
+  grid-auto-columns: minmax(10.5rem, 1fr);
+  gap: var(--space-4);
+  align-items: start;
+}
+
+/* На телефоне колонки не влезают: доска складывается в столбик дней, и
+   прокручивать нечего. Горизонтальный скролл доски тут — не выход: карточка
+   шириной в треть экрана не читается. */
+@media (max-width: 40rem) {
+  .talk-note__related-board {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-5);
+  }
+
+  .talk-note__related-scroll {
+    overflow-x: visible;
+  }
+}
+
+.talk-note__board-day {
+  margin: 0 0 var(--space-2);
+  font-size: 0.75rem;
+  font-weight: 400;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  white-space: nowrap;
+}
+
+.talk-note__board-cards {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+/* Обводка — `--border-strong`, как у чипа: на карточном фоне `--border-color`
+   в киберпанке даёт 1.80:1, а норма для границы элемента — 3:1. */
+.talk-note__board-card {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: var(--space-3);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-md);
+  background-color: var(--card-background);
+  font-size: 0.875rem;
+  line-height: 1.35;
+  /* Ручные переносы: `auto` рвёт трек на «АНАЛИТИЧЕ-/СКИЕ АГЕНТЫ», а самое
+     длинное слово карточки («СЕМАНТИЧЕСКИЙ») в колонку 10.5rem влезает. */
+  hyphens: manual;
+}
+
+.talk-note__board-title {
   color: var(--text-accent);
   text-underline-offset: 3px;
+  text-wrap: pretty;
+}
+
+.talk-note__board-line {
+  font-size: 0.8125rem;
+  color: var(--text-muted);
+}
+
+/* Время — короткий атом: перенос «10:20–10:55» разрывает значение пополам. */
+.talk-note__board-time {
+  font-size: 0.8125rem;
+  color: var(--text-muted);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .talk-note__board-title:hover {
+    color: var(--text-normal);
+  }
 }
 
 /* Материалы: строка «вид · ссылка · автор». Вид и автор — служебные подписи,

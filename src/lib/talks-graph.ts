@@ -142,6 +142,16 @@ export interface RelatedNote {
   hrefTalk: string;
   title: string;
   track: string;
+  /** Зал, время и номер дня: таблица «Связанных» показывает их рядом с названием. */
+  hall: string;
+  start: string;
+  end: string;
+  /** День цели: по нему «Связанные» раскладываются на колонки доски. */
+  dayId: number;
+  dayOrdinal: number;
+  /** Имена спикеров: колонка «Спикер». Отдельного запроса в слепок не нужно —
+   *  `buildNotes` уже собрал их в `lectors`. */
+  speakers: string[];
   score: number;
   sharedThemes: string[];
   sameTrack: boolean;
@@ -169,6 +179,27 @@ export function relatedNotes(notes: TalkNote[], k = RELATED_K): Map<number, Rela
     }
   }
 
+  /** Запись «Связанных»: факты берутся у самой заметки-цели, а не у того, кто
+   *  на неё ссылается, — иначе обратная ссылка показывала бы чужой зал. */
+  const toRelated = (
+    to: TalkNote,
+    fields: Pick<RelatedNote, "score" | "sharedThemes" | "sameTrack" | "adjacent">,
+  ): RelatedNote => ({
+    id: to.id,
+    anchor: to.anchor,
+    href: to.href,
+    hrefTalk: to.hrefTalk,
+    title: to.title,
+    track: to.track,
+    hall: to.hall,
+    start: to.start,
+    end: to.end,
+    dayId: to.dayId,
+    dayOrdinal: to.dayOrdinal,
+    speakers: to.lectors,
+    ...fields,
+  });
+
   const score = (a: TalkNote, b: TalkNote): RelatedNote | null => {
     const shared = a.themes.filter((theme) => b.themes.includes(theme));
     // Косинус по IDF-взвешенным темам: редкая тема весит больше частой, иначе
@@ -193,7 +224,7 @@ export function relatedNotes(notes: TalkNote[], k = RELATED_K): Map<number, Rela
 
     const weight = 4 * cosine + (sameTrack ? 1.6 : 0) + (adjacent ? 0.9 : 0) + (sameDay ? 0.2 : 0);
     if (weight < RELATED_THRESHOLD) return null;
-    return { id: b.id, anchor: b.anchor, href: b.href, hrefTalk: b.hrefTalk, title: b.title, track: b.track, score: weight, sharedThemes: shared, sameTrack, adjacent };
+    return toRelated(b, { score: weight, sharedThemes: shared, sameTrack, adjacent });
   };
 
   const result = new Map<number, RelatedNote[]>();
@@ -222,7 +253,7 @@ export function relatedNotes(notes: TalkNote[], k = RELATED_K): Map<number, Rela
         for (const other of [...stage.pool].sort(byStart)) {
           if (scored.length >= RELATED_MIN) break;
           if (scored.some((item) => item.id === other.id)) continue;
-          scored.push({ id: other.id, anchor: other.anchor, href: other.href, hrefTalk: other.hrefTalk, title: other.title, track: other.track, score: 0, sharedThemes: [], sameTrack: stage.sameTrack, adjacent: stage.adjacent });
+          scored.push(toRelated(other, { score: 0, sharedThemes: [], sameTrack: stage.sameTrack, adjacent: stage.adjacent }));
         }
         if (scored.length >= RELATED_MIN) break;
       }
@@ -237,7 +268,7 @@ export function relatedNotes(notes: TalkNote[], k = RELATED_K): Map<number, Rela
       const back = result.get(relation.id);
       if (!back || back.some((item) => item.id === id)) continue;
       const note = byId.get(id);
-      if (note) back.push({ id: note.id, anchor: note.anchor, href: note.href, hrefTalk: note.hrefTalk, title: note.title, track: note.track, score: relation.score, sharedThemes: relation.sharedThemes, sameTrack: relation.sameTrack, adjacent: relation.adjacent });
+      if (note) back.push(toRelated(note, { score: relation.score, sharedThemes: relation.sharedThemes, sameTrack: relation.sameTrack, adjacent: relation.adjacent }));
     }
   }
 
