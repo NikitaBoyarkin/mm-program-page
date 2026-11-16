@@ -73,7 +73,7 @@ const svg = `<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.
 
   <g filter="url(#shadow)">
     <g clip-path="url(#cardClip)">
-      <svg x="636" y="140" width="484" height="336" viewBox="305 0 1095 760"
+      <svg x="636" y="140" width="484" height="336" viewBox="140 232 1080 750"
            preserveAspectRatio="xMidYMid slice">
         <image xlink:href="data:image/png;base64,${shot}" width="1440" height="1000"/>
       </svg>
