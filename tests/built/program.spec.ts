@@ -347,6 +347,78 @@ test("06 · избранное: звезда, [data-favorites-count], сохра
   }
 });
 
+/**
+ * Два доклада дня из карточек: `overlap` — по времени пересекаются,
+ * `apart` — нет. Времена читаются из `data-start`/`data-end`, поэтому пара
+ * не зависит от того, что именно лежит в слепке.
+ */
+async function slotPair(page: Page, kind: "overlap" | "apart"): Promise<[number, number] | null> {
+  return page.locator("article.talk-card[data-talk-id][data-start]").evaluateAll((nodes, want) => {
+    const slots = nodes.map((node) => {
+      const card = node as HTMLElement;
+      return {
+        id: Number(card.dataset.talkId),
+        start: card.dataset.start ?? "",
+        end: card.dataset.end ?? "",
+      };
+    });
+    const toMinutes = (value: string): number => {
+      const [hours, mins] = value.split(":").map(Number);
+      return Number(hours) * 60 + Number(mins);
+    };
+    for (let i = 0; i < slots.length; i += 1) {
+      for (let j = i + 1; j < slots.length; j += 1) {
+        const a = slots[i]!;
+        const b = slots[j]!;
+        const aStart = toMinutes(a.start);
+        const aEnd = toMinutes(a.end);
+        const bStart = toMinutes(b.start);
+        const bEnd = toMinutes(b.end);
+        const overlap = aStart < bEnd && bStart < aEnd;
+        if (overlap === (want === "overlap")) return [a.id, b.id];
+      }
+    }
+    return null;
+  }, kind);
+}
+
+test("06a · пересечение по времени: второй доклад даёт тост-предупреждение", async ({ page }) => {
+  await open(page, "/");
+  const pair = await slotPair(page, "overlap");
+  expect(pair).not.toBeNull();
+  const [first, second] = pair!;
+
+  try {
+    await page.locator(`button[data-fav][data-talk-id="${first}"]`).click();
+    await page.locator(`button[data-fav][data-talk-id="${second}"]`).click();
+
+    // `.mm-toast--warn` — отдельный класс: обычный тост подтверждает действие,
+    // а этот предупреждает, и живёт дольше (7 с).
+    const warn = page.locator(".mm-toast--warn");
+    await expect(warn).toHaveCount(1);
+    await expect(warn).toContainText("Пересечение по времени");
+    await expect(warn).toHaveAttribute("role", "status");
+  } finally {
+    await page.evaluate(() => window.localStorage.clear());
+  }
+});
+
+test("06b · без пересечения: второй доклад предупреждения не даёт", async ({ page }) => {
+  await open(page, "/");
+  const pair = await slotPair(page, "apart");
+  expect(pair).not.toBeNull();
+  const [first, second] = pair!;
+
+  try {
+    await page.locator(`button[data-fav][data-talk-id="${first}"]`).click();
+    await page.locator(`button[data-fav][data-talk-id="${second}"]`).click();
+    await expect(page.locator(".mm-toast--warn")).toHaveCount(0);
+    await expect(page.locator("#site-nav [data-favorites-count]")).toHaveText("2");
+  } finally {
+    await page.evaluate(() => window.localStorage.clear());
+  }
+});
+
 test("07 · модалка: hidden снят, заголовок непустой, body.is-modal-open, Esc и возврат фокуса", async ({
   page,
   browserName,

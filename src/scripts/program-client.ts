@@ -20,8 +20,10 @@ import {
   imageUrl,
   isTime,
   minutes,
+  timeConflicts,
   type Program,
   type Talk,
+  type TalkSlot,
 } from "../lib/program-core";
 import { searchTalks } from "../lib/search";
 import { THEMES, THEME_COLORS, THEME_ICONS, nextTheme, type Theme } from "../lib/theme";
@@ -36,6 +38,8 @@ const FAV_KEY = "mm-program:favorites";
 /** Фильтр «только избранное» — выбор экрана, а не данные: живёт в sessionStorage. */
 const FAV_FILTER_KEY = "mm-program:favorites-only";
 const TOAST_MS = 2500;
+/** Предупреждение о пересечении докладов читают, а не замечают: 7 с. */
+const TOAST_WARN_MS = 7000;
 
 /** Класс скелетона области постера, пока грузится картинка из чужого CDN. */
 const SKELETON_CLASS = "talk-modal__media--loading";
@@ -95,14 +99,14 @@ function writeStorage(key: string, value: string, kind: "local" | "session" = "l
   }
 }
 
-function toast(message: string): void {
+function toast(message: string, ms = TOAST_MS, warn = false): void {
   for (const node of $$(".mm-toast")) node.remove();
   const node = document.createElement("div");
-  node.className = "mm-toast";
+  node.className = warn ? "mm-toast mm-toast--warn" : "mm-toast";
   node.setAttribute("role", "status");
   node.textContent = message;
   document.body.appendChild(node);
-  window.setTimeout(() => node.remove(), TOAST_MS);
+  window.setTimeout(() => node.remove(), ms);
 }
 
 /* ── 1. Тема: dark → light → cyberpunk → dark ──────────────────────── */
@@ -913,6 +917,46 @@ function syncFavorites(): void {
   if (favoritesOnly) applyFilter();
 }
 
+/**
+ * Предупреждение о пересечении по времени: слоты берутся из карточек этого
+ * дня, поэтому `/program.json` (280 КБ) ради проверки не грузится, а доклад
+ * другого дня конфликтовать не может — у него своя дата. В список идут только
+ * избранные, ровно те, что видит счётчик.
+ */
+function warnOnOverlap(id: number): void {
+  const cards = new Map<number, HTMLElement>();
+  const slots: TalkSlot[] = [];
+  for (const card of $$<HTMLElement>("article.talk-card[data-talk-id][data-start]")) {
+    const talkId = Number(card.dataset.talkId);
+    if (!Number.isFinite(talkId) || !favorites.has(talkId)) continue;
+    cards.set(talkId, card);
+    slots.push({ id: talkId, start: card.dataset.start ?? "", end: card.dataset.end ?? "" });
+  }
+
+  const conflicts = timeConflicts(slots, id);
+  const [first] = conflicts;
+  if (!first) return;
+
+  const card = cards.get(first.id);
+  const title = card?.querySelector(".talk-card__title-btn")?.textContent?.trim() ?? "";
+  const hall = card?.querySelector(".talk-card__hall")?.textContent?.trim() ?? "";
+  const range = `${first.start} - ${first.end}`;
+  const more = conflicts.length - 1;
+  toast(
+    more > 0
+      ? t(LANG, "favConflictMore", {
+          title,
+          range,
+          hall,
+          count: more,
+          talks: pluralTalks(more, LANG),
+        })
+      : t(LANG, "favConflict", { title, range, hall }),
+    TOAST_WARN_MS,
+    true,
+  );
+}
+
 function toggleFavorite(id: number, surface: "card" | "modal"): void {
   if (!Number.isFinite(id)) return;
   // Перечитываем хранилище перед записью: вторая вкладка могла добавить своё,
@@ -923,6 +967,7 @@ function toggleFavorite(id: number, surface: "card" | "modal"): void {
   else favorites.delete(id);
   saveFavorites();
   syncFavorites();
+  if (on) warnOnOverlap(id);
   track("favorite_toggle", {
     talk_id: id,
     on,

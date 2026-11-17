@@ -106,6 +106,8 @@ const RU = {
   toastLoadFailed: "Не удалось загрузить программу",
   toastNoExport: "Нет докладов для экспорта",
   toastExported: "В календарь: {count}",
+  favConflict: "Пересечение по времени: «{title}», {range}, зал «{hall}»",
+  favConflictMore: "Пересечение по времени: «{title}», {range}, зал «{hall}» и ещё {count} {talks}",
   footerSource:
     "Учебная копия страницы {link}. Данные и медиа не перепубликуются, а подтягиваются с CDN Матемаркетинга.",
   footerSourceLink: "первоисточника",
@@ -215,6 +217,8 @@ const EN: Record<keyof typeof RU, string> = {
   toastLoadFailed: "Couldn't load the program",
   toastNoExport: "No talks to export",
   toastExported: "Added to calendar: {count}",
+  favConflict: "Time overlap: “{title}”, {range}, {hall}",
+  favConflictMore: "Time overlap: “{title}”, {range}, {hall} and {count} more",
   footerSource:
     "Study copy of the {link}. Data and media are not republished — they load from the Matemarketing CDN.",
   footerSourceLink: "original page",

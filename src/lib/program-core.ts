@@ -151,6 +151,37 @@ export function formatRange(talk: Pick<Talk, "start" | "end">): string {
   return `${talk.start} - ${talk.end}`;
 }
 
+/** Доклад в форме, которой достаточно для проверки пересечения. */
+export interface TalkSlot {
+  id: number;
+  start: string;
+  end: string;
+}
+
+/**
+ * Доклады из `slots`, которые пересекаются по времени с `id`.
+ *
+ * Пересечение строгое: 11:00–12:10 и 12:10–13:00 не конфликт (один кончается
+ * там, где начинается другой), а 11:00–12:10 и 12:00–13:00 — конфликт. Время,
+ * которое не разбирается в минуты, в проверке не участвует; доклад ищется в
+ * том же списке, поэтому чужие `slots` молча дают пустой ответ.
+ */
+export function timeConflicts(slots: TalkSlot[], id: number): TalkSlot[] {
+  const target = slots.find((slot) => slot.id === id);
+  if (!target) return [];
+  const start = minutes(target.start);
+  const end = minutes(target.end);
+  if (start == null || end == null) return [];
+
+  return slots.filter((slot) => {
+    if (slot.id === id) return false;
+    const otherStart = minutes(slot.start);
+    const otherEnd = minutes(slot.end);
+    if (otherStart == null || otherEnd == null) return false;
+    return otherStart < end && start < otherEnd;
+  });
+}
+
 /* ── Раскладка сетки ───────────────────────────────────────────────── */
 
 export interface PlacedTalk {

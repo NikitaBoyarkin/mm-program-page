@@ -4,7 +4,7 @@
 
 На десктопе — сетка «время × залы», на мобильном — хронологический список.
 
-Карточки с баннерами, фильтры по треку и избранному, модалка доклада, экспорт дня в `.ics`, клиентский поиск по всем трём дням.
+Карточки с баннерами, фильтры по треку и избранному, предупреждение о пересечении избранных докладов по времени, модалка доклада, экспорт дня в `.ics`, клиентский поиск по всем трём дням.
 
 Страница существует в двух локалях — русской (`/`) и английской (`/en/`).
 
@@ -42,14 +42,14 @@
 | `index.html` и 3 файла, запуск двойным кликом по `file://` | Astro: 193 страницы = 192 `index.html` (три дня × две локали, два графа — `/talks/`, `/en/talks/`, заметка на каждый из 92 докладов — `/talk/<id>/`, `/en/talk/<id>/`) + `404.html`; JSON-эндпоинты (`/program.json`, `/en/program.json`) в счёт билда не входят; `bun run build` |
 | Браузер рисует сетку из `window.MM_PROGRAM`                | Сетка **лежит в HTML**: три страницы по 39 / 38 / 15 карточек, у каждого дня свой URL                                                                                                                                                                                            |
 | День переключается на клиенте, состояние живёт в памяти    | День — это адрес: `/`, `/day/2/`, `/day/3/` (в EN — `/en/`, `/en/day/2/`, `/en/day/3/`) — ссылки, история, шаринг                                                                                                                                                                |
-| `app.js` — IIFE на 780 строк без типов                     | `src/lib/program.ts` и `src/lib/ics.ts` — типизированное ядро и 229 юнит-тестов без браузера                                                                                                                                                                                     |
-| Тесты — Python и headless Chrome                           | `bun test` (229 тестов) и Playwright на собранной странице, включая прогон с выключенным JS                                                                                                                                                                                      |
+| `app.js` — IIFE на 780 строк без типов                     | `src/lib/program.ts` и `src/lib/ics.ts` — типизированное ядро и 239 юнит-тестов без браузера                                                                                                                                                                                     |
+| Тесты — Python и headless Chrome                           | `bun test` (239 тестов) и Playwright на собранной странице, включая прогон с выключенным JS                                                                                                                                                                                      |
 | Только русский интерфейс, нет поиска                       | Словарь RU/EN + overlay перевода контента; поиск по названию, спикеру, треку и залу                                                                                                                                                                                              |
 | Свой CSS на 2381 строку с фиолетовым брендом               | Токены портфельной дизайн-системы: три темы, Inter и Cormorant, кремовые баннеры                                                                                                                                                                                                 |
 
-На выходе — **219.8 КБ HTML (28.8 КБ gzip) на первом дне программы и клиентский чанк 51.8 КБ raw (19.2 КБ gzip)**. Вес замерен `gzip -9` на собранном `dist/index.html` и `dist/_astro/ProgramPage.astro_astro_type_script_index_0_lang.*.js`; КБ здесь и ниже — 1024 байта.
+На выходе — **221.5 КБ HTML (29.1 КБ gzip) на первом дне программы, клиентский чанк 55.2 КБ raw (20.2 КБ gzip) и общий `program-core` 0.9 КБ (0.5 КБ gzip)**. Вес замерен `gzip -9` на собранном `dist/index.html` и `dist/_astro/ProgramPage.astro_astro_type_script_index_0_lang.*.js`; КБ здесь и ниже — 1024 байта.
 
-Дни при этом весят по-разному, потому что в них разное число карточек: день 2 — 224.3 / 29.4 КБ, день 3 — 106.2 / 17.2 КБ, то есть страницы отличаются почти вдвое.
+Дни при этом весят по-разному, потому что в них разное число карточек: день 2 — 225.5 / 29.5 КБ, день 3 — 106.1 / 17.1 КБ, то есть страницы отличаются почти вдвое.
 
 В клиентском чанке — тема (с `morphicons`, анимацией иконки) и поиск; слепок программы (298 511 байт) в него больше не входит, его забирают с `/program.json` по требованию.
 
@@ -167,7 +167,7 @@ scripts/generate-talk-notes.ts   184 заметки из слепка, --check
 scripts/optimize-photos.ts       аватарки 144×144 WebP в public/media (не коммитится)
 scripts/generate-og.mjs          превью-баннер из SVG-шаблона (rsvg-convert)
 scripts/og-fonts/                шрифты для генератора баннера
-tests/lib/*.test.ts              229 юнит-тестов (bun test, 13 файлов)
+tests/lib/*.test.ts              239 юнит-тестов (bun test, 13 файлов)
 tests/built/program.spec.ts      браузерные (Playwright)
 tests/built/i18n-search.spec.ts  EN и поиск (Playwright)
 tests/built/talks.spec.ts        граф докладов (Playwright)
@@ -191,8 +191,8 @@ bun run build              # статика в dist/ (prebuild → bun run photo
 bun run preview            # посмотреть сборку
 
 bun run check              # типы в .astro и .ts
-bun test                   # 229 юнит-тестов ядра
-bun run test:built         # браузерные тесты: 66 тестов × 3 проекта
+bun test                   # 239 юнит-тестов ядра
+bun run test:built         # браузерные тесты: 75 тестов × 3 проекта
 bun run talks:check        # 184 заметки совпадают со слепком
 
 bun run talks:generate     # перегенерировать заметки докладов
@@ -257,8 +257,8 @@ GET https://lms.matemarketing.ru/api/event-program/event/6/
 ## Проверка
 
 ```bash
-bun test                  # 229 pass
-bun run test:built        # 66 тестов × 3 проекта = 198 прогонов
+bun test                  # 239 pass
+bun run test:built        # 75 тестов × 3 проекта = 225 прогонов
 bun run data:check        # слепок сходится с сырым ответом
 bun run talks:check       # 184 заметки сходятся со слепком
 ```
@@ -375,8 +375,8 @@ origin (`https://nikitaboyarkin.github.io`), поэтому файл — заг�
 
 Деплой (`.github/workflows/deploy.yml`) не проходит с красным гейтом. Шаги идут так:
 `bun install --frozen-lockfile` → `bun run check` (типы) → `bun run talks:check` →
-`bun run test` (229 юнит-тестов) → `bun run build` с `PUBLIC_POSTHOG_KEY` из секрета →
-установка Chromium и WebKit → `bun run test:built` (66 тестов × 3 проекта = 198 прогонов).
+`bun run test` (239 юнит-тестов) → `bun run build` с `PUBLIC_POSTHOG_KEY` из секрета →
+установка Chromium и WebKit → `bun run test:built` (75 тестов × 3 проекта = 225 прогонов).
 Только после этого `dist/` уходит в Pages.
 
 ### Аналитика

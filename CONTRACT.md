@@ -70,11 +70,11 @@
 | `src/styles/program.css` | design | сетка, карточка, модалка, печать; геометрия всех декоративных иконок — маски `--icon-*` |
 | `src/styles/talks.css` | design | граф и заметки: SVG, списки заметок, хабы тем. Отдельный файл: страница не грузит сетку, карточки и модалку |
 | `src/styles/search.css` | design | диалог поиска; файл глобальный, потому что результаты вставляет клиент уже после отрисовки и узлы `.search-result` не получают scope-атрибут Astro |
-| `tests/lib/*.test.ts` | verify | 229 юнит-тестов ядра, i18n, поиска, земли, картинок, графа, заметок, материалов и аналитики (`bun test tests/lib`, 13 файлов) |
-| `tests/built/program.spec.ts` | verify | 32 браузерных теста сборки (Playwright) |
+| `tests/lib/*.test.ts` | verify | 239 юнит-тестов ядра, i18n, поиска, земли, картинок, графа, заметок, материалов и аналитики (`bun test tests/lib`, 13 файлов) |
+| `tests/built/program.spec.ts` | verify | 34 браузерных теста сборки (Playwright), включая тост-предупреждение о пересечении |
 | `tests/built/i18n-search.spec.ts` | verify | 8 тестов EN-маршрутов, переключателя языка и поиска |
 | `tests/built/talks.spec.ts` | verify | 10 тестов графа: заметки и якоря, SVG на билде, хабы тем, вход в шапке на трёх ширинах (включая 768 px — иконка), EN-копия, скролл только внутри графа |
-| `tests/built/talk-pages.spec.ts` | verify | 17 тестов заметки доклада: адрес и пара языков, факты, связанные ссылки резолвятся, EN-переключатель, вход из модалки; вместе 67 тестов × 3 проекта = 201 прогон |
+| `tests/built/talk-pages.spec.ts` | verify | 14 тестов заметки доклада: адрес и пара языков, факты, связанные ссылки резолвятся, EN-переключатель, вход из модалки; вместе 75 тестов × 3 проекта = 225 прогонов |
 | `src/content.config.ts` | core | коллекции `talks` / `talks-en`: zod-схема фактов заметки, `.strict()` ловит опечатку в ключе |
 | `src/content/talks/<id>.md`, `src/content/talks-en/<id>.md` | data | по заметке на доклад в каждой локали (92 + 92); frontmatter производится генератором, тело — seed из описания и ручная правка |
 | `src/lib/talk-note.ts` | core | детерминированный frontmatter-форматер и разбор файла: один источник для генератора и тестов |
@@ -194,7 +194,8 @@ site`. Ссылка принимается только при подтверж�
 `Program, Day, Talk, Hall, Track, Lector`; `PROGRAM`; `minutes, isTime, formatRange, days,
 talksOfDay, hallsOfDay, tracksOfProgram, isPlaceable, startsOf, spanOf, placeTalks,
 occupiedCells, pluralTalks, dayLabel, dayLongLabel, firstParagraph, resolveDay, dayByOrdinal,
-resolveTrack, talkById, dayHref, socialsOf`; медиа: `IMAGE_HOSTS, imageUrl` — белый список
+resolveTrack, talkById, dayHref, socialsOf`; пересечения избранного: `TalkSlot, timeConflicts`;
+медиа: `IMAGE_HOSTS, imageUrl` — белый список
 трёх CDN, единственный путь картинки из данных в разметку, плюс `src/lib/images.ts`
 (`bannerSources, photoSources, photoMapEntry, BANNER_SIZES`) — единственное место, где из
 разрешённого URL делается уменьшенный вариант. Соцсети: `SOCIAL_NETWORKS, SOCIAL_LABELS,
@@ -210,6 +211,8 @@ buildCalendar, calendarFilename, buildProgramCalendar, PROGRAM_CALENDAR_FILENAME
 - Доклад, начинающийся внутри чужого слота, укорачивает предыдущий: ни одна карточка
   не исчезает.
 - Карточка, перекрывающая больше одной строки, получает `span N` в `grid-area`.
+- `timeConflicts(slots, id)` — строгое пересечение по минутам: `11:00–12:10` и `12:10–13:00`
+  не конфликт, `11:00–12:10` и `12:00–13:00` — конфликт; невалидное время не участвует.
 
 ## Разметка: CSS ↔ JS ↔ view контракт
 
@@ -265,7 +268,7 @@ section.program-grid[data-grid][style=--mm-hall-count:N]
   div.program-grid__content
     div.program-grid__time-cell[style="grid-area:R / 1"]
     div.program-grid__talk-cell#t<id>[data-track][data-span][style="grid-area:R / C / span N"]
-      article.talk-card[data-talk-id][data-track]
+      article.talk-card[data-talk-id][data-track][data-start][data-end]
         div.talk-card__top
           div.talk-card__header > span.talk-card__time + span.talk-card__hall + span.talk-card__track + button.talk-card__favorite[data-fav][data-talk-id][aria-pressed]
           div.talk-card__media > img.talk-card__banner-img | div.talk-card__media-text > h3 > button.talk-card__title-btn[data-talk-open]
@@ -659,6 +662,13 @@ origin (`https://nikitaboyarkin.github.io`) — файл оставлен заг
    отдельное состояние: `sessionStorage['mm-program:favorites-only']`, общее у чипа, звезды в
    шапке и кнопки в панели, поэтому все три несут `aria-pressed` и переключаются одной
    функцией.
+   **Пересечение по времени.** При добавлении доклада (`on === true`) клиент сравнивает его
+   слот с уже избранными докладами этой страницы: `timeConflicts` по `data-start`/`data-end`
+   карточек. Пересечение найдено → тост-предупреждение `.mm-toast--warn` на 7 с: название,
+   интервал и зал конфликтующего доклада (`favConflict`), а если конфликтов больше — «и ещё
+   N» (`favConflictMore`, число через `pluralTalks`). Снятие звезды, доклад без пересечений и
+   доклад другого дня предупреждения не дают. `/program.json` для проверки не грузится:
+   карточки дня уже в DOM, а у другого дня своя дата.
 7. **Карточка**: `button.talk-card__title-btn` открывает модалку. Тезисы обрезаны клампом
    в 5 строк (`-webkit-line-clamp`): высота карточки задаёт строку сетки «время × залы»,
    и развёрнутый текст растянул бы весь ряд. Полный текст — в модалке и на `/talk/<id>/`;
@@ -678,7 +688,8 @@ origin (`https://nikitaboyarkin.github.io`) — файл оставлен заг
    фильтры страницы на экспорт не влияют (они и не могут: на других днях своего набора нет).
    Файл `matemarketing-program.ics`; доклады без валидного времени и с неизвестным `dayId`
    в календарь не попадают (второе — исключение, а не пропуск); пустой набор → тост.
-10. **Тост**: `div.mm-toast[role=status]`, живёт ~2.5 с.
+10. **Тост**: `div.mm-toast[role=status]`, живёт ~2.5 с. Вариант `.mm-toast--warn`
+    (рамка `--text-accent-figure`) предупреждает о пересечении избранного и живёт 7 с.
 11. **Поиск**: `button[data-search-open]` открывает `div.search-dialog` (`hidden = false`,
     фокус в `[data-search-input]`, запись истории через `pushLayer("search")`); закрывают
     backdrop, кнопка и `Esc`, фокус возвращается на триггер. `Esc` закрывает верхний слой:

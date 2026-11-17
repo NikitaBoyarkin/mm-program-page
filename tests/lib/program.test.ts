@@ -28,6 +28,7 @@ import {
   spanOf,
   startsOf,
   talksOfDay,
+  timeConflicts,
   tracksOfProgram,
 } from "../../src/lib/program";
 import socialsOverlay from "../../src/data/socials.json";
@@ -343,6 +344,37 @@ describe("время", () => {
     ];
     expect(startsOf(talks)).toEqual(["11:00", "11:40", "12:10"]);
     expect(startsOf([])).toEqual([]);
+  });
+});
+
+describe("timeConflicts", () => {
+  const A = { id: 1, start: "11:00", end: "12:10" };
+
+  test("перекрытие — конфликт, касание границ — нет", () => {
+    expect(timeConflicts([A, { id: 2, start: "12:00", end: "13:00" }], 1)).toEqual([
+      { id: 2, start: "12:00", end: "13:00" },
+    ]);
+    expect(timeConflicts([A, { id: 3, start: "12:10", end: "13:00" }], 1)).toEqual([]);
+    expect(timeConflicts([A, { id: 4, start: "10:00", end: "11:00" }], 1)).toEqual([]);
+  });
+
+  test("сам себя не конфликтует, незнакомый id — пустой ответ", () => {
+    expect(timeConflicts([A], 1)).toEqual([]);
+    expect(timeConflicts([A], 99)).toEqual([]);
+  });
+
+  test("невалидное время в проверке не участвует", () => {
+    expect(timeConflicts([A, { id: 5, start: "25:00", end: "26:00" }], 1)).toEqual([]);
+    expect(timeConflicts([{ id: 1, start: "oops", end: "12:10" }, A], 1)).toEqual([]);
+  });
+
+  test("возвращает все конфликты, а не первый", () => {
+    const slots = [
+      A,
+      { id: 6, start: "11:30", end: "11:50" },
+      { id: 7, start: "12:00", end: "13:00" },
+    ];
+    expect(timeConflicts(slots, 1).map((slot) => slot.id)).toEqual([6, 7]);
   });
 });
 

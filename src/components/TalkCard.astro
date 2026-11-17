@@ -61,6 +61,8 @@ const initials = (name: string): string =>
   class:list={["talk-card", image ? null : "talk-card--compact"]}
   data-talk-id={talk.id}
   data-track={trackKey ?? talk.track}
+  data-start={talk.start}
+  data-end={talk.end}
 >
   <div class="talk-card__top">
     <div class="talk-card__header">
